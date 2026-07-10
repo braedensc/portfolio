@@ -31,14 +31,19 @@
   perspective: 1000px;
   overflow: hidden;
 }
+/* Crispness-first backdrop (round 3): ONE photo plane at scale(1), no mask —
+   the engine only ever translates it a few px, so the image is sampled 1:1
+   with background-size: cover and there is no masked copy to ghost against.
+   The plane is a sky band down to just past the ground seam; the drawn ground
+   carries everything below it. Side bleed covers the parallax shift. */
 .plane {
   position: absolute;
-  left: -25%;
-  top: -10%;
-  width: 150%;
-  height: 120%;
+  left: -44px;
+  right: -44px;
+  top: -20px;
+  height: calc(68% + 20px);
   background-size: cover;
-  background-position: center 32%;
+  background-position: center;
   transition: filter 0.9s;
   will-change: transform;
 }
@@ -51,13 +56,30 @@
 .world.sc-camp .plane {
   filter: brightness(0.94) saturate(1.05) !important;
 }
-.pMid {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 52%);
-  mask-image: linear-gradient(to bottom, transparent 42%, #000 52%);
+/* Vector sky accent — drifting cloud wisps above the horizon. The only extra
+   backdrop layer: pure vector, so it cannot ghost or double-expose. */
+.skyDrift {
+  position: absolute;
+  left: -48px;
+  right: -48px;
+  top: 0;
+  height: 32%;
+  pointer-events: none;
+  will-change: transform;
 }
-.pNear {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 65%, #000 75%);
-  mask-image: linear-gradient(to bottom, transparent 65%, #000 75%);
+.skyDrift svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.skyInner {
+  animation: skyDriftK 90s ease-in-out infinite alternate;
+}
+.world.sc-slot .skyDrift {
+  display: none;
+}
+.world.sc-camp .skyDrift {
+  opacity: 0.55;
 }
 
 .stars {
@@ -1543,6 +1565,14 @@
 }
 
 /* ---------- keyframes ---------- */
+@keyframes skyDriftK {
+  from {
+    transform: translateX(-30px);
+  }
+  to {
+    transform: translateX(30px);
+  }
+}
 @keyframes tw {
   0%,
   100% {

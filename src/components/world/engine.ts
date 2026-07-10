@@ -1,7 +1,8 @@
 /**
  * The world engine: game loop, keyboard/pointer movement, click-to-move,
- * camera deadzone panning, parallax planes, billboard projection, NPC idle
- * animation, proximity cards, scene transitions, and auto mode.
+ * camera deadzone panning, a translate-only photo backdrop, billboard
+ * projection, NPC idle animation, proximity cards, scene transitions, and
+ * auto mode.
  *
  * React owns UI state (which card is open, which scene renders, auto on/off)
  * via the EngineHooks callbacks; the engine owns all per-frame math and writes
@@ -29,7 +30,10 @@ export interface EngineHooks {
 
 export interface AttachRefs {
   root: HTMLElement;
-  planes: [HTMLElement, HTMLElement, HTMLElement];
+  /** The single photo backdrop plane (crisp: translate-only, never scaled). */
+  backdrop: HTMLElement;
+  /** Vector sky accent strip (drifting cloud wisps) — the one extra depth layer. */
+  sky: HTMLElement;
   ground: HTMLElement;
   fader: HTMLElement;
   card: HTMLElement;
@@ -100,11 +104,6 @@ interface AutoState {
   mode: "manual" | "attract";
   /** Route direction — attract mode ping-pongs so the wander feels natural. */
   dir: 1 | -1;
-}
-
-function setPlane(el: HTMLElement, z: number, f: number, p: number): void {
-  const s = (1000 - z) / 1000;
-  el.style.transform = `translate3d(${-p * f * s}px,0,${z}px) scale(${s})`;
 }
 
 export class WorldEngine {
@@ -221,7 +220,7 @@ export class WorldEngine {
     this.rescan(itemsEl, idx);
     this.measure();
     this.positionAll();
-    this.paintPlanes(0);
+    this.paintBackdrop(0);
     if (pending && pending.thenTarget) this.walkTo(pending.thenTarget);
     if (this.transitioning) {
       if (this.rm) this.transitioning = false;
@@ -575,7 +574,14 @@ export class WorldEngine {
 
   /* ---------- per-frame ---------- */
 
-  private paintPlanes(dt: number): void {
+  /**
+   * Camera + backdrop. Crispness-first rig (round-3 client feedback): the
+   * photo backdrop is ONE plane at scale(1) — translate-only, so it is never
+   * fractionally resampled (no blur) and never overlaps a masked copy of
+   * itself (no ghost seams). Depth comes from the backdrop shifting a few px
+   * opposite the camera pan, plus the vector sky strip drifting a bit more.
+   */
+  private paintBackdrop(dt: number): void {
     if (!this.refs) return;
     const t = this.gy / 100;
     const k = 0.55 + 0.45 * t;
@@ -586,10 +592,8 @@ export class WorldEngine {
     else if (sx < -dz) tc = this.gx + dz / k;
     tc = Math.max(-this.camcl, Math.min(this.camcl, tc));
     this.camX = this.rm || dt === 0 ? tc : this.camX + (tc - this.camX) * Math.min(1, dt * 6);
-    const p = this.camX * 0.9;
-    setPlane(this.refs.planes[0], -420, 0.25, p);
-    setPlane(this.refs.planes[1], -220, 0.5, p);
-    setPlane(this.refs.planes[2], -70, 0.8, p);
+    this.refs.backdrop.style.transform = `translate3d(${-this.camX * 0.06}px,0,0)`;
+    this.refs.sky.style.transform = `translate3d(${-this.camX * 0.12}px,0,0)`;
     this.refs.ground.style.transform = `translate3d(${-this.camX * 0.72}px,0,0) rotateX(64deg)`;
   }
 
@@ -773,8 +777,8 @@ export class WorldEngine {
       }
     }
 
-    /* camera + planes + billboards */
-    this.paintPlanes(dt);
+    /* camera + backdrop + billboards */
+    this.paintBackdrop(dt);
     this.positionAll();
 
     /* proximity */

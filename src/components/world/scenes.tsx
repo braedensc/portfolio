@@ -449,6 +449,42 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
   }
 }
 
+/**
+ * Vector sky accent — the ONE extra backdrop layer besides the photo plane
+ * (crispness rig, round 3). Soft cloud wisps drawn as blurred vector shapes:
+ * they drift slowly and parallax a touch more than the photo, and because
+ * they are not a masked copy of the photo they can never ghost against it.
+ */
+export function SkyDriftArt() {
+  return (
+    <svg
+      viewBox="0 0 1200 300"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <filter id="skyblur" x="-20%" y="-60%" width="140%" height="220%">
+          <feGaussianBlur stdDeviation="9" />
+        </filter>
+      </defs>
+      <g className="skyInner" filter="url(#skyblur)">
+        <g fill="rgba(238,244,252,0.14)">
+          <ellipse cx="180" cy="88" rx="130" ry="17" />
+          <ellipse cx="280" cy="70" rx="80" ry="13" />
+          <ellipse cx="620" cy="140" rx="170" ry="15" />
+          <ellipse cx="730" cy="122" rx="90" ry="11" />
+          <ellipse cx="1020" cy="72" rx="140" ry="16" />
+        </g>
+        <g fill="rgba(238,244,252,0.09)">
+          <ellipse cx="420" cy="52" rx="150" ry="12" />
+          <ellipse cx="900" cy="180" rx="180" ry="13" />
+          <ellipse cx="80" cy="190" rx="110" ry="11" />
+        </g>
+      </g>
+    </svg>
+  );
+}
+
 export function SignArt() {
   return (
     <svg width="36" height="46" viewBox="0 0 36 46" aria-hidden="true">

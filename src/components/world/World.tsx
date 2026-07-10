@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * The explorable world: three walkable scenes (camp → meadow → slot) rendered
- * as parallax photo planes + a rotated ground plane, with a canvas pixel-art
- * hiker, mascot NPCs, furnished set-piece waypoints, and project stations.
+ * The explorable world: three walkable scenes (camp → meadow → slot), each a
+ * single crisp photo backdrop + a vector sky strip + a rotated ground plane,
+ * with a canvas pixel-art hiker, mascot NPCs, furnished set-piece waypoints,
+ * and project stations.
  *
  * React renders structure and UI state (open card, scene, auto mode);
  * WorldEngine (engine.ts) owns the game loop and writes transforms directly.
@@ -32,7 +33,7 @@ import {
   type CardId,
 } from "@/content/site";
 import { WorldEngine } from "./engine";
-import { DecorArt, SignArt, SetPieceArt, StationArt } from "./scenes";
+import { DecorArt, SignArt, SetPieceArt, SkyDriftArt, StationArt } from "./scenes";
 import { Lightbox } from "./Lightbox";
 import { HIKER, CHEF } from "./sprites";
 import "./world.css";
@@ -212,9 +213,8 @@ export default function World() {
 
   const engineRef = useRef<WorldEngine | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const pDeepRef = useRef<HTMLDivElement>(null);
-  const pMidRef = useRef<HTMLDivElement>(null);
-  const pNearRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const skyRef = useRef<HTMLDivElement>(null);
   const groundRef = useRef<HTMLDivElement>(null);
   const faderRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -237,7 +237,8 @@ export default function World() {
     engineRef.current = engine;
     engine.attach({
       root: rootRef.current!,
-      planes: [pDeepRef.current!, pMidRef.current!, pNearRef.current!],
+      backdrop: backdropRef.current!,
+      sky: skyRef.current!,
       ground: groundRef.current!,
       fader: faderRef.current!,
       card: cardRef.current!,
@@ -277,20 +278,13 @@ export default function World() {
     <div ref={rootRef} className={`world ${scene.cls}${night ? " night" : ""}`}>
       <div className="world-scene" role="img" aria-label={scene.aria}>
         <div
-          ref={pDeepRef}
-          className="plane pDeep"
+          ref={backdropRef}
+          className="plane"
           style={{ backgroundImage: `url(${scene.img})`, backgroundPosition: scene.bgPos }}
         />
-        <div
-          ref={pMidRef}
-          className="plane pMid"
-          style={{ backgroundImage: `url(${scene.img})`, backgroundPosition: scene.bgPos }}
-        />
-        <div
-          ref={pNearRef}
-          className="plane pNear"
-          style={{ backgroundImage: `url(${scene.img})`, backgroundPosition: scene.bgPos }}
-        />
+        <div ref={skyRef} className="skyDrift" aria-hidden="true">
+          <SkyDriftArt />
+        </div>
         <div ref={starsRef} className="stars" />
         <div className="shafts">
           <div className="shaft s1" />

@@ -274,7 +274,9 @@ export const scenes: Scene[] = [
     theme: "PROJECTS",
     cls: "sc-camp",
     img: "/world/camp.jpg",
-    bgPos: "center 76%",
+    // Wide-band asset (2400×1044): clouds top, mountain crest mid, glowing
+    // tent bottom-right — sits just above the drawn-ground seam.
+    bgPos: "center 62%",
     aria: "Stylized night campsite with a fire, project stations, lantern lights, a small lake with a dock, and a walkable hiker character",
     gxClamp: 500,
     camClamp: 251,
@@ -345,7 +347,8 @@ export const scenes: Scene[] = [
     theme: "ABOUT & ATHLETICS",
     cls: "sc-meadow",
     img: "/world/meadow.jpg",
-    bgPos: "center 82%",
+    // Valley + cliffs centered, treeline meeting the ground seam.
+    bgPos: "center 67%",
     aria: "Stylized Yosemite meadow with giant sequoias, a running track with a Georgia Tech sign, a bear on a rock, a pond, and a walkable hiker character",
     gxClamp: 560,
     camClamp: 311,
