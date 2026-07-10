@@ -451,7 +451,6 @@
 .item[data-kind="flowers"] .in::after,
 .item[data-kind="butterfly"] .in::after,
 .item[data-kind="lanterns"] .in::after,
-.item[data-kind="dock"] .in::after,
 .item[data-kind="lake"] .in::after,
 .item[data-kind="climb"] .in::after,
 .item[data-kind="fire"] .in::after {
@@ -939,7 +938,7 @@
   width: 120px;
   height: 34px;
 }
-/* Alpine-lake shimmer: thin highlight lines drifting across the water. */
+/* Mountain-lake shimmer: thin highlight lines drifting across the water. */
 .shimmer {
   opacity: 0;
   animation: shimmerK 6.5s ease-in-out infinite;
@@ -947,21 +946,6 @@
 .sh2 {
   animation-delay: 2.2s;
   animation-duration: 7.5s;
-}
-.sh3 {
-  animation-delay: 4.1s;
-  animation-duration: 5.5s;
-}
-.fishJump {
-  transform: translate(298px, 60px);
-  opacity: 0;
-  animation: fishJumpK 7s ease-in-out infinite;
-}
-.fishRip {
-  transform-box: fill-box;
-  transform-origin: center;
-  opacity: 0;
-  animation: fishRipK 7s ease-out infinite;
 }
 .birdHop {
   animation: birdHopK 5.4s ease-in-out infinite;
@@ -1975,29 +1959,6 @@
     transform: scaleY(0.35);
   }
 }
-@keyframes fishJumpK {
-  0%,
-  1% {
-    transform: translate(298px, 60px) rotate(0deg);
-    opacity: 0;
-  }
-  2.5% {
-    opacity: 1;
-  }
-  5% {
-    transform: translate(312px, 42px) rotate(35deg);
-    opacity: 1;
-  }
-  8% {
-    transform: translate(326px, 54px) rotate(100deg);
-    opacity: 1;
-  }
-  9.5%,
-  100% {
-    transform: translate(330px, 60px) rotate(130deg);
-    opacity: 0;
-  }
-}
 @keyframes shimmerK {
   0%,
   100% {
@@ -2014,21 +1975,6 @@
   88% {
     opacity: 0;
     transform: translateX(42px);
-  }
-}
-@keyframes fishRipK {
-  0%,
-  8% {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  11% {
-    opacity: 0.85;
-  }
-  22%,
-  100% {
-    transform: scale(2);
-    opacity: 0;
   }
 }
 @keyframes birdHopK {

@@ -150,97 +150,6 @@ function TrackArt() {
 }
 
 /**
- * The alpine lake (round 3: the meadow pond, grown 3–4× into a mountain
- * lake). Irregular shoreline, a drawn inverted-peak reflection in darker
- * wavier tones, reflected glints, drifting shimmer lines, reeds and shore
- * rocks. Flat ground art — the hiker walks the shore around it.
- */
-function MountainLakeArt() {
-  const glints = [
-    [150, 38, 0],
-    [205, 30, 0.8],
-    [258, 44, 1.6],
-    [118, 52, 2.3],
-    [305, 36, 3.0],
-    [240, 62, 3.7],
-  ] as const;
-  return (
-    <svg width="420" height="96" viewBox="0 0 420 96" aria-hidden="true">
-      {/* water body — irregular alpine shoreline */}
-      <path
-        d="M18 52Q10 34 52 24Q100 8 178 10Q268 6 330 18Q404 28 408 52Q412 74 340 84Q250 96 150 92Q60 90 30 76Q14 68 18 52Z"
-        fill="#28444d"
-        stroke="#3d5f63"
-        strokeWidth="2.5"
-      />
-      <ellipse cx="210" cy="50" rx="150" ry="26" fill="#31555c" opacity="0.65" />
-      {/* inverted mountain reflection — darker, wavy-edged */}
-      <g opacity="0.55">
-        <path
-          d="M112 15L168 60Q172 64 177 59L190 48L202 60Q206 64 211 59L262 15Q238 20 208 18Q156 16 112 15Z"
-          fill="#1c333c"
-        />
-        <path d="M250 17L294 52Q298 56 303 51L342 20Q308 14 250 17Z" fill="#22404a" />
-      </g>
-      {/* drifting shimmer lines */}
-      <g stroke="#bcd9dc" strokeLinecap="round" fill="none">
-        <path className="shimmer" d="M96 46L156 46" strokeWidth="1.6" />
-        <path className="shimmer sh2" d="M212 64L286 64" strokeWidth="1.4" />
-        <path className="shimmer sh3" d="M256 32L314 32" strokeWidth="1.2" />
-      </g>
-      {/* reflected glints */}
-      {glints.map(([x, y, delay]) => (
-        <circle
-          key={`${x}-${y}`}
-          className="lakeStar"
-          cx={x}
-          cy={y}
-          r="1.5"
-          fill="#e6f2f4"
-          style={{ animationDelay: `${delay}s` }}
-        />
-      ))}
-      {/* fish jump, kept from the pond days */}
-      <g className="fishJump">
-        <path d="M0 0Q4 -3 8 0Q5 2 2 3Q0 2 0 0Z" fill="#9fb7ba" />
-        <path d="M7.4 -0.6L10 -2.4L9 0.8Z" fill="#9fb7ba" />
-      </g>
-      <ellipse
-        className="fishRip"
-        cx="330"
-        cy="58"
-        rx="7"
-        ry="2.2"
-        fill="none"
-        stroke="#bcd4d6"
-        strokeWidth="1.2"
-      />
-      {/* shore rocks */}
-      <path d="M26 70L22 60Q28 52 40 54Q52 52 55 62L51 71Z" fill="#5e5a4e" />
-      <path d="M370 76L366 66Q372 58 384 60Q396 58 399 68L395 77Z" fill="#6e6a5e" />
-      <path d="M336 88L334 82Q338 77 345 78Q352 77 354 83L352 88Z" fill="#565449" />
-      {/* reeds + cattails on the near shore */}
-      <path
-        d="M60 92C60 78 59 70 57 62M68 94C68 80 69 72 71 63M77 91C77 80 76 74 75 68"
-        stroke="#4a6a35"
-        strokeWidth="2"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <ellipse cx="57" cy="60" rx="2.2" ry="5" fill="#6b4a2a" />
-      <ellipse cx="71" cy="61" rx="2.2" ry="5" fill="#6b4a2a" />
-      <path
-        d="M392 90C392 78 393 72 395 66M400 92C400 82 399 76 398 70"
-        stroke="#47663a"
-        strokeWidth="1.8"
-        fill="none"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-/**
  * Small ground bird, redrawn on the same 3px logical-pixel grid the canvas
  * sprites use (round-3 consistency pass). The wrapper class hops it along.
  */
@@ -517,25 +426,6 @@ function OwlTreeArt() {
   );
 }
 
-/** Wooden dock on the lake with a propped fishing rod; the bobber ripples. */
-function DockArt() {
-  return (
-    <svg width="110" height="64" viewBox="0 0 110 64" aria-hidden="true">
-      {/* deck, receding up-left into the water */}
-      <path d="M38 60L104 60L84 38L30 38Z" fill="#6b4a2a" />
-      <path d="M38 60L104 60L104 63L38 63Z" fill="#4a3220" />
-      <path d="M46 59L36 39M62 59.5L50 38.5M78 59.5L64 38.5M92 60L76 38" stroke="#553a20" strokeWidth="1.4" />
-      <rect x="28" y="30" width="4" height="12" fill="#4a3a2c" />
-      <rect x="52" y="30" width="4" height="10" fill="#4a3a2c" />
-      {/* rod propped on the end post, line down to the bobber */}
-      <path d="M56 42L18 12" stroke="#4a3a2c" strokeWidth="2" strokeLinecap="round" />
-      <path d="M18 12L16 30" stroke="#d8cfc0" strokeWidth="0.9" />
-      <circle cx="16" cy="31" r="1.8" fill="#c9524a" />
-      <ellipse className="bobRip" cx="16" cy="33" rx="5" ry="1.8" fill="none" stroke="#cfe2e4" strokeWidth="1" />
-    </svg>
-  );
-}
-
 /** Wind-rippled sand lines for the slot canyon floor. */
 function SandlineArt({ v = 0 }: { v?: number }) {
   const w = [96, 74, 118][v % 3];
@@ -611,8 +501,6 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <MossRockArt v={v} />;
     case "track":
       return <TrackArt />;
-    case "lake":
-      return <MountainLakeArt />;
     case "bird":
       return <BirdArt v={v} />;
     case "butterfly":
@@ -627,8 +515,6 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <StumpArt v={v} />;
     case "owltree":
       return <OwlTreeArt />;
-    case "dock":
-      return <DockArt />;
     case "sandline":
       return <SandlineArt v={v} />;
     case "slab":
@@ -699,23 +585,56 @@ export function SignArt() {
 
 /* ---------- furnished set-pieces ---------- */
 
+/**
+ * The About anchor (round-4 client correction): the camp's mountain-lake
+ * vignette owns the left side of the scene. A drawn night mountain — dark
+ * silhouette with snow patches, clearly in front of the photo backdrop —
+ * rises over a big still lake that mirrors it: inverted wavy silhouette,
+ * star glints, gentle drifting shimmer. The old camp dock and its fishing
+ * rod fold into the near shore.
+ */
 function LakeArt() {
   const lakeStars = [
-    [52, 26, 0],
-    [78, 22, 0.9],
-    [96, 30, 1.7],
-    [64, 36, 2.4],
-    [112, 25, 3.1],
+    [66, 118, 0],
+    [96, 112, 0.9],
+    [128, 122, 1.7],
+    [158, 114, 2.4],
+    [102, 132, 3.1],
   ] as const;
   return (
-    <svg width="160" height="62" viewBox="0 0 160 62" aria-hidden="true">
+    // Rendered ~1.18× its viewBox — the vignette owns the camp's left side.
+    <svg width="272" height="201" viewBox="0 0 230 170" aria-hidden="true">
+      {/* night mountain — snow patches on the high ridges */}
+      <path d="M4 104L52 26L76 58L104 12L140 62L170 40L224 104Z" fill="#141d2b" />
+      <path d="M96 24L104 12L114 26L108 38L100 34Z" fill="#d7e2ef" opacity="0.8" />
+      <path d="M46 36L52 26L58 36L52 44Z" fill="#c9d6e6" opacity="0.7" />
+      <path d="M164 48L170 40L177 50L170 56Z" fill="#c9d6e6" opacity="0.6" />
       <path
-        d="M16 32Q10 20 34 15Q64 6 104 11Q148 15 150 31Q152 47 114 53Q62 59 30 51Q12 45 16 32Z"
+        d="M104 12L88 52M104 12L116 44M52 26L44 58M170 40L182 66"
+        stroke="#1f2c40"
+        strokeWidth="1.4"
+        fill="none"
+      />
+      {/* the lake — big and still */}
+      <path
+        d="M8 130Q6 114 40 108Q92 98 146 102Q216 106 224 128Q228 148 162 158Q84 168 34 158Q10 152 8 130Z"
         fill="#0d1c29"
         stroke="#1e3648"
         strokeWidth="2"
       />
-      <ellipse cx="66" cy="30" rx="36" ry="10" fill="#152b3d" opacity="0.75" />
+      <ellipse cx="112" cy="130" rx="86" ry="16" fill="#152b3d" opacity="0.75" />
+      {/* inverted mountain reflection, wavy-edged */}
+      <g opacity="0.45">
+        <path
+          d="M52 106L84 148Q88 152 93 147L104 136L118 150Q122 154 127 149L160 108Q120 100 52 106Z"
+          fill="#0a1420"
+        />
+      </g>
+      {/* drifting shimmer + reflected stars */}
+      <g stroke="#a9c4d4" strokeLinecap="round" fill="none">
+        <path className="shimmer" d="M52 124L100 124" strokeWidth="1.3" />
+        <path className="shimmer sh2" d="M120 142L168 142" strokeWidth="1.2" />
+      </g>
       {lakeStars.map(([x, y, delay]) => (
         <circle
           key={`${x}-${y}`}
@@ -727,8 +646,32 @@ function LakeArt() {
           style={{ animationDelay: `${delay}s` }}
         />
       ))}
-      <path d="M6 56L4 50Q8 44 15 45Q23 44 25 51L23 56Z" fill="#38312c" />
-      <path d="M138 58L136 53Q139 48 145 49Q152 48 153 54L151 58Z" fill="#443b34" />
+      {/* shore rocks */}
+      <path d="M6 162L4 154Q9 147 18 148Q27 147 29 156L27 162Z" fill="#38312c" />
+      <path d="M196 164L194 158Q198 152 205 153Q212 152 214 159L212 164Z" fill="#443b34" />
+      {/* the dock, folded in: deck receding into the water, rod, bobber */}
+      <path d="M118 167L188 167L166 144L110 144Z" fill="#6b4a2a" />
+      <path d="M118 167L188 167L188 170L118 170Z" fill="#4a3220" />
+      <path
+        d="M128 166L116 146M146 166L132 145M164 166L148 145M178 166L162 144"
+        stroke="#553a20"
+        strokeWidth="1.4"
+      />
+      <rect x="108" y="135" width="4" height="12" fill="#4a3a2c" />
+      <rect x="132" y="136" width="4" height="10" fill="#4a3a2c" />
+      <path d="M136 148L98 118" stroke="#4a3a2c" strokeWidth="2" strokeLinecap="round" />
+      <path d="M98 118L96 136" stroke="#d8cfc0" strokeWidth="0.9" />
+      <circle cx="96" cy="137" r="1.8" fill="#c9524a" />
+      <ellipse
+        className="bobRip"
+        cx="96"
+        cy="139"
+        rx="5"
+        ry="1.8"
+        fill="none"
+        stroke="#cfe2e4"
+        strokeWidth="1"
+      />
     </svg>
   );
 }
