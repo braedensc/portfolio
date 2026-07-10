@@ -1,7 +1,10 @@
 /**
- * Canvas pixel-art painters for the hiker and the mascot NPCs (dog, chef).
+ * Canvas pixel-art painters for the hiker, the chef NPC, and the meadow bear.
  * All sprites share one logical-pixel style; canvases are displayed at 3x
  * with image-rendering: pixelated.
+ *
+ * (The old generic pixel dog is gone — Todoclaw's desk now uses the app's own
+ * mascot art, see todoclaw-art.tsx.)
  */
 
 type Palette = Record<string, string>;
@@ -90,46 +93,52 @@ export function paintHiker(ctx: CanvasRenderingContext2D, frame: HikerFrame): vo
   paint(ctx, [...HIKER_TORSO, ...HIKER_LEGS[frame]], HIKER_PAL, HIKER.w, HIKER.h);
 }
 
-/* ---------- dog (12×10, 2-frame idle: ear flick / tail wag) ---------- */
+/* ---------- bear (20×12, 2-frame idle: head turns every few seconds) ----------
+   Standing four-legged on its boulder in the meadow (the Glacier NP bear POI).
+   Frame 0 looks ahead (right); frame 1 turns its head back toward the trail. */
 
-export const DOG = { w: 12, h: 10 } as const;
+export const BEAR = { w: 20, h: 12 } as const;
 
-const DOG_PAL: Palette = {
-  b: "#8a5a33",
-  d: "#5f3d22",
-  c: "#b6402e",
-  n: "#1d1512",
+const BEAR_PAL: Palette = {
+  b: "#7a5230", // coat
+  d: "#5a3a1e", // shading / legs
+  h: "#8f6238", // hump + head highlight
+  n: "#241708", // nose / eye
 };
 
-const DOG_FRAMES: readonly [readonly string[], readonly string[]] = [
+const BEAR_FRAMES: readonly [readonly string[], readonly string[]] = [
   [
-    "...b........",
-    "..bbb.......",
-    ".bbbbb......",
-    "nbnbbb......",
-    ".bbbb....dd.",
-    "..ccc...bdd.",
-    "..bbbbbbbb..",
-    "..bbbbbbbbb.",
-    "..bb..bb.bb.",
-    "..dd..dd.dd.",
+    "....................",
+    ".....hh.............",
+    "....hhhhbbbb..hh....",
+    "...bbbbbbbbbbhhhh...",
+    "...bbbbbbbbbbhhnh...",
+    "..dbbbbbbbbbbbhh.n..",
+    "..dbbbbbbbbbbbdd....",
+    "..dbbbbbbbbbbbd.....",
+    "..dbb.dbbd..bbd.....",
+    "..db..db.d..bd......",
+    "..dd..dd.d..dd......",
+    "....................",
   ],
   [
-    "............",
-    "..bbbb......",
-    ".bbbbb......",
-    "nbnbbb......",
-    ".bbbb.......",
-    "..ccc...b...",
-    "..bbbbbbbbd.",
-    "..bbbbbbbbbd",
-    "..bb..bb.bb.",
-    "..dd..dd.dd.",
+    "....................",
+    ".....hh......hh.....",
+    "....hhhhbbbhhhh.....",
+    "...bbbbbbbbbhhhh....",
+    "...bbbbbbbbbnhhh....",
+    "..dbbbbbbbbbbhhn....",
+    "..dbbbbbbbbbbbdd....",
+    "..dbbbbbbbbbbbd.....",
+    "..dbb.dbbd..bbd.....",
+    "..db..db.d..bd......",
+    "..dd..dd.d..dd......",
+    "....................",
   ],
 ];
 
-export function paintDog(ctx: CanvasRenderingContext2D, frame: 0 | 1): void {
-  paint(ctx, DOG_FRAMES[frame], DOG_PAL, DOG.w, DOG.h);
+export function paintBear(ctx: CanvasRenderingContext2D, frame: 0 | 1): void {
+  paint(ctx, BEAR_FRAMES[frame], BEAR_PAL, BEAR.w, BEAR.h);
 }
 
 /* ---------- chef (15×22, 2-frame stirring loop) ---------- */

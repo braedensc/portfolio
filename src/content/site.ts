@@ -8,14 +8,39 @@ export type SceneId = "camp" | "meadow" | "slot";
 export type CardId =
   | "about"
   | "experience"
+  | "athletics"
+  | "bear"
+  | "skills"
   | "photography"
   | "todoclaw"
   | "chefclaw"
   | "contact";
-export type SetPieceKind = "lake" | "grove" | "photo";
+export type SetPieceKind = "lake" | "grove" | "photo" | "gtsign" | "bear" | "climb";
 export type StationKind = "desk" | "fire" | "pot";
-export type DecorKind = "grass" | "rock" | "slotRock" | "campRock" | "pine" | "log";
-export type NpcKind = "dog" | "chef";
+export type DecorKind =
+  | "grass"
+  | "rock"
+  | "slotRock"
+  | "campRock"
+  | "pine"
+  | "log"
+  | "flowers"
+  | "mossRock"
+  | "track"
+  | "pond"
+  | "bird"
+  | "butterfly"
+  | "lanterns"
+  | "dryline"
+  | "backpack"
+  | "canister"
+  | "stump"
+  | "owltree"
+  | "dock"
+  | "sandline"
+  | "slab"
+  | "raven";
+export type NpcKind = "chef";
 export type StationAnim = "opening" | "popping";
 
 export interface Vec {
@@ -49,6 +74,13 @@ export interface Decor {
   kind: DecorKind;
   gx: number;
   gy: number;
+  /** Optional variant index (e.g. wildflower color, bird timing offset). */
+  v?: number;
+  /**
+   * Ground-flat art (track oval, pond, sand ripples, dock…): rendered UNDER
+   * every standing billboard so the hiker can walk "over" it.
+   */
+  flat?: boolean;
 }
 
 export interface Signpost {
@@ -66,6 +98,8 @@ export interface Npc {
 export interface Scene {
   id: SceneId;
   name: string;
+  /** Content theme shown in the scene indicator, e.g. "PROJECTS". */
+  theme: string;
   cls: string;
   img: string;
   bgPos: string;
@@ -153,6 +187,24 @@ export const experienceRows: ExperienceRow[] = [
   },
 ];
 
+/** Athletics ("Records") card — the PR stats on the meadow's track sign. */
+export const recordsStats = "4:03 mile · 14:17 5k · 31:07 10k";
+export const recordsNote = "NCAA Division I track & cross country — Georgia Tech.";
+
+/** Skills card — plain, grouped. Shown at the slot canyon climbing vignette. */
+export const skillGroups = [
+  "TypeScript · React · Next.js",
+  "C# · .NET",
+  "Python · FastAPI",
+  "PostgreSQL · Supabase",
+  "Kubernetes · Docker · AWS · GCP",
+  "RabbitMQ · Redis",
+] as const;
+
+/** The bear card — one plain factual line, no jokes. */
+export const bearNote =
+  "Glacier National Park. It was on the trail. Photo from a respectful distance.";
+
 export const photographyNote =
   "Every image here is one of my photographs, restyled by the same pipeline that draws this site.";
 export const morePlacesNote =
@@ -175,10 +227,29 @@ export const cardMedia: Partial<
     alt: "Sequoia grove photograph, stylized",
     caption: photoCaption,
   },
+  bear: {
+    src: "/world/bear.jpg",
+    alt: "A brown bear resting on a rock among pines, Glacier National Park",
+  },
   photography: {
     src: "/world/tunnel-original.jpg",
     alt: "Original Tunnel View photograph",
   },
+};
+
+/**
+ * Per-section photo galleries. A card that declares a gallery shows a PHOTOS
+ * row of thumbnails; clicking one opens the fullscreen lightbox.
+ *
+ * Convention: drop JPEGs into `public/gallery/<section>/` and list them here
+ * (see public/gallery/README.md). Currently seeded with the existing world
+ * images so the feature is visible before the real photo sets arrive.
+ */
+export const galleries: Partial<Record<CardId, string[]>> = {
+  about: ["/world/lake.jpg", "/world/camp.jpg"],
+  athletics: ["/world/meadow.jpg"],
+  experience: ["/world/grove.jpg", "/world/meadow.jpg"],
+  photography: ["/world/slot.jpg", "/world/meadow.jpg"],
 };
 
 /** Stylized photo strip for the simple view. */
@@ -188,6 +259,10 @@ export const worldPhotos = [
   { src: "/world/slot.jpg", alt: "Antelope Canyon slot photograph, stylized" },
   { src: "/world/lake.jpg", alt: "Mirror-still mountain lake photograph, stylized" },
   { src: "/world/grove.jpg", alt: "Sequoia grove photograph, stylized" },
+  {
+    src: "/world/bear.jpg",
+    alt: "A brown bear resting on a rock, Glacier National Park, stylized",
+  },
 ] as const;
 
 /* ---------- scenes (order: camp → meadow → slot) ---------- */
@@ -196,10 +271,11 @@ export const scenes: Scene[] = [
   {
     id: "camp",
     name: "THE CAMP",
+    theme: "PROJECTS",
     cls: "sc-camp",
     img: "/world/camp.jpg",
-    bgPos: "center 42%",
-    aria: "Stylized night campsite with a fire, project stations, a small lake, and a walkable hiker character",
+    bgPos: "center 76%",
+    aria: "Stylized night campsite with a fire, project stations, lantern lights, a small lake with a dock, and a walkable hiker character",
     gxClamp: 500,
     camClamp: 251,
     exits: { right: 1 },
@@ -210,6 +286,14 @@ export const scenes: Scene[] = [
       { kind: "campRock", gx: 120, gy: 24 },
       { kind: "log", gx: 110, gy: 74 },
       { kind: "log", gx: -360, gy: 30 },
+      { kind: "lanterns", gx: -85, gy: 40 },
+      { kind: "dryline", gx: 175, gy: 36 },
+      { kind: "backpack", gx: -320, gy: 66 },
+      { kind: "canister", gx: 62, gy: 78 },
+      { kind: "stump", gx: -45, gy: 66 },
+      { kind: "stump", gx: 92, gy: 60, v: 1 },
+      { kind: "owltree", gx: 432, gy: 26 },
+      { kind: "dock", gx: -452, gy: 66, flat: true },
     ],
     signs: [{ text: "THE MEADOW →", gx: 440, gy: 52 }],
     setPieces: [
@@ -253,18 +337,16 @@ export const scenes: Scene[] = [
         animMs: 400,
       },
     ],
-    npcs: [
-      { kind: "dog", gx: -192, gy: 53 },
-      { kind: "chef", gx: 322, gy: 50 },
-    ],
+    npcs: [{ kind: "chef", gx: 322, gy: 50 }],
   },
   {
     id: "meadow",
     name: "THE MEADOW",
+    theme: "ABOUT & ATHLETICS",
     cls: "sc-meadow",
     img: "/world/meadow.jpg",
-    bgPos: "center 32%",
-    aria: "Stylized Yosemite meadow with a sequoia grove and a walkable hiker character",
+    bgPos: "center 82%",
+    aria: "Stylized Yosemite meadow with giant sequoias, a running track with a Georgia Tech sign, a bear on a rock, a pond, and a walkable hiker character",
     gxClamp: 560,
     camClamp: 311,
     exits: { left: 0, right: 2 },
@@ -272,17 +354,29 @@ export const scenes: Scene[] = [
       { kind: "grass", gx: -520, gy: 30 },
       { kind: "grass", gx: -300, gy: 72 },
       { kind: "grass", gx: -150, gy: 25 },
-      { kind: "grass", gx: -60, gy: 88 },
+      { kind: "grass", gx: -60, gy: 62 },
       { kind: "grass", gx: 80, gy: 42 },
-      { kind: "grass", gx: 240, gy: 82 },
       { kind: "grass", gx: 380, gy: 28 },
-      { kind: "grass", gx: 180, gy: 55 },
-      { kind: "rock", gx: -380, gy: 55 },
+      { kind: "grass", gx: 480, gy: 62 },
       { kind: "rock", gx: -120, gy: 52 },
       { kind: "rock", gx: 160, gy: 18 },
-      { kind: "rock", gx: 340, gy: 60 },
       { kind: "pine", gx: -545, gy: 16 },
-      { kind: "pine", gx: 300, gy: 20 },
+      { kind: "pine", gx: 300, gy: 14 },
+      { kind: "pine", gx: 530, gy: 20 },
+      { kind: "log", gx: -180, gy: 86 },
+      { kind: "mossRock", gx: -480, gy: 72 },
+      { kind: "mossRock", gx: 400, gy: 68, v: 1 },
+      { kind: "flowers", gx: -340, gy: 26, v: 0 },
+      { kind: "flowers", gx: -195, gy: 66, v: 1 },
+      { kind: "flowers", gx: 60, gy: 28, v: 2 },
+      { kind: "flowers", gx: 255, gy: 24, v: 0 },
+      { kind: "flowers", gx: 445, gy: 80, v: 1 },
+      { kind: "track", gx: 150, gy: 80, flat: true },
+      { kind: "pond", gx: -70, gy: 86, flat: true },
+      { kind: "bird", gx: 60, gy: 66, v: 0 },
+      { kind: "bird", gx: 415, gy: 44, v: 1 },
+      { kind: "butterfly", gx: -190, gy: 62, v: 0 },
+      { kind: "butterfly", gx: 250, gy: 28, v: 1 },
     ],
     signs: [
       { text: "← THE CAMP", gx: -498, gy: 52 },
@@ -297,6 +391,22 @@ export const scenes: Scene[] = [
         gy: 42,
         approach: { gx: -270, gy: 58 },
       },
+      {
+        id: "bear",
+        kind: "bear",
+        label: "THE BEAR",
+        gx: -430,
+        gy: 55,
+        approach: { gx: -430, gy: 70 },
+      },
+      {
+        id: "athletics",
+        kind: "gtsign",
+        label: "RECORDS",
+        gx: 330,
+        gy: 54,
+        approach: { gx: 330, gy: 68 },
+      },
     ],
     stations: [],
     npcs: [],
@@ -304,10 +414,11 @@ export const scenes: Scene[] = [
   {
     id: "slot",
     name: "THE SLOT",
+    theme: "SKILLS & PHOTOGRAPHY",
     cls: "sc-slot",
     img: "/world/slot.jpg",
-    bgPos: "center 34%",
-    aria: "Stylized slot canyon with a light beam and a walkable hiker character",
+    bgPos: "center 30%",
+    aria: "Stylized slot canyon with a light beam, drifting dust, a climbing rope on the wall, a raven, and a walkable hiker character",
     gxClamp: 336,
     camClamp: 92,
     exits: { left: 1 },
@@ -315,8 +426,13 @@ export const scenes: Scene[] = [
       { kind: "slotRock", gx: -180, gy: 30 },
       { kind: "slotRock", gx: 120, gy: 76 },
       { kind: "slotRock", gx: -70, gy: 84 },
-      { kind: "slotRock", gx: 220, gy: 26 },
       { kind: "slotRock", gx: -140, gy: 62 },
+      { kind: "sandline", gx: -210, gy: 74, flat: true },
+      { kind: "sandline", gx: 110, gy: 84, v: 1, flat: true },
+      { kind: "sandline", gx: -30, gy: 90, v: 2, flat: true },
+      { kind: "sandline", gx: 235, gy: 70, v: 1, flat: true },
+      { kind: "slab", gx: -115, gy: 72, flat: true },
+      { kind: "raven", gx: -255, gy: 22 },
     ],
     signs: [{ text: "← THE MEADOW", gx: -282, gy: 52 }],
     setPieces: [
@@ -327,6 +443,14 @@ export const scenes: Scene[] = [
         gx: 50,
         gy: 56,
         approach: { gx: 50, gy: 70 },
+      },
+      {
+        id: "skills",
+        kind: "climb",
+        label: "SKILLS",
+        gx: 235,
+        gy: 42,
+        approach: { gx: 235, gy: 60 },
       },
     ],
     stations: [],
@@ -378,16 +502,24 @@ export const chips: Chip[] = [
   { label: "ABOUT", poi: "about" },
   { label: "PROJECTS", poi: "todoclaw" },
   { label: "EXPERIENCE", poi: "experience" },
+  { label: "ATHLETICS", poi: "athletics" },
+  { label: "SKILLS", poi: "skills" },
   { label: "PHOTOGRAPHY", poi: "photography" },
   { label: "CONTACT", poi: "contact" },
 ];
 
-/** Auto-mode ("Play the route") stop order across all scenes. */
+/**
+ * Route stop order across all scenes — shared by the manual tour (▶) and the
+ * ambient attract mode (which ping-pongs back through it forever).
+ */
 export const autoRoute: CardId[] = [
   "about",
   "todoclaw",
   "chefclaw",
   "contact",
   "experience",
+  "bear",
+  "athletics",
   "photography",
+  "skills",
 ];
