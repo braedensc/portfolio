@@ -13,6 +13,7 @@ import {
   scenes,
   poiLocations,
   autoRoute,
+  type Blocker,
   type CardId,
   type SetPiece,
   type Station,
@@ -124,6 +125,8 @@ export class WorldEngine {
   private camX = 0;
   private facing = 1;
   private target: Vec | null = null;
+  /** Waypoints still to visit after `target` (path-following travel). */
+  private queue: Vec[] = [];
   private walkAcc = 0;
   private walking = false;
   private curFrame: HikerFrame = "idle";
@@ -132,6 +135,8 @@ export class WorldEngine {
   private cur = 0;
   private gxcl = scenes[0].gxClamp;
   private camcl = scenes[0].camClamp;
+  private blockers: Blocker[] = scenes[0].blockers;
+  private scenePath: Vec[] = scenes[0].path;
   private transitioning = false;
   private pending: { idx: number; side: Side; thenTarget: Vec | null } | null = null;
 
@@ -218,6 +223,8 @@ export class WorldEngine {
     this.cur = idx;
     this.gxcl = sc.gxClamp;
     this.camcl = sc.camClamp;
+    this.blockers = sc.blockers;
+    this.scenePath = sc.path;
     const pending = this.pending;
     this.pending = null;
     const side = pending ? pending.side : null;
@@ -225,14 +232,16 @@ export class WorldEngine {
     else if (side === "right") this.gx = this.gxcl - 90;
     else if (!pending) this.gx = 0;
     this.gy = Math.max(20, Math.min(92, this.gy));
+    if (this.blockedAt(this.gx, this.gy)) this.unstick();
     this.camX = Math.max(-this.camcl, Math.min(this.camcl, this.gx));
     this.target = null;
+    this.queue = [];
     this.suppressed = null;
     this.rescan(itemsEl, idx);
     this.measure();
     this.positionAll();
     this.paintBackdrop(0);
-    if (pending && pending.thenTarget) this.walkTo(pending.thenTarget);
+    if (pending && pending.thenTarget) this.walkVia(pending.thenTarget);
     if (this.transitioning) {
       if (this.rm) this.transitioning = false;
       else
@@ -248,7 +257,7 @@ export class WorldEngine {
   travelTo(poi: CardId): void {
     const loc = poiLocations[poi];
     this.suppressed = null;
-    if (loc.scene === this.cur) this.walkTo({ ...loc.approach });
+    if (loc.scene === this.cur) this.walkVia({ ...loc.approach });
     else
       this.requestScene(loc.scene, loc.scene > this.cur ? "left" : "right", {
         ...loc.approach,
@@ -259,7 +268,7 @@ export class WorldEngine {
     if (this.transitioning) return;
     this.suppressed = null;
     const d = Math.hypot(this.gx - p.gx, (this.gy - p.gy) * GW);
-    if (d > 85) this.walkTo({ ...p.approach });
+    if (d > 85) this.walkVia({ ...p.approach });
     else this.openCard(p.id);
   }
 
@@ -270,7 +279,7 @@ export class WorldEngine {
     this.suppressed = null;
     const d = Math.hypot(this.gx - s.gx, (this.gy - s.gy) * GW);
     if (d > 85)
-      this.walkTo({ gx: s.gx + (this.gx < s.gx ? -52 : 52), gy: Math.min(96, s.gy + 12) });
+      this.walkVia({ gx: s.gx + (this.gx < s.gx ? -52 : 52), gy: Math.min(96, s.gy + 12) });
     if (s.anim && !this.rm && el) {
       el.dataset.busy = "1";
       el.classList.add(s.anim);
@@ -338,6 +347,7 @@ export class WorldEngine {
       this.closeCard();
     }
     this.target = null;
+    this.queue = [];
   }
 
   private startAuto(mode: "manual" | "attract"): void {
@@ -345,6 +355,7 @@ export class WorldEngine {
     this.closeCard();
     this.keys = { l: 0, r: 0, u: 0, d: 0 };
     this.target = null;
+    this.queue = [];
     const idx = mode === "attract" ? this.nearestRouteIdx() : 0;
     this.auto = { idx, phase: "go", timer: 0, mode, dir: 1 };
     if (mode === "manual") this.hooks.setAuto(true);
@@ -379,6 +390,7 @@ export class WorldEngine {
     const mode = this.auto.mode;
     this.auto = null;
     this.target = null;
+    this.queue = [];
     if (mode === "attract") {
       this.hooks.setAttract(false);
       if (this.activeId && this.refs && !this.refs.card.matches(":hover")) {
@@ -406,16 +418,150 @@ export class WorldEngine {
     };
   }
 
+  /* ----- walkability (round 4): blockers, sliding, nearest-walkable ----- */
+
+  private blockedAt(gx: number, gy: number): boolean {
+    for (const b of this.blockers) {
+      const dx = Math.abs(gx - b.gx);
+      const dy = Math.abs(gy - b.gy);
+      if (b.shape === "rect") {
+        if (dx <= b.hw && dy <= b.hh) return true;
+      } else {
+        const ex = dx / b.hw;
+        const ey = dy / b.hh;
+        if (ex * ex + ey * ey <= 1) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Spawn landed inside a blocker (scene entry) — nudge to open ground. */
+  private unstick(): void {
+    for (let r = 2; r <= 60; r += 2) {
+      for (const [dx, dy] of [
+        [0, r],
+        [0, -r],
+        [r * 2, 0],
+        [-r * 2, 0],
+        [r * 2, r],
+        [-r * 2, r],
+      ] as const) {
+        const gx = Math.max(-this.gxcl, Math.min(this.gxcl, this.gx + dx));
+        const gy = Math.max(0, Math.min(100, this.gy + dy));
+        if (!this.blockedAt(gx, gy)) {
+          this.gx = gx;
+          this.gy = gy;
+          return;
+        }
+      }
+    }
+  }
+
+  /**
+   * Resolve a blocked walk target to the nearest walkable point on the
+   * segment back toward the hiker (i.e. the shore/edge the walk approaches
+   * from). Falls back to standing still if the whole segment is blocked.
+   */
+  private toWalkable(tg: Vec): Vec {
+    if (!this.blockedAt(tg.gx, tg.gy)) return tg;
+    const dx = this.gx - tg.gx;
+    const dy = this.gy - tg.gy;
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy * GW) / 3));
+    for (let i = 1; i <= steps; i++) {
+      const gx = tg.gx + (dx * i) / steps;
+      const gy = tg.gy + (dy * i) / steps;
+      if (!this.blockedAt(gx, gy)) return { gx, gy };
+    }
+    return { gx: this.gx, gy: this.gy };
+  }
+
+  /** Move toward (nx, ny), sliding along blocker edges. True if we moved. */
+  private slideTo(nx: number, ny: number): boolean {
+    nx = Math.max(-this.gxcl, Math.min(this.gxcl, nx));
+    ny = Math.max(0, Math.min(100, ny));
+    const ox = this.gx;
+    const oy = this.gy;
+    if (!this.blockedAt(nx, ny)) {
+      this.gx = nx;
+      this.gy = ny;
+    } else if (!this.blockedAt(nx, oy)) this.gx = nx;
+    else if (!this.blockedAt(ox, ny)) this.gy = ny;
+    return Math.abs(this.gx - ox) > 1e-4 || Math.abs(this.gy - oy) > 1e-4;
+  }
+
+  private wdist(a: Vec, b: Vec): number {
+    return Math.hypot(a.gx - b.gx, (a.gy - b.gy) * GW);
+  }
+
+  /** Direct walk (raw click-to-move / ground taps). Blocked targets resolve
+   *  to the nearest walkable point; blockers are slid along en route. */
   private walkTo(tg: Vec): void {
-    const t = {
+    const t = this.toWalkable({
       gx: Math.max(-this.gxcl, Math.min(this.gxcl, tg.gx)),
       gy: Math.max(0, Math.min(100, tg.gy)),
-    };
+    });
+    this.queue = [];
     if (this.rm) {
       this.gx = t.gx;
       this.gy = t.gy;
       this.target = null;
     } else this.target = t;
+    this.ripple(t);
+  }
+
+  /**
+   * Programmatic travel (chips, POI approach walks, auto/attract): follow
+   * the scene's drawn path between here and the destination — enter at the
+   * nearest waypoint, walk node to node, then peel off to the target.
+   */
+  private walkVia(tg: Vec): void {
+    const t = this.toWalkable({
+      gx: Math.max(-this.gxcl, Math.min(this.gxcl, tg.gx)),
+      gy: Math.max(0, Math.min(100, tg.gy)),
+    });
+    if (this.rm) {
+      this.gx = t.gx;
+      this.gy = t.gy;
+      this.target = null;
+      this.queue = [];
+      return;
+    }
+    const here = { gx: this.gx, gy: this.gy };
+    const path = this.scenePath;
+    const nodes: Vec[] = [];
+    if (path.length >= 2 && this.wdist(here, t) > 130) {
+      let ai = 0;
+      let bi = 0;
+      let ad = Infinity;
+      let bd = Infinity;
+      path.forEach((p, i) => {
+        const da = this.wdist(here, p);
+        if (da < ad) {
+          ad = da;
+          ai = i;
+        }
+        const db = this.wdist(t, p);
+        if (db < bd) {
+          bd = db;
+          bi = i;
+        }
+      });
+      const dir = bi >= ai ? 1 : -1;
+      for (let i = ai; i !== bi + dir; i += dir) nodes.push(path[i]);
+      // Don't backtrack to enter the path, and don't overshoot the goal.
+      while (nodes.length >= 2 && this.wdist(here, nodes[1]) <= this.wdist(nodes[0], nodes[1]))
+        nodes.shift();
+      while (
+        nodes.length >= 2 &&
+        this.wdist(nodes[nodes.length - 2], t) <= this.wdist(nodes[nodes.length - 1], t)
+      )
+        nodes.pop();
+      while (nodes.length && this.wdist(here, nodes[0]) < 24) nodes.shift();
+      if (nodes.length && this.wdist(t, nodes[nodes.length - 1]) < 24) nodes.pop();
+    }
+    const pts = [...nodes.map((n) => ({ ...n })), t];
+    this.target = pts.shift() ?? null;
+    this.queue = pts;
     this.ripple(t);
   }
 
@@ -576,6 +722,7 @@ export class WorldEngine {
     if (k) {
       this.keys[k] = 1;
       this.target = null;
+      this.queue = [];
       if (e.key.startsWith("Arrow")) e.preventDefault();
     }
   };
@@ -724,7 +871,7 @@ export class WorldEngine {
           this.requestScene(loc.scene, loc.scene > this.cur ? "left" : "right", {
             ...loc.approach,
           });
-        else this.walkTo({ ...loc.approach });
+        else this.walkVia({ ...loc.approach });
         a.phase = "travel";
       }
     } else if (!this.transitioning && this.cur === loc.scene && !this.target) {
@@ -777,16 +924,17 @@ export class WorldEngine {
     this.maybeStartAttract(now);
     this.stepAuto(dt);
 
-    /* movement */
+    /* movement (round 4: all motion resolves through the blocker slide) */
     if (!this.transitioning) {
       const vx = this.keys.r - this.keys.l;
       const vy = this.keys.d - this.keys.u;
       let moved = false;
       if (vx || vy) {
         const inv = 1 / Math.hypot(vx, vy);
-        this.gx += vx * inv * SPEED * dt;
-        this.gy += (vy * inv * SPEED * dt) / GW;
-        moved = true;
+        moved = this.slideTo(
+          this.gx + vx * inv * SPEED * dt,
+          this.gy + (vy * inv * SPEED * dt) / GW,
+        );
         if (vx) this.facing = vx > 0 ? 1 : -1;
       } else if (this.target) {
         const dx = this.target.gx - this.gx;
@@ -796,11 +944,12 @@ export class WorldEngine {
         if (d <= stp || d < 2) {
           this.gx = this.target.gx;
           this.gy = this.target.gy;
-          this.target = null;
+          this.target = this.queue.shift() ?? null;
+          moved = this.target !== null;
         } else {
-          this.gx += (dx / d) * stp;
-          this.gy += (dyw / d) * stp / GW;
-          moved = true;
+          moved = this.slideTo(this.gx + (dx / d) * stp, this.gy + ((dyw / d) * stp) / GW);
+          // Wedged against a blocker: skip to the next waypoint, not stall.
+          if (!moved) this.target = this.queue.shift() ?? null;
           if (Math.abs(dx) > 1) this.facing = dx > 0 ? 1 : -1;
         }
       }

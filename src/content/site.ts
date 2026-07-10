@@ -852,6 +852,61 @@ if (process.env.NODE_ENV !== "production") {
       }
     }
   });
+
+  /* Round-4 walkability guard: every path waypoint and every POI approach
+     point must be outside the scene's blockers, or programmatic travel
+     could wedge against them. */
+  const blockedIn = (sc: Scene, gx: number, gy: number) =>
+    sc.blockers.some((b) => {
+      const dx = Math.abs(gx - b.gx);
+      const dy = Math.abs(gy - b.gy);
+      return b.shape === "rect"
+        ? dx <= b.hw && dy <= b.hh
+        : (dx / b.hw) ** 2 + (dy / b.hh) ** 2 <= 1;
+    });
+  scenes.forEach((sc) => {
+    sc.path.forEach((p, i) => {
+      if (blockedIn(sc, p.gx, p.gy))
+        console.warn(`[world] path node ${i} in "${sc.id}" is inside a blocker (${p.gx},${p.gy})`);
+    });
+    [...sc.setPieces, ...sc.stations].forEach((p) => {
+      if (blockedIn(sc, p.approach.gx, p.approach.gy))
+        console.warn(`[world] approach for "${p.id}" in "${sc.id}" is inside a blocker`);
+    });
+  });
+
+  /* Round-4 label guard: labels are now always visible, so approximate each
+     label's screen box at 1280×800 (camera centered and at both clamps) and
+     warn when two boxes could collide. Heuristic — anchor y stands in for
+     label y since art heights vary — but it catches the side-by-side class
+     of collision that matters. */
+  const GUARD_W = 1280;
+  const GUARD_H = 800;
+  scenes.forEach((sc) => {
+    const labeled = [
+      ...sc.setPieces.filter((p) => !p.discovery).map((p) => ({ id: p.id as string, gx: p.gx, gy: p.gy, text: p.label })),
+      ...sc.stations.map((s) => ({ id: s.id as string, gx: s.gx, gy: s.gy, text: s.label })),
+      ...sc.signs.map((s) => ({ id: `sign:${s.text}`, gx: s.gx, gy: s.gy, text: s.text })),
+    ];
+    [-sc.camClamp, 0, sc.camClamp].forEach((camX) => {
+      const boxes = labeled.map((l) => {
+        const t = l.gy / 100;
+        const x = GUARD_W / 2 + (l.gx - camX) * (0.55 + 0.45 * t);
+        const w = Math.max(30, l.text.length * 7.5) + 14;
+        return { id: l.id, x0: x - w / 2, x1: x + w / 2, y: (0.615 + 0.315 * t) * GUARD_H };
+      });
+      for (let i = 0; i < boxes.length; i++) {
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i];
+          const b = boxes[j];
+          if (a.x0 < b.x1 && b.x0 < a.x1 && Math.abs(a.y - b.y) < 56)
+            console.warn(
+              `[world] labels may collide in "${sc.id}" (cam ${camX}): ${a.id} ↔ ${b.id}`,
+            );
+        }
+      }
+    });
+  });
 }
 
 export interface Chip {

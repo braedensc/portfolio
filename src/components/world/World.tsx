@@ -337,9 +337,6 @@ export default function World() {
           <div className="mottle m1" />
           <div className="mottle m2" />
           <div className="groundTex" />
-          <div className="trail t1" />
-          <div className="trail t2" />
-          <div className="trail t3" />
           <div className="sandl" />
           <div className="beamspot" />
           <div className="fglow" />
@@ -384,9 +381,12 @@ export default function World() {
                 data-poi={p.id}
               >
                 <div className="in">
-                  <div className="mlabel" aria-hidden="true">
-                    {p.label}
-                  </div>
+                  {/* discovery pieces (bear, mirror lake, grove) stay unlabeled */}
+                  {!p.discovery && (
+                    <div className="mlabel" aria-hidden="true">
+                      {p.label}
+                    </div>
+                  )}
                   <div className="gem" />
                   <button
                     className="pbtn"

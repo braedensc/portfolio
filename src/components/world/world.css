@@ -364,41 +364,8 @@
 .world.sc-desert .m2 {
   opacity: 0.2;
 }
-.trail {
-  position: absolute;
-  left: 50%;
-  background: linear-gradient(
-    to right,
-    rgba(178, 158, 110, 0),
-    rgba(178, 158, 110, 0.42) 35%,
-    rgba(178, 158, 110, 0.42) 65%,
-    rgba(178, 158, 110, 0)
-  );
-  filter: blur(3px);
-  border-radius: 60px;
-}
-.world.sc-slot .trail,
-.world.sc-camp .trail {
-  display: none;
-}
-.t1 {
-  top: -2%;
-  height: 38%;
-  width: 60px;
-  transform: translateX(-55%) rotate(4deg);
-}
-.t2 {
-  top: 32%;
-  height: 40%;
-  width: 95px;
-  transform: translateX(-45%) rotate(-6deg);
-}
-.t3 {
-  top: 68%;
-  height: 36%;
-  width: 140px;
-  transform: translateX(-58%) rotate(3deg);
-}
+/* (round 4: the old blurred meadow trail strips are gone — every scene's
+   path is now drawn from its waypoints as flat pathstamp decor.) */
 .sandl {
   display: none;
   position: absolute;
@@ -645,6 +612,8 @@
 .pbtn:hover {
   filter: drop-shadow(0 0 16px rgba(255, 220, 150, 0.55));
 }
+/* Round 4: station labels are always visible (world rule — every meaningful
+   POI wears its name); proximity now just brightens them. */
 .slabel {
   font-family: var(--mono);
   font-size: 10px;
@@ -652,7 +621,7 @@
   color: #ffe9c0;
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.95);
   white-space: nowrap;
-  opacity: 0;
+  opacity: 0.85;
   transition: opacity 0.35s;
   pointer-events: none;
 }
