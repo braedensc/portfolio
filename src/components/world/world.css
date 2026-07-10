@@ -56,6 +56,18 @@
 .world.sc-camp .plane {
   filter: brightness(0.94) saturate(1.05) !important;
 }
+/* Snow: a cold blue-hour cast by day; deep blue at night (aurora joins it). */
+.world.sc-snow .plane {
+  filter: brightness(0.97) saturate(0.88);
+}
+.world.night.sc-snow .plane {
+  filter: brightness(0.45) saturate(0.62) hue-rotate(-16deg);
+}
+/* Desert night: grade the backdrop way down so the Mittens read as black
+   silhouettes against the boosted starfield. */
+.world.night.sc-desert .plane {
+  filter: brightness(0.3) saturate(0.4) contrast(1.25);
+}
 /* Vector sky accent — drifting cloud wisps above the horizon. The only extra
    backdrop layer: pure vector, so it cannot ghost or double-expose. */
 .skyDrift {
@@ -107,6 +119,13 @@
   border-radius: 50%;
   animation: tw 3s ease-in-out infinite;
 }
+/* Desert-only starfield boost — the huge open night sky over the Mittens. */
+.stX {
+  display: none;
+}
+.world.sc-desert .stX {
+  display: block;
+}
 
 .shafts {
   position: absolute;
@@ -119,7 +138,8 @@
   opacity: 0;
 }
 .world.sc-slot .shafts,
-.world.sc-camp .shafts {
+.world.sc-camp .shafts,
+.world.sc-desert .shafts {
   display: none;
 }
 .shaft {
@@ -241,6 +261,28 @@
     #150f09 100%
   );
 }
+.world.sc-snow .ground {
+  background: linear-gradient(
+    to bottom,
+    #a2b4cb 0%,
+    #bccbdf 16%,
+    #d2deec 38%,
+    #e2eaf4 62%,
+    #ecf2f8 84%,
+    #f3f7fb 100%
+  );
+}
+.world.sc-desert .ground {
+  background: linear-gradient(
+    to bottom,
+    #74371a 0%,
+    #8e451e 16%,
+    #a85424 38%,
+    #bd662c 62%,
+    #cc7634 82%,
+    #d5843e 100%
+  );
+}
 .mottle {
   position: absolute;
   inset: 0;
@@ -272,6 +314,29 @@
     38px 26px,
     52px 34px;
 }
+/* Snow: wind-ripple shading + sun sparkle; desert: dark grit + pale sand flecks. */
+.world.sc-snow .groundTex {
+  opacity: 0.9;
+  background-image:
+    radial-gradient(3px 6px at 34% 44%, rgba(118, 146, 184, 0.34), transparent 70%),
+    radial-gradient(2px 4px at 70% 62%, rgba(255, 255, 255, 0.8), transparent 70%),
+    radial-gradient(2px 6px at 14% 80%, rgba(118, 146, 184, 0.26), transparent 70%);
+  background-size:
+    46px 32px,
+    58px 40px,
+    30px 24px;
+}
+.world.sc-desert .groundTex {
+  opacity: 0.9;
+  background-image:
+    radial-gradient(3px 5px at 32% 40%, rgba(84, 32, 10, 0.38), transparent 70%),
+    radial-gradient(2px 4px at 66% 66%, rgba(240, 190, 130, 0.32), transparent 70%),
+    radial-gradient(2px 5px at 12% 78%, rgba(84, 32, 10, 0.3), transparent 70%);
+  background-size:
+    46px 32px,
+    60px 40px,
+    32px 24px;
+}
 .m1 {
   background-image: radial-gradient(ellipse 40px 22px at 30% 40%, rgba(0, 0, 0, 0.28), transparent 70%);
   background-size: 110px 70px;
@@ -289,6 +354,15 @@
 .world.sc-slot .m2,
 .world.sc-camp .m2 {
   opacity: 0.12;
+}
+.world.sc-snow .m1 {
+  opacity: 0.14;
+}
+.world.sc-snow .m2 {
+  opacity: 0.4;
+}
+.world.sc-desert .m2 {
+  opacity: 0.2;
 }
 .trail {
   position: absolute;
@@ -402,6 +476,24 @@
     rgba(30, 20, 11, 0) 100%
   );
 }
+.world.sc-snow .seam {
+  background: linear-gradient(
+    to bottom,
+    rgba(142, 162, 190, 0) 0%,
+    rgba(142, 162, 190, 0.85) 40%,
+    rgba(162, 180, 203, 0.9) 60%,
+    rgba(162, 180, 203, 0) 100%
+  );
+}
+.world.sc-desert .seam {
+  background: linear-gradient(
+    to bottom,
+    rgba(104, 48, 20, 0) 0%,
+    rgba(104, 48, 20, 0.85) 40%,
+    rgba(116, 55, 26, 0.9) 60%,
+    rgba(116, 55, 26, 0) 100%
+  );
+}
 
 /* ---------- ground items (screen-space billboards) ---------- */
 .items {
@@ -453,6 +545,7 @@
 .item[data-kind="lanterns"] .in::after,
 .item[data-kind="lake"] .in::after,
 .item[data-kind="climb"] .in::after,
+.item[data-kind="scrub"] .in::after,
 .item[data-kind="fire"] .in::after {
   display: none;
 }
@@ -1060,6 +1153,123 @@
   animation-duration: 12s;
 }
 
+/* ---------- round-4 scene ambience: snow + desert ---------- */
+/* Sparse falling snow (engine-built .flake divs; snow scene only). Flakes
+   are opacity 0 at rest, so reduced-motion (animation: none) hides them. */
+.snowfall {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.9s;
+  pointer-events: none;
+}
+.world.sc-snow .snowfall {
+  opacity: 1;
+}
+.flake {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #eef4fc;
+  filter: blur(0.4px);
+  opacity: 0;
+  animation: flakeK 10s linear infinite;
+}
+/* Cold-air breath puff off the hiker every ~6s (snow scene only). */
+.breath {
+  position: absolute;
+  left: 27px;
+  top: 7px;
+  width: 9px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(226, 238, 250, 0.7);
+  filter: blur(1.5px);
+  opacity: 0;
+  pointer-events: none;
+}
+.world.sc-snow .breath {
+  animation: breathK 6s ease-out infinite;
+}
+/* Aurora hint band — snow scene at night only, drifting slowly. */
+.aurora {
+  display: none;
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 5%;
+  height: 24%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    104deg,
+    rgba(90, 255, 190, 0) 8%,
+    rgba(90, 255, 190, 0.14) 30%,
+    rgba(120, 205, 255, 0.16) 52%,
+    rgba(150, 130, 255, 0.1) 70%,
+    rgba(90, 255, 190, 0) 92%
+  );
+  filter: blur(14px);
+}
+.world.night.sc-snow .aurora {
+  display: block;
+  animation: auroraK 16s ease-in-out infinite alternate;
+}
+/* Heat-shimmer band above the desert horizon — day only, very subtle. */
+.heatShimmer {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 49%;
+  height: 10%;
+  pointer-events: none;
+  backdrop-filter: blur(1.6px);
+  -webkit-backdrop-filter: blur(1.6px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 62%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 62%, transparent);
+  opacity: 0.4;
+}
+.world.sc-desert:not(.night) .heatShimmer {
+  display: block;
+  animation: heatK 7s ease-in-out infinite;
+}
+/* Circling hawk silhouette, high over the desert (fades out at night). */
+.hawkPath {
+  display: none;
+  position: absolute;
+  left: 58%;
+  top: 13%;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.9s;
+}
+.world.sc-desert .hawkPath {
+  display: block;
+  animation: hawkX 34s ease-in-out infinite alternate;
+}
+.world.night .hawkPath {
+  opacity: 0;
+}
+.hawkDrift {
+  animation: hawkY 11s ease-in-out infinite alternate;
+}
+.hawkDrift svg {
+  display: block;
+  animation: hawkTilt 9s ease-in-out infinite alternate;
+}
+/* Jackrabbit: hop out to the far bush, pause, flip, hop home. */
+.jackHop {
+  animation: jackK 9s ease-in-out infinite;
+}
+/* Open-water glint drifting along the frozen river. */
+.riverGlint {
+  opacity: 0;
+  animation: shimmerK 7s ease-in-out infinite;
+}
+
 /* Todoclaw's blink, ported from todoclaw/src/index.css (.tc-eye-blink):
    a quick scaleY squish of the eye groups every few seconds. */
 .tc-eye-blink {
@@ -1115,7 +1325,9 @@
   opacity: 1;
 }
 .world.sc-slot .ffs,
-.world.sc-camp .ffs {
+.world.sc-camp .ffs,
+.world.sc-snow .ffs,
+.world.sc-desert .ffs {
   opacity: 0 !important;
 }
 .ff {
@@ -2106,6 +2318,123 @@
   100% {
     transform: translate(16px, 74px);
     opacity: 0;
+  }
+}
+@keyframes flakeK {
+  0% {
+    transform: translate3d(0, -4vh, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate3d(var(--sx, 16px), 74vh, 0);
+    opacity: 0;
+  }
+}
+@keyframes breathK {
+  0%,
+  90% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  93% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(9px, -7px) scale(1.5);
+  }
+}
+@keyframes auroraK {
+  from {
+    transform: translateX(-26px) skewX(-4deg);
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(26px) skewX(3deg);
+    opacity: 0.8;
+  }
+}
+@keyframes heatK {
+  0%,
+  100% {
+    opacity: 0.24;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(-3px);
+  }
+}
+@keyframes hawkX {
+  from {
+    transform: translateX(-150px);
+  }
+  to {
+    transform: translateX(130px);
+  }
+}
+@keyframes hawkY {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(46px);
+  }
+}
+@keyframes hawkTilt {
+  from {
+    transform: rotate(-6deg);
+  }
+  to {
+    transform: rotate(7deg);
+  }
+}
+@keyframes jackK {
+  0%,
+  18% {
+    transform: translate(0, 0) scaleX(1);
+  }
+  22% {
+    transform: translate(14px, -8px) scaleX(1);
+  }
+  26% {
+    transform: translate(28px, 0) scaleX(1);
+  }
+  30% {
+    transform: translate(42px, -8px) scaleX(1);
+  }
+  34%,
+  60% {
+    transform: translate(56px, 0) scaleX(1);
+  }
+  62%,
+  63% {
+    transform: translate(56px, 0) scaleX(-1);
+  }
+  67% {
+    transform: translate(42px, -8px) scaleX(-1);
+  }
+  71% {
+    transform: translate(28px, 0) scaleX(-1);
+  }
+  75% {
+    transform: translate(14px, -8px) scaleX(-1);
+  }
+  79%,
+  97% {
+    transform: translate(0, 0) scaleX(-1);
+  }
+  100% {
+    transform: translate(0, 0) scaleX(1);
   }
 }
 @media (prefers-reduced-motion: reduce) {

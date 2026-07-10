@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * The explorable world: three walkable scenes (camp → meadow → slot), each a
- * single crisp photo backdrop + a vector sky strip + a rotated ground plane,
- * with a canvas pixel-art hiker, mascot NPCs, furnished set-piece waypoints,
- * and project stations.
+ * The explorable world: five walkable scenes (meadow → slot → snow → desert
+ * → camp), each a single crisp photo backdrop + a vector sky strip + a
+ * rotated ground plane, with a canvas pixel-art hiker, mascot NPCs,
+ * furnished set-piece waypoints, and project stations.
  *
  * React renders structure and UI state (open card, scene, auto mode);
  * WorldEngine (engine.ts) owns the game loop and writes transforms directly.
@@ -22,6 +22,8 @@ import {
   recordsNote,
   skillGroups,
   bearNote,
+  groveNote,
+  lakeNote,
   photographyNote,
   morePlacesNote,
   finePrint,
@@ -33,7 +35,7 @@ import {
   type CardId,
 } from "@/content/site";
 import { WorldEngine } from "./engine";
-import { DecorArt, SignArt, SetPieceArt, SkyDriftArt, StationArt } from "./scenes";
+import { DecorArt, HawkArt, SignArt, SetPieceArt, SkyDriftArt, StationArt } from "./scenes";
 import { Lightbox } from "./Lightbox";
 import { HIKER, CHEF } from "./sprites";
 import "./world.css";
@@ -44,6 +46,8 @@ const CARD_TITLES: Record<CardId, string> = {
   experience: "Experience",
   athletics: "Records",
   bear: "The bear",
+  grove: "Sequoia grove",
+  lake: "Mountain lake",
   skills: "Skills",
   photography: "Photography",
   todoclaw: "Todoclaw",
@@ -135,6 +139,23 @@ function CardContent({
           <p>{bearNote}</p>
         </div>
       );
+    case "grove":
+      return (
+        <div>
+          <div className="ct">Sequoia grove</div>
+          <CardMediaImg id="grove" />
+          <p>{groveNote}</p>
+        </div>
+      );
+    case "lake":
+      return (
+        <div>
+          <div className="ct">Mountain lake</div>
+          <CardMediaImg id="lake" />
+          <p>{lakeNote}</p>
+          {gallery}
+        </div>
+      );
     case "skills":
       return (
         <div>
@@ -197,6 +218,7 @@ function CardContent({
             </a>{" "}
             · <span className="inert">LinkedIn</span> · <span className="inert">Resume</span>
           </p>
+          {gallery}
         </div>
       );
   }
@@ -227,6 +249,7 @@ export default function World() {
   const motesRef = useRef<HTMLDivElement>(null);
   const ffsRef = useRef<HTMLDivElement>(null);
   const embersRef = useRef<HTMLDivElement>(null);
+  const snowRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const engine = new WorldEngine({
@@ -251,6 +274,7 @@ export default function World() {
       motes: motesRef.current!,
       fireflies: ffsRef.current!,
       embers: embersRef.current!,
+      snowfall: snowRef.current!,
     });
     return () => {
       engine.detach();
@@ -299,6 +323,15 @@ export default function World() {
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <div key={i} className={`bmote bm${i}`} />
           ))}
+        </div>
+        {/* per-scene sky ambience (CSS-gated): snow-night aurora, desert
+            heat shimmer (day) and a circling hawk silhouette */}
+        <div className="aurora" aria-hidden="true" />
+        <div className="heatShimmer" aria-hidden="true" />
+        <div className="hawkPath" aria-hidden="true">
+          <div className="hawkDrift">
+            <HawkArt />
+          </div>
         </div>
         <div ref={groundRef} className="ground">
           <div className="mottle m1" />
@@ -406,6 +439,8 @@ export default function World() {
           <div ref={hikerRef} className="item hiker">
             <div className="in">
               <div className="lant" />
+              {/* cold-air breath puff, snow scene only (CSS-gated) */}
+              <div className="breath" />
               <canvas
                 ref={hikerCvRef}
                 width={HIKER.w}
@@ -419,6 +454,7 @@ export default function World() {
         </div>
         <div ref={ffsRef} className="ffs" />
         <div ref={embersRef} className="embers" />
+        <div ref={snowRef} className="snowfall" />
         <div className="groundDark" />
         <div className="tint" />
       </div>

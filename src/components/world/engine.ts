@@ -46,6 +46,7 @@ export interface AttachRefs {
   motes: HTMLElement;
   fireflies: HTMLElement;
   embers: HTMLElement;
+  snowfall: HTMLElement;
 }
 
 type Side = "left" | "right" | null;
@@ -118,7 +119,7 @@ export class WorldEngine {
   private rm = false;
 
   private gx = 0;
-  // Spawn a step in front of the campfire (gy 72), not inside its footprint.
+  // Spawn on the meadow trail (round 4: the world starts at the meadow).
   private gy = 72;
   private camX = 0;
   private facing = 1;
@@ -196,11 +197,15 @@ export class WorldEngine {
     window.removeEventListener("keyup", this.onKeyUp);
     if (this.refs) {
       this.refs.root.removeEventListener("pointerdown", this.onPointerDown);
-      [this.refs.stars, this.refs.motes, this.refs.fireflies, this.refs.embers].forEach(
-        (el) => {
-          el.innerHTML = "";
-        },
-      );
+      [
+        this.refs.stars,
+        this.refs.motes,
+        this.refs.fireflies,
+        this.refs.embers,
+        this.refs.snowfall,
+      ].forEach((el) => {
+        el.innerHTML = "";
+      });
     }
     this.refs = null;
     this.itemsEl = null;
@@ -493,14 +498,17 @@ export class WorldEngine {
 
   private buildParticles(): void {
     if (!this.refs) return;
-    const { stars, motes, fireflies, embers } = this.refs;
+    const { stars, motes, fireflies, embers, snowfall } = this.refs;
     stars.innerHTML = "";
     motes.innerHTML = "";
     fireflies.innerHTML = "";
     embers.innerHTML = "";
-    for (let i = 0; i < 42; i++) {
+    snowfall.innerHTML = "";
+    // Base starfield + a desert-only booster set (.stX, CSS-gated): the
+    // desert night is a huge open sky, so it gets roughly 2.5× the stars.
+    for (let i = 0; i < 106; i++) {
       const st = document.createElement("div");
-      st.className = "st";
+      st.className = i < 42 ? "st" : "st stX";
       st.style.left = `${Math.random() * 100}%`;
       st.style.top = `${Math.random() * 33}%`;
       const sz = Math.random() < 0.3 ? 2 : 1;
@@ -509,6 +517,17 @@ export class WorldEngine {
       st.style.animationDelay = `${Math.random() * 4}s`;
       st.style.animationDuration = `${2 + Math.random() * 3}s`;
       stars.appendChild(st);
+    }
+    // Sparse falling snow — visible only in the snow scene (CSS-gated), and
+    // stays invisible under reduced motion (base opacity 0, animation only).
+    for (let i = 0; i < 16; i++) {
+      const fl = document.createElement("div");
+      fl.className = "flake";
+      fl.style.left = `${Math.random() * 100}%`;
+      fl.style.setProperty("--sx", `${Math.round(Math.random() * 60 - 30)}px`);
+      fl.style.animationDelay = `${Math.random() * 9}s`;
+      fl.style.animationDuration = `${8 + Math.random() * 7}s`;
+      snowfall.appendChild(fl);
     }
     for (let i = 0; i < 8; i++) {
       const mo = document.createElement("div");
