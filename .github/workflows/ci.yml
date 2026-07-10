@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
 
+# Least privilege: CI only needs to read the repo. No write access to contents,
+# packages, deployments, etc. Tighten further per-job if any step ever needs more.
+permissions:
+  contents: read
+
 jobs:
   checks:
     runs-on: ubuntu-latest

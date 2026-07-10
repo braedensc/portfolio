@@ -95,9 +95,12 @@ if tool == "Bash":
         block("Piping curl/wget into a shell is a supply-chain risk. "
               "Download first, inspect, then run.")
 
-    # Block staging the reference dir or real .env files
-    if re.search(r"\bgit\s+add\b[^#\n;&|]*(planning/|\.env(?!\.example))", cmd):
-        block("Staging planning/ or .env files is forbidden — these are gitignored.")
+    # Block staging original photos (content-src/) or real .env files.
+    # content-src/ holds the gitignored full-res originals with EXIF/GPS — only
+    # posterized outputs in public/world/ may ever be committed (see CLAUDE.md).
+    if re.search(r"\bgit\s+add\b[^#\n;&|]*(content-src/|\.env(?!\.example))", cmd):
+        block("Staging content-src/ or .env files is forbidden — these are "
+              "gitignored (original photos with EXIF/GPS, or secrets).")
 
     # Block direct commits to main or force-push
     if re.search(r"\bgit\s+push\b[^#\n;&|]*(\s+--force|\s+-f\s|\s+origin\s+main)", cmd):
