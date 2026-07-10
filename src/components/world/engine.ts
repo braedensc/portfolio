@@ -37,6 +37,8 @@ export interface AttachRefs {
   ground: HTMLElement;
   fader: HTMLElement;
   card: HTMLElement;
+  /** Thin accent line from the docked card toward its source POI. */
+  link: HTMLElement;
   hiker: HTMLElement;
   hikerCanvas: HTMLCanvasElement;
   fx: HTMLElement;
@@ -51,8 +53,11 @@ type Dir = "l" | "r" | "u" | "d";
 
 const GW = 2.5; // gy-to-gx distance weighting
 const SPEED = 273; // 182 (round 1) × 1.5 (round-2 client feedback: "a decent amount more")
-const AUTO_DWELL = 4.5; // seconds a card stays open in the manual tour
-const ATTRACT_DWELL = 5; // seconds a card stays open while attract mode wanders
+const AUTO_DWELL = 4; // seconds a card stays open in the manual tour (round 3: compact cards read faster)
+const ATTRACT_DWELL = 4; // seconds a card stays open while attract mode wanders
+/* The field-note card's CSS dock (world.css .card) — the connector math needs them. */
+const CARD_LEFT = 12;
+const CARD_BOTTOM = 44;
 const ATTRACT_FIRST_DELAY = 4; // s after load before attract mode starts on its own
 const ATTRACT_IDLE_DELAY = 30; // s of no input before attract mode resumes
 
@@ -287,6 +292,18 @@ export class WorldEngine {
     this.modalOpen = open;
     this.lastInput = performance.now();
     if (open && this.auto?.mode === "attract") this.cancelAuto();
+  }
+
+  /** ✕ on the field-note card: close it, and suppress a set-piece so
+   *  proximity doesn't instantly reopen it under the hiker's feet. Always
+   *  pushes the closed state to React, even if the engine lost track. */
+  dismissCard(): void {
+    const id = this.activeId;
+    if (id) {
+      const loc = poiLocations[id];
+      if (loc && loc.type === "setpiece") this.suppressed = id;
+    }
+    this.closeCard();
   }
 
   /* ---------- internals ---------- */
@@ -613,21 +630,38 @@ export class WorldEngine {
     this.refs.hikerCanvas.style.transform = this.facing < 0 ? "scaleX(-1)" : "";
   }
 
-  private positionCard(): void {
-    if (!this.refs || !this.activeId) return;
-    const loc = poiLocations[this.activeId];
-    if (!loc || loc.scene !== this.cur) return;
+  /**
+   * Field-note connector (round 3): the card itself is CSS-docked at the
+   * bottom-left; when its source POI is on-screen, a thin 1px accent line
+   * runs from the card's top-right corner toward the POI so the eye can
+   * find what the note belongs to. Hidden when the geometry would read as
+   * clutter (POI off-screen, behind/too close to the card, small screens).
+   */
+  private positionConnector(): void {
+    if (!this.refs) return;
+    const link = this.refs.link;
+    const loc = this.activeId ? poiLocations[this.activeId] : null;
+    if (!loc || loc.scene !== this.cur || this.transitioning || this.w < 600) {
+      link.classList.remove("on");
+      return;
+    }
     const card = this.refs.card;
+    const x0 = CARD_LEFT + card.offsetWidth;
+    const y0 = this.h - CARD_BOTTOM - card.offsetHeight + 18;
     const p = this.proj(loc.gx, loc.gy);
-    const cw = card.offsetWidth || 320;
-    const ch = card.offsetHeight || 200;
-    const cx = Math.max(cw / 2 + 8, Math.min(this.w - cw / 2 - 8, p.x));
-    let by = p.y - 72 * p.s;
-    const hp = this.proj(this.gx, this.gy);
-    if (Math.abs(hp.x - cx) < cw / 2 + 26) by = Math.min(by, hp.y - 72 * hp.s - 8);
-    if (by - ch < 52) by = 52 + ch;
-    card.style.left = `${cx}px`;
-    card.style.bottom = `${this.h - by}px`;
+    const tx = p.x;
+    const ty = p.y - 46 * p.s;
+    const dx = tx - x0;
+    const dy = ty - y0;
+    if (dx < 40 || tx > this.w - 10 || ty < 8) {
+      link.classList.remove("on");
+      return;
+    }
+    link.style.left = `${x0}px`;
+    link.style.top = `${y0}px`;
+    link.style.width = `${Math.hypot(dx, dy)}px`;
+    link.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+    link.classList.add("on");
   }
 
   private stepAuto(dt: number): void {
@@ -821,8 +855,8 @@ export class WorldEngine {
           }
         }
       }
-      if (this.activeId) this.positionCard();
     }
+    this.positionConnector();
 
     this.schedule();
   };

@@ -1227,19 +1227,24 @@
   pointer-events: auto;
 }
 
-/* ---------- card ---------- */
+/* ---------- card (round 3: compact field-note, docked bottom-left) ----------
+   The dock keeps it off the hiker (center), the chips (bottom-center) and
+   the scene pill (top-center); the body scrolls internally. The engine draws
+   a thin accent line (.cardLink) from the card toward its source POI.
+   Engine constants CARD_LEFT/CARD_BOTTOM mirror the left/bottom values. */
 .card {
   position: absolute;
-  left: 50%;
-  bottom: 40%;
-  width: min(320px, calc(100% - 24px));
-  max-height: calc(100% - 130px);
-  overflow-y: auto;
-  background: rgba(10, 16, 14, 0.86);
+  left: 12px;
+  bottom: 44px;
+  width: min(300px, calc(100% - 24px));
+  max-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(10, 16, 14, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 10px;
-  padding: 13px 15px;
-  transform: translateX(-50%) translateY(12px);
+  transform: translateY(10px);
   opacity: 0;
   pointer-events: none;
   transition:
@@ -1253,8 +1258,48 @@
 }
 .card.on {
   opacity: 1;
-  transform: translateX(-50%);
+  transform: none;
   pointer-events: auto;
+}
+/* only the body scrolls — the shell (and the ✕) stay put */
+.cardBody {
+  overflow-y: auto;
+  min-height: 0;
+  padding: 12px 14px;
+}
+.card .ct {
+  padding-right: 24px;
+}
+.cardClose {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #e8e4da;
+  font-size: 13px;
+  line-height: 1;
+}
+.cardClose:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.cardLink {
+  position: absolute;
+  height: 1px;
+  transform-origin: 0 0;
+  background: linear-gradient(to right, rgba(255, 217, 160, 0.75), rgba(255, 217, 160, 0));
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 490;
+  pointer-events: none;
+}
+.cardLink.on {
+  opacity: 1;
 }
 .ct {
   font-family: var(--mono);
@@ -1650,6 +1695,17 @@
   }
   .fine {
     display: none;
+  }
+  /* Mobile: the field note becomes a slim bottom sheet (≤45vh). It rides
+     above the chips while open; the ✕ (or walking away) dismisses it. */
+  .card {
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    width: auto;
+    max-height: 45vh;
+    border-radius: 12px 12px 0 0;
+    z-index: 650;
   }
 }
 

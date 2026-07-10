@@ -218,6 +218,7 @@ export default function World() {
   const groundRef = useRef<HTMLDivElement>(null);
   const faderRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const linkRef = useRef<HTMLDivElement>(null);
   const hikerRef = useRef<HTMLDivElement>(null);
   const hikerCvRef = useRef<HTMLCanvasElement>(null);
   const fxRef = useRef<HTMLDivElement>(null);
@@ -242,6 +243,7 @@ export default function World() {
       ground: groundRef.current!,
       fader: faderRef.current!,
       card: cardRef.current!,
+      link: linkRef.current!,
       hiker: hikerRef.current!,
       hikerCanvas: hikerCvRef.current!,
       fx: fxRef.current!,
@@ -426,9 +428,22 @@ export default function World() {
       <div ref={motesRef} className="motes" />
       <div ref={faderRef} className="fader" />
 
+      <div ref={linkRef} className="cardLink" aria-hidden="true" />
       <div ref={cardRef} className={`card${card ? " on" : ""}`} aria-live="polite">
         {card ? (
-          <CardContent id={card} onOpenGallery={(id, index) => setLightbox({ id, index })} />
+          <>
+            <button
+              className="cardClose"
+              aria-label="Close note"
+              onClick={() => engineRef.current?.dismissCard()}
+            >
+              ×
+            </button>
+            {/* the shell stays put (✕ always visible); only the body scrolls */}
+            <div className="cardBody">
+              <CardContent id={card} onOpenGallery={(id, index) => setLightbox({ id, index })} />
+            </div>
+          </>
         ) : null}
       </div>
 
