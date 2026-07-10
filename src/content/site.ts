@@ -304,31 +304,70 @@ export const cardMedia: Partial<
 
 /**
  * Per-section photo galleries. A card that declares a gallery shows a PHOTOS
- * row of thumbnails; clicking one opens the fullscreen lightbox.
+ * row of thumbnails; clicking one opens the fullscreen lightbox. The simple
+ * view shows each section's first three as a static strip.
  *
  * Convention: drop JPEGs into `public/gallery/<section>/` and list them here
- * (see public/gallery/README.md). Currently seeded with the existing world
- * images so the feature is visible before the real photo sets arrive.
+ * (see public/gallery/README.md).
  */
-export const galleries: Partial<Record<CardId, string[]>> = {
-  about: ["/world/lake.jpg", "/world/camp.jpg"],
-  athletics: ["/world/meadow.jpg"],
-  experience: ["/world/grove.jpg", "/world/meadow.jpg"],
-  photography: ["/world/slot.jpg", "/world/meadow.jpg"],
-};
+const g = (dir: string, names: string[]) => names.map((n) => `/gallery/${dir}/${n}.jpg`);
 
-/** Stylized photo strip for the simple view. */
-export const worldPhotos = [
-  { src: "/world/camp.jpg", alt: "Night campsite photograph, stylized" },
-  { src: "/world/meadow.jpg", alt: "Yosemite Tunnel View meadow photograph, stylized" },
-  { src: "/world/slot.jpg", alt: "Antelope Canyon slot photograph, stylized" },
-  { src: "/world/lake.jpg", alt: "Mirror-still mountain lake photograph, stylized" },
-  { src: "/world/grove.jpg", alt: "Sequoia grove photograph, stylized" },
-  {
-    src: "/world/bear.jpg",
-    alt: "A brown bear resting on a rock, Glacier National Park, stylized",
-  },
-] as const;
+export const galleries: Partial<Record<CardId, string[]>> = {
+  about: g("about", [
+    "taft-point-sunset",
+    "backpacking-meadow",
+    "pass-ascent",
+    "blue-ridge-overlook",
+    "two-medicine-bench",
+    "valley-of-fire-standing",
+  ]),
+  // The camp set is shared by Contact and the camp's mirror-lake vignette.
+  contact: g("camp", ["campfire-night", "mirror-lake-dusk", "tent-alpenglow"]),
+  lake: g("camp", ["mirror-lake-dusk", "campfire-night", "tent-alpenglow"]),
+  experience: g("snow", [
+    "sulphur-mountain-trail",
+    "frozen-river",
+    "matsumoto-castle",
+    "matsumoto-pines",
+    "togakushi-gate",
+    "snowy-cemetery",
+  ]),
+  skills: g("desert", [
+    "mobius-arch",
+    "monument-valley-mittens",
+    "monument-valley-spire",
+    "horseshoe-bend",
+    "grand-canyon",
+    "grand-canyon-river",
+    "dawn-crest",
+    "lava-field",
+    "red-rock-approach",
+    "valley-of-fire-canyon",
+    "valley-of-fire-wash",
+  ]),
+  photography: g("photography", [
+    "tunnel-view",
+    "el-capitan",
+    "yosemite-falls",
+    "taft-point-crow",
+    "sierra-meadow",
+    "kearsarge-basin",
+    "sequoia-grove",
+    "moss-forest",
+    "glacier-valley",
+    "glacier-bear",
+    "river-sunrise",
+    "the-narrows",
+    "antelope-canyon",
+    "starry-night",
+    "monet-agapanthus",
+    "asmat-mask",
+    "malachite-carving",
+    "statice-flowers",
+    "old-cafe",
+    "stone-steps",
+  ]),
+};
 
 /* ---------- per-scene walking paths (round 4) ----------
    Each scene draws its trodden trail along these waypoints, and auto/attract

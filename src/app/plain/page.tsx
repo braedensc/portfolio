@@ -7,18 +7,40 @@ import {
   projects,
   skillGroups,
   experienceRows,
+  recordsStats,
+  recordsNote,
   photographyNote,
-  worldPhotos,
+  galleries,
+  type CardId,
 } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Braeden Collins — Simple view",
   description:
-    "Braeden Collins, full-stack software engineer — plain-page portfolio: about, projects, experience, photography, contact.",
+    "Braeden Collins, full-stack software engineer — plain-page portfolio: about, athletics, photography, experience, skills, projects, contact.",
 };
 
 const sectionLabel =
   "font-mono text-[11px] uppercase tracking-[0.22em] text-accent";
+
+/** Static three-photo strip from a section's gallery (no lightbox here). */
+function GalleryStrip({ id, label }: { id: CardId; label: string }) {
+  const images = (galleries[id] ?? []).slice(0, 3);
+  if (images.length === 0) return null;
+  return (
+    <div className="mt-4 flex flex-wrap gap-3">
+      {images.map((src, i) => (
+        <img
+          key={src}
+          src={src}
+          alt={`${label} photo ${i + 1}`}
+          loading="lazy"
+          className="h-24 w-32 rounded-sm border-4 border-white object-cover shadow-md sm:h-28 sm:w-40"
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function PlainPage() {
   return (
@@ -53,6 +75,58 @@ export default function PlainPage() {
             About
           </h2>
           <p className="mt-3 max-w-2xl leading-relaxed">{aboutText}</p>
+          <GalleryStrip id="about" label="About" />
+        </section>
+
+        <section className="mt-10" aria-labelledby="athletics-h">
+          <h2 id="athletics-h" className={sectionLabel}>
+            Athletics
+          </h2>
+          <p className="mt-3 font-mono text-sm tracking-[0.08em]">{recordsStats}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/80">{recordsNote}</p>
+        </section>
+
+        <section className="mt-10" aria-labelledby="photography-h">
+          <h2 id="photography-h" className={sectionLabel}>
+            Photography
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/80">
+            {photographyNote}
+          </p>
+          <GalleryStrip id="photography" label="Photography" />
+        </section>
+
+        <section className="mt-10" aria-labelledby="experience-h">
+          <h2 id="experience-h" className={sectionLabel}>
+            Experience
+          </h2>
+          <ul className="mt-4 space-y-4">
+            {experienceRows.map((row) => (
+              <li key={row.period} className="sm:flex sm:gap-6">
+                <span className="block shrink-0 font-mono text-xs tracking-[0.1em] text-ink/60 sm:w-32 sm:pt-1">
+                  {row.period}
+                </span>
+                <span className="block leading-relaxed">
+                  <strong className="font-semibold">{row.org}</strong> — {row.detail}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <GalleryStrip id="experience" label="Experience" />
+        </section>
+
+        <section className="mt-10" aria-labelledby="skills-h">
+          <h2 id="skills-h" className={sectionLabel}>
+            Skills
+          </h2>
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+            {skillGroups.map((group) => (
+              <li key={group} className="font-mono text-xs tracking-[0.08em] text-ink/80">
+                {group}
+              </li>
+            ))}
+          </ul>
+          <GalleryStrip id="skills" label="Skills" />
         </section>
 
         <section className="mt-10" aria-labelledby="projects-h">
@@ -90,57 +164,6 @@ export default function PlainPage() {
           </div>
         </section>
 
-        <section className="mt-10" aria-labelledby="skills-h">
-          <h2 id="skills-h" className={sectionLabel}>
-            Skills
-          </h2>
-          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-            {skillGroups.map((group) => (
-              <li key={group} className="font-mono text-xs tracking-[0.08em] text-ink/80">
-                {group}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="mt-10" aria-labelledby="experience-h">
-          <h2 id="experience-h" className={sectionLabel}>
-            Experience
-          </h2>
-          <ul className="mt-4 space-y-4">
-            {experienceRows.map((row) => (
-              <li key={row.period} className="sm:flex sm:gap-6">
-                <span className="block shrink-0 font-mono text-xs tracking-[0.1em] text-ink/60 sm:w-32 sm:pt-1">
-                  {row.period}
-                </span>
-                <span className="block leading-relaxed">
-                  <strong className="font-semibold">{row.org}</strong> — {row.detail}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="mt-10" aria-labelledby="photography-h">
-          <h2 id="photography-h" className={sectionLabel}>
-            Photography
-          </h2>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {worldPhotos.map((photo) => (
-              <img
-                key={photo.src}
-                src={photo.src}
-                alt={photo.alt}
-                loading="lazy"
-                className="h-24 w-32 rounded-sm border-4 border-white object-cover shadow-md sm:h-28 sm:w-40"
-              />
-            ))}
-          </div>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/80">
-            {photographyNote}
-          </p>
-        </section>
-
         <section className="mt-10" aria-labelledby="contact-h">
           <h2 id="contact-h" className={sectionLabel}>
             Contact
@@ -165,6 +188,7 @@ export default function PlainPage() {
             · <span className="text-ink/40">LinkedIn</span> ·{" "}
             <span className="text-ink/40">Resume</span>
           </p>
+          <GalleryStrip id="contact" label="Camp" />
         </section>
 
         <footer className="mt-14 border-t border-ink/15 pt-6">
