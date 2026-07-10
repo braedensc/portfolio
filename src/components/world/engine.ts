@@ -113,7 +113,8 @@ export class WorldEngine {
   private rm = false;
 
   private gx = 0;
-  private gy = 58;
+  // Spawn a step in front of the campfire (gy 72), not inside its footprint.
+  private gy = 72;
   private camX = 0;
   private facing = 1;
   private target: Vec | null = null;

@@ -301,6 +301,7 @@ export default function World() {
         <div ref={groundRef} className="ground">
           <div className="mottle m1" />
           <div className="mottle m2" />
+          <div className="groundTex" />
           <div className="trail t1" />
           <div className="trail t2" />
           <div className="trail t3" />
@@ -319,6 +320,7 @@ export default function World() {
                 className="item decor"
                 data-gx={d.gx}
                 data-gy={d.gy}
+                data-kind={d.kind}
                 data-flat={d.flat ? "1" : undefined}
                 aria-hidden="true"
               >
@@ -338,7 +340,14 @@ export default function World() {
               </div>
             ))}
             {scene.setPieces.map((p) => (
-              <div key={p.id} className="item setp" data-gx={p.gx} data-gy={p.gy} data-poi={p.id}>
+              <div
+                key={p.id}
+                className="item setp"
+                data-gx={p.gx}
+                data-gy={p.gy}
+                data-kind={p.kind}
+                data-poi={p.id}
+              >
                 <div className="in">
                   <div className="mlabel" aria-hidden="true">
                     {p.label}
@@ -355,7 +364,14 @@ export default function World() {
               </div>
             ))}
             {scene.stations.map((s) => (
-              <div key={s.id} className="item stn" data-gx={s.gx} data-gy={s.gy} data-poi={s.id}>
+              <div
+                key={s.id}
+                className="item stn"
+                data-gx={s.gx}
+                data-gy={s.gy}
+                data-kind={s.kind}
+                data-poi={s.id}
+              >
                 <div className="in">
                   <div className="slabel" aria-hidden="true">
                     {s.label}

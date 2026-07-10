@@ -102,110 +102,206 @@ function MossRockArt({ v = 0 }: { v?: number }) {
 }
 
 /**
- * The running track: a flat dirt/tartan oval drawn into the meadow ground
- * (rendered under the hiker via the `flat` decor flag). Two lane lines,
- * slightly worn — dashed, with a couple of bare patches.
+ * The running track (round 3): sized up into a proper wide oval. Every
+ * boundary and lane line is generated from ONE set of ellipse parameters —
+ * same center, decreasing radii, same dash pattern — so the lanes are
+ * concentric with the band and can never drift off it.
  */
 function TrackArt() {
+  const CX = 260;
+  const CY = 84;
+  const RX = 252; // outer boundary
+  const RY = 76;
+  const LANES = 3;
+  const W = 16; // lane width, constant across the band
+  const ring = (rx: number, ry: number) =>
+    `M ${CX - rx} ${CY} a ${rx} ${ry} 0 1 0 ${rx * 2} 0 a ${rx} ${ry} 0 1 0 ${-rx * 2} 0 Z`;
+  const inRx = RX - LANES * W;
+  const inRy = RY - LANES * W;
   return (
-    <svg width="360" height="96" viewBox="0 0 360 96" aria-hidden="true">
+    <svg width="520" height="168" viewBox="0 0 520 168" aria-hidden="true">
+      {/* the band: outer ring minus inner ring, both from the same center */}
+      <path d={`${ring(RX, RY)} ${ring(inRx, inRy)}`} fill="#9c5e33" fillRule="evenodd" />
+      <path d={ring(RX, RY)} fill="none" stroke="#6e3f1f" strokeWidth="2.5" />
+      <path d={ring(inRx, inRy)} fill="none" stroke="#6e3f1f" strokeWidth="2" />
+      {/* lane separators: the same oval at decreasing radii */}
+      {[1, 2].map((i) => (
+        <path
+          key={i}
+          d={ring(RX - W * i, RY - W * i)}
+          fill="none"
+          stroke="rgba(240,230,208,0.5)"
+          strokeWidth="1.6"
+          strokeDasharray="12 8"
+        />
+      ))}
+      {/* start line across the near straight */}
       <path
-        d="M180 2C282 2 356 22 356 48C356 74 282 94 180 94C78 94 4 74 4 48C4 22 78 2 180 2Z
-           M180 26C247 26 298 36 298 48C298 60 247 70 180 70C113 70 62 60 62 48C62 36 113 26 180 26Z"
-        fill="#9c5e33"
-        fillRule="evenodd"
-        stroke="#6e3f1f"
-        strokeWidth="2"
+        d={`M ${CX - 4} ${CY + inRy} L ${CX - 4} ${CY + RY}`}
+        stroke="rgba(240,230,208,0.65)"
+        strokeWidth="2.5"
       />
-      {/* two lane lines, worn (uneven dashes) */}
-      <ellipse
-        cx="180"
-        cy="48"
-        rx="137"
-        ry="35"
-        fill="none"
-        stroke="rgba(240,230,208,0.55)"
-        strokeWidth="1.6"
-        strokeDasharray="14 7 9 11 16 6"
-      />
-      <ellipse
-        cx="180"
-        cy="48"
-        rx="98"
-        ry="27"
-        fill="none"
-        stroke="rgba(240,230,208,0.45)"
-        strokeWidth="1.4"
-        strokeDasharray="10 9 15 7 8 12"
-      />
-      {/* bare, scuffed patches */}
-      <ellipse cx="96" cy="66" rx="16" ry="4.5" fill="rgba(94,60,32,0.55)" />
-      <ellipse cx="262" cy="30" rx="13" ry="4" fill="rgba(94,60,32,0.5)" />
-      <ellipse cx="180" cy="83" rx="18" ry="3.5" fill="rgba(240,230,208,0.12)" />
+      {/* worn, scuffed patches */}
+      <ellipse cx={CX - 132} cy={CY + 56} rx="20" ry="5" fill="rgba(94,60,32,0.5)" />
+      <ellipse cx={CX + 120} cy={CY - 58} rx="16" ry="4.5" fill="rgba(94,60,32,0.45)" />
+      <ellipse cx={CX + 152} cy={CY + 50} rx="18" ry="4" fill="rgba(240,230,208,0.1)" />
     </svg>
   );
 }
 
-/** Small pond with reeds and an occasional fish jump (arc + ripple, CSS timed). */
-function PondArt() {
+/**
+ * The alpine lake (round 3: the meadow pond, grown 3–4× into a mountain
+ * lake). Irregular shoreline, a drawn inverted-peak reflection in darker
+ * wavier tones, reflected glints, drifting shimmer lines, reeds and shore
+ * rocks. Flat ground art — the hiker walks the shore around it.
+ */
+function MountainLakeArt() {
+  const glints = [
+    [150, 38, 0],
+    [205, 30, 0.8],
+    [258, 44, 1.6],
+    [118, 52, 2.3],
+    [305, 36, 3.0],
+    [240, 62, 3.7],
+  ] as const;
   return (
-    <svg width="132" height="52" viewBox="0 0 132 52" aria-hidden="true">
+    <svg width="420" height="96" viewBox="0 0 420 96" aria-hidden="true">
+      {/* water body — irregular alpine shoreline */}
       <path
-        d="M14 30Q10 18 34 15Q62 8 96 13Q124 17 126 30Q128 42 96 47Q52 52 26 46Q10 42 14 30Z"
-        fill="#274449"
-        stroke="#3a5c5f"
-        strokeWidth="2"
+        d="M18 52Q10 34 52 24Q100 8 178 10Q268 6 330 18Q404 28 408 52Q412 74 340 84Q250 96 150 92Q60 90 30 76Q14 68 18 52Z"
+        fill="#28444d"
+        stroke="#3d5f63"
+        strokeWidth="2.5"
       />
-      <ellipse cx="60" cy="30" rx="30" ry="8" fill="#335c60" opacity="0.7" />
-      {/* fish jump: crescent leaps an arc every ~7s, then the ripple blooms */}
+      <ellipse cx="210" cy="50" rx="150" ry="26" fill="#31555c" opacity="0.65" />
+      {/* inverted mountain reflection — darker, wavy-edged */}
+      <g opacity="0.55">
+        <path
+          d="M112 15L168 60Q172 64 177 59L190 48L202 60Q206 64 211 59L262 15Q238 20 208 18Q156 16 112 15Z"
+          fill="#1c333c"
+        />
+        <path d="M250 17L294 52Q298 56 303 51L342 20Q308 14 250 17Z" fill="#22404a" />
+      </g>
+      {/* drifting shimmer lines */}
+      <g stroke="#bcd9dc" strokeLinecap="round" fill="none">
+        <path className="shimmer" d="M96 46L156 46" strokeWidth="1.6" />
+        <path className="shimmer sh2" d="M212 64L286 64" strokeWidth="1.4" />
+        <path className="shimmer sh3" d="M256 32L314 32" strokeWidth="1.2" />
+      </g>
+      {/* reflected glints */}
+      {glints.map(([x, y, delay]) => (
+        <circle
+          key={`${x}-${y}`}
+          className="lakeStar"
+          cx={x}
+          cy={y}
+          r="1.5"
+          fill="#e6f2f4"
+          style={{ animationDelay: `${delay}s` }}
+        />
+      ))}
+      {/* fish jump, kept from the pond days */}
       <g className="fishJump">
         <path d="M0 0Q4 -3 8 0Q5 2 2 3Q0 2 0 0Z" fill="#9fb7ba" />
         <path d="M7.4 -0.6L10 -2.4L9 0.8Z" fill="#9fb7ba" />
       </g>
-      <ellipse className="fishRip" cx="78" cy="30" rx="6" ry="2" fill="none" stroke="#bcd4d6" strokeWidth="1.2" />
-      {/* reeds + cattails on the right bank */}
+      <ellipse
+        className="fishRip"
+        cx="330"
+        cy="58"
+        rx="7"
+        ry="2.2"
+        fill="none"
+        stroke="#bcd4d6"
+        strokeWidth="1.2"
+      />
+      {/* shore rocks */}
+      <path d="M26 70L22 60Q28 52 40 54Q52 52 55 62L51 71Z" fill="#5e5a4e" />
+      <path d="M370 76L366 66Q372 58 384 60Q396 58 399 68L395 77Z" fill="#6e6a5e" />
+      <path d="M336 88L334 82Q338 77 345 78Q352 77 354 83L352 88Z" fill="#565449" />
+      {/* reeds + cattails on the near shore */}
       <path
-        d="M108 44C108 32 107 26 106 20M114 46C114 34 115 28 116 21M121 43C121 34 120 30 119 25"
+        d="M60 92C60 78 59 70 57 62M68 94C68 80 69 72 71 63M77 91C77 80 76 74 75 68"
         stroke="#4a6a35"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <ellipse cx="57" cy="60" rx="2.2" ry="5" fill="#6b4a2a" />
+      <ellipse cx="71" cy="61" rx="2.2" ry="5" fill="#6b4a2a" />
+      <path
+        d="M392 90C392 78 393 72 395 66M400 92C400 82 399 76 398 70"
+        stroke="#47663a"
         strokeWidth="1.8"
         fill="none"
         strokeLinecap="round"
       />
-      <ellipse cx="106" cy="18" rx="2" ry="4.5" fill="#6b4a2a" />
-      <ellipse cx="116" cy="19" rx="2" ry="4.5" fill="#6b4a2a" />
     </svg>
   );
 }
 
-/** Small ground bird — the wrapper class hops it along on a slow CSS loop. */
+/**
+ * Small ground bird, redrawn on the same 3px logical-pixel grid the canvas
+ * sprites use (round-3 consistency pass). The wrapper class hops it along.
+ */
 function BirdArt({ v = 0 }: { v?: number }) {
+  const P = 3; // logical pixel — matches the hiker/chef/bear canvas scale
+  const px: ReadonlyArray<readonly [number, number, string]> = [
+    [4, 0, "#8a7660"], // head
+    [5, 0, "#26201c"], // eye
+    [6, 1, "#d9a441"], // beak
+    [0, 1, "#6e5c48"], // tail
+    [1, 1, "#8a7660"],
+    [2, 1, "#8a7660"],
+    [3, 1, "#8a7660"],
+    [4, 1, "#8a7660"],
+    [5, 1, "#8a7660"],
+    [1, 2, "#6e5c48"], // wing shade
+    [2, 2, "#8a7660"],
+    [3, 2, "#8a7660"],
+    [4, 2, "#8a7660"],
+    [2, 3, "#6b5236"], // legs
+    [4, 3, "#6b5236"],
+  ];
   return (
     <div className={`birdHop ${v ? "birdB" : ""}`} aria-hidden="true">
-      <svg width="15" height="13" viewBox="0 0 15 13">
-        <ellipse cx="7" cy="7.5" rx="4.6" ry="3.4" fill="#8a7660" />
-        <path d="M2.5 7L-0.5 5.5L2.8 8.6Z" fill="#6e5c48" />
-        <circle cx="11" cy="4.6" r="2.5" fill="#8a7660" />
-        <circle cx="11.9" cy="4" r="0.7" fill="#26201c" />
-        <path d="M13.2 4.6L15 5.2L13.2 5.9Z" fill="#d9a441" />
-        <path d="M6 10.8L6 12.6M8.4 10.8L8.4 12.6" stroke="#6b5236" strokeWidth="1" strokeLinecap="round" />
+      <svg width={7 * P} height={4 * P} viewBox={`0 0 ${7 * P} ${4 * P}`} shapeRendering="crispEdges">
+        {px.map(([x, y, c]) => (
+          <rect key={`${x}-${y}`} x={x * P} y={y * P} width={P} height={P} fill={c} />
+        ))}
       </svg>
     </div>
   );
 }
 
-/** Butterfly — wing flap + lazy drift, two color variants. */
+/**
+ * Butterfly on the same 3px logical-pixel grid — wing flap + lazy drift,
+ * two color variants.
+ */
 function ButterflyArt({ v = 0 }: { v?: number }) {
+  const P = 3;
   const wing = v ? "#b8c4e8" : "#d98f3d";
+  const wingPx: ReadonlyArray<readonly [number, number]> = [
+    [0, 0],
+    [1, 0],
+    [3, 0],
+    [4, 0],
+    [0, 1],
+    [1, 1],
+    [3, 1],
+    [4, 1],
+    [1, 2],
+    [3, 2],
+  ];
   return (
     <div className={`bflyDrift ${v ? "bflyB" : ""}`} aria-hidden="true">
-      <svg width="12" height="10" viewBox="0 0 12 10">
+      <svg width={5 * P} height={4 * P} viewBox={`0 0 ${5 * P} ${4 * P}`} shapeRendering="crispEdges">
         <g className="bflyWings">
-          <ellipse cx="3.4" cy="4" rx="3" ry="2.6" fill={wing} />
-          <ellipse cx="8.6" cy="4" rx="3" ry="2.6" fill={wing} />
-          <ellipse cx="3.6" cy="6.6" rx="2" ry="1.6" fill={wing} opacity="0.8" />
-          <ellipse cx="8.4" cy="6.6" rx="2" ry="1.6" fill={wing} opacity="0.8" />
+          {wingPx.map(([x, y]) => (
+            <rect key={`${x}-${y}`} x={x * P} y={y * P} width={P} height={P} fill={wing} />
+          ))}
         </g>
-        <rect x="5.4" y="1.8" width="1.2" height="6" rx="0.6" fill="#33291f" />
+        <rect x={2 * P} y={0} width={P} height={4 * P} fill="#33291f" />
       </svg>
     </div>
   );
@@ -248,18 +344,113 @@ function LanternsArt() {
   );
 }
 
-/** Drying line with a towel between two poles. */
-function DrylineArt() {
+/** Trodden-earth patch (flat): bare dirt worn smooth, a few pebbles. */
+function EarthArt({ v = 0 }: { v?: number }) {
+  const w = [96, 68][v % 2];
   return (
-    <svg width="112" height="48" viewBox="0 0 112 48" aria-hidden="true">
-      <rect x="4" y="8" width="3" height="40" rx="1.5" fill="#4a3a2c" />
-      <rect x="105" y="8" width="3" height="40" rx="1.5" fill="#4a3a2c" />
-      <path d="M6 11Q56 17 106 11" stroke="#2b2320" strokeWidth="1.3" fill="none" />
-      <g className="towelSway">
-        <path d="M42 14L66 14L65 34Q54 37 43 34Z" fill="#b8683f" />
-        <path d="M42 14L66 14L65.7 19L42.3 19Z" fill="#a05531" />
-        <path d="M47 19L47.4 33M59 19L58.6 33" stroke="#8f4a2a" strokeWidth="1" opacity="0.7" />
+    <svg width={w} height="26" viewBox={`0 0 ${w} 26`} aria-hidden="true">
+      <ellipse cx={w / 2} cy="13" rx={w / 2 - 2} ry="10" fill="rgba(88,62,36,0.5)" />
+      <ellipse cx={w / 2 - 8} cy="12" rx={w / 3} ry="6" fill="rgba(114,82,48,0.4)" />
+      <circle cx={w * 0.3} cy="16" r="1.6" fill="#6e5940" />
+      <circle cx={w * 0.7} cy="9" r="1.3" fill="#5c4a34" />
+      <circle cx={w * 0.55} cy="18" r="1.1" fill="#6e5940" />
+    </svg>
+  );
+}
+
+/** Pine-needle duff scatter (flat). */
+function NeedlesArt() {
+  return (
+    <svg width="64" height="18" viewBox="0 0 64 18" aria-hidden="true">
+      <g stroke="rgba(146,98,52,0.6)" strokeWidth="1.1" strokeLinecap="round" fill="none">
+        <path d="M6 12l7 -3M18 8l8 2M30 14l7 -4M44 9l8 3M12 16l6 -2M52 15l7 -3M36 6l6 1" />
       </g>
+      <g stroke="rgba(94,60,32,0.5)" strokeWidth="1" strokeLinecap="round" fill="none">
+        <path d="M10 7l6 2M26 11l6 -2M40 15l7 -2M50 8l6 -2" />
+      </g>
+    </svg>
+  );
+}
+
+/** Small stone cluster. */
+function StonesArt() {
+  return (
+    <svg width="30" height="12" viewBox="0 0 30 12" aria-hidden="true">
+      <ellipse cx="7" cy="8" rx="5" ry="3.4" fill="#55504a" />
+      <ellipse cx="16" cy="9" rx="3.6" ry="2.6" fill="#625c54" />
+      <ellipse cx="24" cy="7.5" rx="4" ry="3" fill="#4c4640" />
+      <path d="M4 6.5Q7 4.5 10 6" stroke="#6e685f" strokeWidth="1" fill="none" />
+    </svg>
+  );
+}
+
+/** Warm light pooling on the ground under a light source (flat). v1 = neon. */
+function LightPoolArt({ v = 0 }: { v?: number }) {
+  const background =
+    v === 1
+      ? "radial-gradient(ellipse at 40% 50%, rgba(255,45,85,0.16), rgba(255,45,85,0) 70%), radial-gradient(ellipse at 65% 50%, rgba(53,224,255,0.12), rgba(53,224,255,0) 70%)"
+      : "radial-gradient(ellipse at center, rgba(255,190,90,0.28), rgba(255,170,70,0.1) 55%, rgba(255,170,70,0) 78%)";
+  return <div className="lightPool" style={{ background }} aria-hidden="true" />;
+}
+
+/** Tiny daisy scatter (flat ground cover). */
+function DaisiesArt() {
+  const dots = [
+    [6, 10],
+    [16, 5],
+    [27, 12],
+    [38, 7],
+    [48, 13],
+    [58, 6],
+    [22, 16],
+    [44, 17],
+  ] as const;
+  return (
+    <svg width="66" height="22" viewBox="0 0 66 22" aria-hidden="true">
+      {dots.map(([x, y]) => (
+        <g key={`${x}-${y}`}>
+          <circle cx={x - 1.3} cy={y} r="1.2" fill="#f0eee6" />
+          <circle cx={x + 1.3} cy={y} r="1.2" fill="#f0eee6" />
+          <circle cx={x} cy={y - 1.3} r="1.2" fill="#f0eee6" />
+          <circle cx={x} cy={y + 1.3} r="1.2" fill="#f0eee6" />
+          <circle cx={x} cy={y} r="1" fill="#e8c33d" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/** Clover patch (flat ground cover). */
+function CloverArt() {
+  const leaves = [
+    [8, 8],
+    [18, 5],
+    [28, 9],
+    [38, 6],
+    [15, 13],
+    [33, 14],
+    [45, 10],
+  ] as const;
+  return (
+    <svg width="54" height="20" viewBox="0 0 54 20" aria-hidden="true">
+      {leaves.map(([x, y]) => (
+        <g key={`${x}-${y}`} fill="#3f6031">
+          <circle cx={x - 1.6} cy={y + 0.9} r="1.7" />
+          <circle cx={x + 1.6} cy={y + 0.9} r="1.7" />
+          <circle cx={x} cy={y - 1.4} r="1.7" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/** Worn dirt spot along a walking desire-line (flat). */
+function WornArt({ v = 0 }: { v?: number }) {
+  const w = [70, 50, 90][v % 3];
+  return (
+    <svg width={w} height="16" viewBox={`0 0 ${w} 16`} aria-hidden="true">
+      <ellipse cx={w / 2} cy="8" rx={w / 2 - 2} ry="6" fill="rgba(140,118,74,0.32)" />
+      <ellipse cx={w / 2} cy="8" rx={w / 3} ry="4" fill="rgba(158,134,86,0.28)" />
     </svg>
   );
 }
@@ -420,16 +611,14 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <MossRockArt v={v} />;
     case "track":
       return <TrackArt />;
-    case "pond":
-      return <PondArt />;
+    case "lake":
+      return <MountainLakeArt />;
     case "bird":
       return <BirdArt v={v} />;
     case "butterfly":
       return <ButterflyArt v={v} />;
     case "lanterns":
       return <LanternsArt />;
-    case "dryline":
-      return <DrylineArt />;
     case "backpack":
       return <BackpackArt />;
     case "canister":
@@ -446,6 +635,20 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <SlabArt />;
     case "raven":
       return <RavenArt />;
+    case "earth":
+      return <EarthArt v={v} />;
+    case "needles":
+      return <NeedlesArt />;
+    case "stones":
+      return <StonesArt />;
+    case "lightpool":
+      return <LightPoolArt v={v} />;
+    case "daisies":
+      return <DaisiesArt />;
+    case "clover":
+      return <CloverArt />;
+    case "worn":
+      return <WornArt v={v} />;
   }
 }
 
@@ -531,68 +734,39 @@ function LakeArt() {
 }
 
 /**
- * The sequoia grove, redrawn to read as Sequoia National Park: trunks 3–4×
- * the hiker's height, thick cinnamon-red fibrous bark (vertical strokes),
- * a fire-scar hollow at the base of the middle giant, canopies out of frame.
+ * The sequoia grove, rebuilt for round 3: trunks ~20% skinnier and ~40%
+ * taller than round 2, each with a full tapered top and a layered dark-green
+ * crown that lives entirely INSIDE the viewBox — nothing clips at the frame.
+ * The fire-scar hollow and fibrous cinnamon bark carry over.
  */
 function GroveArt() {
   return (
-    <svg width="300" height="232" viewBox="0 0 300 232" aria-hidden="true">
-      {/* canopy hints at the very top edge — the crowns live out of frame */}
-      <path d="M-4 10Q30 -8 74 6L74 0L-4 0Z" fill="#14261a" />
-      <path d="M96 4Q150 -14 208 2L208 0L96 0Z" fill="#182c1e" />
-      <path d="M220 12Q262 -6 304 8L304 0L220 0Z" fill="#14261a" />
-
-      {/* left giant */}
-      <path d="M32 22Q30 120 26 200L12 230L88 230L72 200Q66 120 66 22Q49 14 32 22Z" fill="#7d4226" />
+    <svg width="300" height="330" viewBox="0 0 300 330" aria-hidden="true">
+      {/* left giant — crown */}
+      <g fill="#16281c">
+        <ellipse cx="52" cy="30" rx="15" ry="9" />
+        <ellipse cx="44" cy="46" rx="22" ry="12" />
+        <ellipse cx="62" cy="52" rx="20" ry="11" />
+        <ellipse cx="38" cy="68" rx="24" ry="12" />
+        <ellipse cx="66" cy="74" rx="22" ry="11" />
+        <ellipse cx="52" cy="88" rx="29" ry="12" />
+      </g>
+      <g fill="#1f3826">
+        <ellipse cx="46" cy="56" rx="14" ry="7" />
+        <ellipse cx="60" cy="80" rx="15" ry="7" />
+        <ellipse cx="52" cy="36" rx="9" ry="5" />
+      </g>
+      {/* left giant — tapered trunk */}
+      <path d="M44 88Q42 210 34 300L22 328L84 328L72 300Q62 210 60 88Q52 78 44 88Z" fill="#7d4226" />
       <path
-        d="M40 26Q38 120 34 210M50 24Q49 130 48 214M60 26Q60 128 63 210M46 60Q45 90 44 130M55 100Q55 150 56 190"
-        stroke="#5e2f18"
-        strokeWidth="2.6"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M36 40Q35 130 31 206M56 34Q56 140 58 206M65 70Q66 140 68 200"
-        stroke="#96552e"
-        strokeWidth="1.6"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-
-      {/* middle giant — with the fire-scar hollow at its base */}
-      <path d="M122 12Q120 130 114 202L98 232L206 232L188 202Q180 130 180 12Q151 2 122 12Z" fill="#8a4a2a" />
-      <path
-        d="M132 16Q130 130 124 214M146 12Q145 140 143 220M160 13Q160 140 164 218M172 20Q172 120 176 208M138 80Q137 130 135 170M154 60Q154 110 154 160"
-        stroke="#66341a"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M127 30Q126 140 120 212M152 14Q151 150 150 218M168 40Q168 150 172 214"
-        stroke="#a55f36"
-        strokeWidth="1.8"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-      {/* fire scar: charred rim around a dark hollow */}
-      <path d="M136 232Q132 196 144 182Q158 174 166 190Q172 208 168 232Z" fill="#2a160c" />
-      <path d="M141 232Q139 202 148 190Q157 184 162 196Q166 212 163 232Z" fill="#120a06" />
-
-      {/* right giant */}
-      <path d="M228 30Q227 130 223 204L210 232L282 232L268 204Q262 130 262 30Q245 22 228 30Z" fill="#7d4226" />
-      <path
-        d="M236 34Q234 130 230 214M246 31Q245 140 244 218M256 33Q256 136 259 214M251 90Q251 140 252 180"
+        d="M48 96Q46 210 40 310M54 94Q53 220 52 314M58 100Q59 220 64 308M51 150Q50 190 49 240"
         stroke="#5e2f18"
         strokeWidth="2.4"
         fill="none"
         strokeLinecap="round"
       />
       <path
-        d="M232 50Q231 140 227 210M252 36Q252 150 254 212"
+        d="M46 120Q45 220 39 306M57 116Q57 230 60 306"
         stroke="#96552e"
         strokeWidth="1.5"
         fill="none"
@@ -600,16 +774,88 @@ function GroveArt() {
         opacity="0.85"
       />
 
+      {/* middle giant (tallest) — crown */}
+      <g fill="#182c1e">
+        <ellipse cx="150" cy="16" rx="16" ry="9" />
+        <ellipse cx="140" cy="32" rx="24" ry="13" />
+        <ellipse cx="162" cy="38" rx="22" ry="12" />
+        <ellipse cx="134" cy="56" rx="26" ry="13" />
+        <ellipse cx="168" cy="60" rx="24" ry="12" />
+        <ellipse cx="150" cy="76" rx="32" ry="13" />
+      </g>
+      <g fill="#22402a">
+        <ellipse cx="144" cy="42" rx="15" ry="7" />
+        <ellipse cx="160" cy="68" rx="16" ry="7" />
+        <ellipse cx="150" cy="22" rx="10" ry="5" />
+      </g>
+      {/* middle giant — tapered trunk with the fire-scar hollow */}
+      <path
+        d="M136 76Q134 210 126 296L108 330L192 330L176 296Q166 210 164 76Q150 66 136 76Z"
+        fill="#8a4a2a"
+      />
+      <path
+        d="M142 84Q140 210 132 312M150 82Q149 230 147 318M157 86Q158 220 162 314M146 150Q145 200 143 250M153 130Q153 180 153 230"
+        stroke="#66341a"
+        strokeWidth="2.8"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path
+        d="M139 110Q138 220 130 310M155 104Q155 230 158 312"
+        stroke="#a55f36"
+        strokeWidth="1.7"
+        fill="none"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+      {/* fire scar: charred rim around a dark hollow */}
+      <path d="M134 330Q130 292 142 276Q156 268 164 286Q170 306 166 330Z" fill="#2a160c" />
+      <path d="M139 330Q137 298 146 286Q155 280 160 292Q164 310 161 330Z" fill="#120a06" />
+
+      {/* right giant — crown */}
+      <g fill="#16281c">
+        <ellipse cx="246" cy="52" rx="14" ry="8" />
+        <ellipse cx="238" cy="66" rx="21" ry="11" />
+        <ellipse cx="256" cy="72" rx="19" ry="10" />
+        <ellipse cx="234" cy="86" rx="22" ry="11" />
+        <ellipse cx="258" cy="92" rx="20" ry="10" />
+        <ellipse cx="246" cy="104" rx="27" ry="11" />
+      </g>
+      <g fill="#1f3826">
+        <ellipse cx="240" cy="74" rx="13" ry="6" />
+        <ellipse cx="254" cy="96" rx="14" ry="6" />
+      </g>
+      {/* right giant — tapered trunk */}
+      <path
+        d="M238 104Q236 220 230 302L218 330L286 330L274 302Q266 220 264 104Q251 95 238 104Z"
+        fill="#7d4226"
+      />
+      <path
+        d="M242 112Q240 220 236 314M250 110Q249 230 248 318M256 114Q256 224 260 312M252 180Q252 220 253 260"
+        stroke="#5e2f18"
+        strokeWidth="2.2"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path
+        d="M240 136Q239 230 233 310M258 130Q258 240 262 310"
+        stroke="#96552e"
+        strokeWidth="1.4"
+        fill="none"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+
       {/* ferns and shade plants at the feet */}
       <path
-        d="M92 228C90 220 86 216 81 213M92 228C92 219 93 215 95 210M92 228C95 221 99 218 103 216"
+        d="M96 326C94 318 90 314 85 311M96 326C96 317 97 313 99 308M96 326C99 319 103 316 107 314"
         stroke="#3d5a33"
         strokeWidth="1.8"
         fill="none"
         strokeLinecap="round"
       />
       <path
-        d="M206 230C204 223 200 219 196 217M206 230C207 222 209 218 212 214M206 230C209 224 213 221 217 220"
+        d="M204 328C202 321 198 317 194 315M204 328C205 320 207 316 210 312M204 328C207 322 211 319 215 318"
         stroke="#47663a"
         strokeWidth="1.8"
         fill="none"
