@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# --- security baseline (secure-bootstrap kit) ---
+!.env.example
+*.key
+.claude/audit.log
+.claude/settings.local.json
+.claude/launch.json
+
+# --- project: pipeline inputs stay out of git (original multi-MB photos) ---
+/content-src/
+/playwright/.auth/
