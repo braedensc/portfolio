@@ -1,0 +1,29 @@
+# Dependabot — automated dependency update PRs.
+# Security alerts/updates are enabled separately in repo settings (Security tab);
+# this file governs scheduled *version* updates. Docs:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates
+version: 2
+updates:
+  # npm app dependencies (Next.js, React, tooling)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    groups:
+      # Batch minor/patch bumps into one PR to cut review noise.
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep GitHub Actions (checkout, setup-node, …) pinned and current.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"

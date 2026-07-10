@@ -33,12 +33,12 @@ if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
   exit 1
 fi
 
-# ── 1. Block reference dir + real .env files from being staged ────────────────
-# Match planning/ (rename to your gitignored ref dir, or drop) or any path
+# ── 1. Block original photos + real .env files from being staged ──────────────
+# Match content-src/ (gitignored full-res originals with EXIF/GPS) or any path
 # component starting with .env, then explicitly allow .env.example.
 # (|| true so a no-match grep doesn't abort under `sh -e`)
 FORBIDDEN=$(git diff --cached --name-only \
-  | grep -E '^planning/|(^|/)\.env' \
+  | grep -E '^content-src/|(^|/)\.env' \
   | grep -v -E '(^|/)\.env\.example$' \
   || true)
 if [ -n "$FORBIDDEN" ]; then
@@ -46,7 +46,7 @@ if [ -n "$FORBIDDEN" ]; then
   echo "  BLOCKED: Forbidden files in this commit:"
   echo "$FORBIDDEN" | sed 's/^/    /'
   echo ""
-  echo "  Reference dirs are gitignored and must never be published."
+  echo "  content-src/ holds original photos (EXIF/GPS) and must never be published."
   echo "  .env files (other than .env.example) contain real secrets."
   echo ""
   exit 1
