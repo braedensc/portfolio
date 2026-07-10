@@ -17,12 +17,14 @@ import {
   type Station,
   type Vec,
 } from "@/content/site";
-import { paintHiker, paintDog, paintChef, type HikerFrame } from "./sprites";
+import { paintHiker, paintChef, paintBear, type HikerFrame } from "./sprites";
 
 export interface EngineHooks {
   setScene: (idx: number) => void;
   setCard: (id: CardId | null) => void;
   setAuto: (running: boolean) => void;
+  /** Ambient attract mode is driving (shows the "WATCHING" hint). */
+  setAttract: (running: boolean) => void;
 }
 
 export interface AttachRefs {
@@ -44,8 +46,11 @@ type Side = "left" | "right" | null;
 type Dir = "l" | "r" | "u" | "d";
 
 const GW = 2.5; // gy-to-gx distance weighting
-const SPEED = 182; // 140 in the approved mock × 1.3 (client feedback: brisker)
-const AUTO_DWELL = 4.5; // seconds a card stays open in auto mode
+const SPEED = 273; // 182 (round 1) × 1.5 (round-2 client feedback: "a decent amount more")
+const AUTO_DWELL = 4.5; // seconds a card stays open in the manual tour
+const ATTRACT_DWELL = 5; // seconds a card stays open while attract mode wanders
+const ATTRACT_FIRST_DELAY = 4; // s after load before attract mode starts on its own
+const ATTRACT_IDLE_DELAY = 30; // s of no input before attract mode resumes
 
 const KEYMAP: Record<string, Dir> = {
   arrowleft: "l",
@@ -62,6 +67,8 @@ interface WorldItem {
   el: HTMLElement;
   gx: number;
   gy: number;
+  /** Ground-flat art (track, pond, sand ripples…) renders under all billboards. */
+  flat: boolean;
 }
 
 interface PieceRec {
@@ -79,7 +86,7 @@ interface StationRec {
 
 interface NpcRec {
   ctx: CanvasRenderingContext2D;
-  kind: "dog" | "chef";
+  kind: "chef" | "bear";
   frame: 0 | 1;
   acc: number;
   period: number;
@@ -87,8 +94,12 @@ interface NpcRec {
 
 interface AutoState {
   idx: number;
-  phase: "go" | "travel" | "dwell";
+  phase: "go" | "travel" | "dwell" | "pause";
   timer: number;
+  /** "manual" = the ▶ tour (one pass); "attract" = ambient idle wandering (loops). */
+  mode: "manual" | "attract";
+  /** Route direction — attract mode ping-pongs so the wander feels natural. */
+  dir: 1 | -1;
 }
 
 function setPlane(el: HTMLElement, z: number, f: number, p: number): void {
@@ -121,6 +132,12 @@ export class WorldEngine {
   private activeId: CardId | null = null;
   private suppressed: CardId | null = null;
   private auto: AutoState | null = null;
+  /** performance.now() of the last real user input (key/pointer/touch). */
+  private lastInput = 0;
+  /** Seconds of quiet before attract mode may start (4 on load, 30 after input). */
+  private attractDelay = ATTRACT_FIRST_DELAY;
+  /** A fullscreen overlay (photo lightbox) owns input — engine ignores it. */
+  private modalOpen = false;
 
   private itemsEl: HTMLElement | null = null;
   private worldEls: WorldItem[] = [];
@@ -159,6 +176,8 @@ export class WorldEngine {
     window.addEventListener("keyup", this.onKeyUp);
     refs.root.addEventListener("pointerdown", this.onPointerDown);
     this.last = performance.now();
+    this.lastInput = this.last;
+    this.attractDelay = ATTRACT_FIRST_DELAY;
     this.raf = requestAnimationFrame(this.tick);
   }
 
@@ -254,9 +273,20 @@ export class WorldEngine {
     } else this.openCard(s.id);
   }
 
+  /** ▶ button: starts the manual tour (taking over from attract mode if it was driving). */
   toggleAuto(): void {
-    if (this.auto) this.cancelAuto();
-    else this.startAuto();
+    if (this.auto?.mode === "manual") this.cancelAuto();
+    else {
+      if (this.auto) this.cancelAuto();
+      this.startAuto("manual");
+    }
+  }
+
+  /** A fullscreen overlay (lightbox) is open — pause world input + attract mode. */
+  setModalOpen(open: boolean): void {
+    this.modalOpen = open;
+    this.lastInput = performance.now();
+    if (open && this.auto?.mode === "attract") this.cancelAuto();
   }
 
   /* ---------- internals ---------- */
@@ -288,19 +318,53 @@ export class WorldEngine {
     this.target = null;
   }
 
-  private startAuto(): void {
+  private startAuto(mode: "manual" | "attract"): void {
     this.suppressed = null;
     this.closeCard();
     this.keys = { l: 0, r: 0, u: 0, d: 0 };
     this.target = null;
-    this.auto = { idx: 0, phase: "go", timer: 0 };
-    this.hooks.setAuto(true);
+    const idx = mode === "attract" ? this.nearestRouteIdx() : 0;
+    this.auto = { idx, phase: "go", timer: 0, mode, dir: 1 };
+    if (mode === "manual") this.hooks.setAuto(true);
+    else this.hooks.setAttract(true);
   }
 
+  /** Attract mode resumes from wherever the player left the hiker, not stop 0. */
+  private nearestRouteIdx(): number {
+    let best = 0;
+    let bd = Infinity;
+    autoRoute.forEach((id, i) => {
+      const loc = poiLocations[id];
+      const d =
+        loc.scene === this.cur
+          ? Math.hypot(this.gx - loc.gx, (this.gy - loc.gy) * GW)
+          : 1e5 * Math.abs(loc.scene - this.cur);
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    });
+    return best;
+  }
+
+  /**
+   * Stop auto/attract. Any user input lands here: the hiker halts mid-step and
+   * an attract-opened card closes — unless the pointer is over it (the user is
+   * reading / about to click it).
+   */
   private cancelAuto(): void {
     if (!this.auto) return;
+    const mode = this.auto.mode;
     this.auto = null;
-    this.hooks.setAuto(false);
+    this.target = null;
+    if (mode === "attract") {
+      this.hooks.setAttract(false);
+      if (this.activeId && this.refs && !this.refs.card.matches(":hover")) {
+        const loc = poiLocations[this.activeId];
+        if (loc && loc.type === "setpiece") this.suppressed = this.activeId;
+        this.closeCard();
+      }
+    } else this.hooks.setAuto(false);
   }
 
   private measure(): void {
@@ -368,7 +432,12 @@ export class WorldEngine {
     const sc = scenes[idx];
     this.worldEls = [];
     itemsEl.querySelectorAll<HTMLElement>(".item").forEach((el) => {
-      this.worldEls.push({ el, gx: Number(el.dataset.gx), gy: Number(el.dataset.gy) });
+      this.worldEls.push({
+        el,
+        gx: Number(el.dataset.gx),
+        gy: Number(el.dataset.gy),
+        flat: el.dataset.flat === "1",
+      });
     });
     this.stns = [];
     itemsEl.querySelectorAll<HTMLElement>(".item.stn").forEach((el) => {
@@ -379,13 +448,14 @@ export class WorldEngine {
     itemsEl.querySelectorAll<HTMLCanvasElement>("canvas[data-npc]").forEach((cv) => {
       const ctx = cv.getContext("2d");
       if (!ctx) return;
-      const kind: "dog" | "chef" = cv.dataset.npc === "chef" ? "chef" : "dog";
+      const kind: "chef" | "bear" = cv.dataset.npc === "bear" ? "bear" : "chef";
       const rec: NpcRec = {
         ctx,
         kind,
         frame: 0,
         acc: kind === "chef" ? 0.5 : 0,
-        period: kind === "chef" ? 1 : 1.6,
+        // The bear's head-turn is a slow, occasional gesture (~3s a frame).
+        period: kind === "chef" ? 1 : 3,
       };
       this.paintNpc(rec);
       this.npcs.push(rec);
@@ -393,7 +463,7 @@ export class WorldEngine {
   }
 
   private paintNpc(n: NpcRec): void {
-    if (n.kind === "dog") paintDog(n.ctx, n.frame);
+    if (n.kind === "bear") paintBear(n.ctx, n.frame);
     else paintChef(n.ctx, n.frame);
   }
 
@@ -457,6 +527,8 @@ export class WorldEngine {
 
   private onKeyDown = (e: KeyboardEvent): void => {
     if (!e.key) return;
+    this.noteInput();
+    if (this.modalOpen) return; // the lightbox owns the keyboard while open
     if (this.auto) this.cancelAuto();
     if (e.key === "Escape") {
       this.esc();
@@ -478,8 +550,15 @@ export class WorldEngine {
     if (k) this.keys[k] = 0;
   };
 
+  private noteInput(): void {
+    this.lastInput = performance.now();
+    this.attractDelay = ATTRACT_IDLE_DELAY;
+  }
+
   private onPointerDown = (e: PointerEvent): void => {
     const t = e.target instanceof Element ? e.target : null;
+    this.noteInput();
+    if (this.modalOpen) return; // the lightbox owns the pointer while open
     if (this.auto && !(t && t.closest("[data-auto-btn]"))) this.cancelAuto();
     if (this.transitioning) return;
     if (t && t.closest("button,a,.card,.chips,.tr,.who,[data-auto-btn]")) return;
@@ -519,7 +598,8 @@ export class WorldEngine {
     for (const w of this.worldEls) {
       const p = this.proj(w.gx, w.gy);
       w.el.style.transform = `translate(${p.x}px,${p.y}px) scale(${p.s})`;
-      w.el.style.zIndex = String(100 + Math.round(w.gy));
+      // Flat ground art stays below every standing billboard (incl. the hiker).
+      w.el.style.zIndex = String((w.flat ? 40 : 100) + Math.round(w.gy));
     }
     const hp = this.proj(this.gx, this.gy);
     const bob = this.walking && !this.rm && this.curFrame === "a" ? 1.4 * hp.s : 0;
@@ -554,12 +634,31 @@ export class WorldEngine {
       a.timer -= dt;
       if (a.timer <= 0) {
         this.closeCard();
-        a.idx += 1;
-        if (a.idx >= autoRoute.length) {
-          // Keep the last card from instantly reopening via proximity.
+        if (a.mode === "attract") {
+          // Loop forever: brief random pause so it reads as wandering, then
+          // ping-pong back through the route at the ends.
           if (loc.type === "setpiece") this.suppressed = step;
-          this.cancelAuto();
-        } else a.phase = "go";
+          a.phase = "pause";
+          a.timer = 0.5 + Math.random();
+        } else {
+          a.idx += 1;
+          if (a.idx >= autoRoute.length) {
+            // Keep the last card from instantly reopening via proximity.
+            if (loc.type === "setpiece") this.suppressed = step;
+            this.cancelAuto();
+          } else a.phase = "go";
+        }
+      }
+    } else if (a.phase === "pause") {
+      a.timer -= dt;
+      if (a.timer <= 0) {
+        let next = a.idx + a.dir;
+        if (next < 0 || next >= autoRoute.length) {
+          a.dir = a.dir === 1 ? -1 : 1;
+          next = a.idx + a.dir;
+        }
+        a.idx = next;
+        a.phase = "go";
       }
     } else if (a.phase === "go") {
       if (!this.transitioning) {
@@ -581,8 +680,21 @@ export class WorldEngine {
       }
       this.openCard(step);
       a.phase = "dwell";
-      a.timer = AUTO_DWELL;
+      a.timer = a.mode === "attract" ? ATTRACT_DWELL : AUTO_DWELL;
     }
+  }
+
+  /**
+   * Idle attract mode: the world never sits static. After ~4s on first load
+   * (or ~30s of no input later), the hiker starts wandering the route on its
+   * own. Never with reduced motion (teleports would be jarring), never over an
+   * open card or the lightbox, and any input cancels it instantly.
+   */
+  private maybeStartAttract(now: number): void {
+    if (this.auto || this.rm || this.modalOpen || this.transitioning) return;
+    if (this.activeId) return;
+    if ((now - this.lastInput) / 1000 < this.attractDelay) return;
+    this.startAuto("attract");
   }
 
   private schedule(): void {
@@ -604,6 +716,7 @@ export class WorldEngine {
       return;
     }
 
+    this.maybeStartAttract(now);
     this.stepAuto(dt);
 
     /* movement */

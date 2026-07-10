@@ -17,18 +17,38 @@ import {
   identity,
   aboutText,
   experienceRows,
+  recordsStats,
+  recordsNote,
+  skillGroups,
+  bearNote,
   photographyNote,
   morePlacesNote,
   finePrint,
   cardMedia,
+  galleries,
+  photoCaption,
   projects,
   todoclawUrl,
   type CardId,
 } from "@/content/site";
 import { WorldEngine } from "./engine";
 import { DecorArt, SignArt, SetPieceArt, StationArt } from "./scenes";
-import { HIKER, DOG, CHEF } from "./sprites";
+import { Lightbox } from "./Lightbox";
+import { HIKER, CHEF } from "./sprites";
 import "./world.css";
+
+/** Human-readable card titles — reused for gallery alt text / lightbox labels. */
+const CARD_TITLES: Record<CardId, string> = {
+  about: "About",
+  experience: "Experience",
+  athletics: "Records",
+  bear: "The bear",
+  skills: "Skills",
+  photography: "Photography",
+  todoclaw: "Todoclaw",
+  chefclaw: "ChefClaw",
+  contact: "Contact",
+};
 
 function CardMediaImg({ id }: { id: CardId }) {
   const media = cardMedia[id];
@@ -41,9 +61,39 @@ function CardMediaImg({ id }: { id: CardId }) {
   );
 }
 
-function CardContent({ id }: { id: CardId }) {
+/** PHOTOS row — thumbnails for a card's gallery; clicking opens the lightbox. */
+function GalleryRow({ id, onOpen }: { id: CardId; onOpen: (index: number) => void }) {
+  const images = galleries[id];
+  if (!images || images.length === 0) return null;
+  return (
+    <div className="gal">
+      <div className="galLabel">PHOTOS</div>
+      <div className="galRow">
+        {images.map((src, i) => (
+          <button
+            key={src}
+            className="galThumb"
+            aria-label={`Open ${CARD_TITLES[id]} photo ${i + 1} of ${images.length}`}
+            onClick={() => onOpen(i)}
+          >
+            <img src={src} alt="" loading="lazy" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CardContent({
+  id,
+  onOpenGallery,
+}: {
+  id: CardId;
+  onOpenGallery: (id: CardId, index: number) => void;
+}) {
   const todoclaw = projects[0];
   const chefclaw = projects[1];
+  const gallery = <GalleryRow id={id} onOpen={(i) => onOpenGallery(id, i)} />;
   switch (id) {
     case "about":
       return (
@@ -51,6 +101,7 @@ function CardContent({ id }: { id: CardId }) {
           <div className="ct">About</div>
           <CardMediaImg id="about" />
           <p>{aboutText}</p>
+          {gallery}
         </div>
       );
     case "experience":
@@ -63,6 +114,35 @@ function CardContent({ id }: { id: CardId }) {
               {row.period} · {row.org} — {row.detail}
             </p>
           ))}
+          {gallery}
+        </div>
+      );
+    case "athletics":
+      return (
+        <div>
+          <div className="ct">Records</div>
+          <p className="recs">{recordsStats}</p>
+          <p>{recordsNote}</p>
+          {gallery}
+        </div>
+      );
+    case "bear":
+      return (
+        <div>
+          <div className="ct">The bear</div>
+          <CardMediaImg id="bear" />
+          <p>{bearNote}</p>
+        </div>
+      );
+    case "skills":
+      return (
+        <div>
+          <div className="ct">Skills</div>
+          <ul className="skills">
+            {skillGroups.map((group) => (
+              <li key={group}>{group}</li>
+            ))}
+          </ul>
         </div>
       );
     case "photography":
@@ -72,6 +152,7 @@ function CardContent({ id }: { id: CardId }) {
           <CardMediaImg id="photography" />
           <p>{photographyNote}</p>
           <p className="note">{morePlacesNote}</p>
+          {gallery}
         </div>
       );
     case "todoclaw":
@@ -125,7 +206,9 @@ export default function World() {
   const [card, setCard] = useState<CardId | null>(null);
   const [userNight, setUserNight] = useState(false);
   const [autoOn, setAutoOn] = useState(false);
+  const [attractOn, setAttractOn] = useState(false);
   const [hintOn, setHintOn] = useState(true);
+  const [lightbox, setLightbox] = useState<{ id: CardId; index: number } | null>(null);
 
   const engineRef = useRef<WorldEngine | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -145,7 +228,12 @@ export default function World() {
   const embersRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    const engine = new WorldEngine({ setScene: setSceneIdx, setCard, setAuto: setAutoOn });
+    const engine = new WorldEngine({
+      setScene: setSceneIdx,
+      setCard,
+      setAuto: setAutoOn,
+      setAttract: setAttractOn,
+    });
     engineRef.current = engine;
     engine.attach({
       root: rootRef.current!,
@@ -176,8 +264,14 @@ export default function World() {
     return () => window.clearTimeout(t);
   }, []);
 
+  // The lightbox owns input while open — the engine must not walk/close cards.
+  useEffect(() => {
+    engineRef.current?.setModalOpen(lightbox !== null);
+  }, [lightbox]);
+
   const scene = scenes[sceneIdx];
   const night = Boolean(scene.alwaysNight) || userNight;
+  const lbImages = lightbox ? (galleries[lightbox.id] ?? []) : [];
 
   return (
     <div ref={rootRef} className={`world ${scene.cls}${night ? " night" : ""}`}>
@@ -205,6 +299,10 @@ export default function World() {
         </div>
         <div className="beam">
           <div className="bw" />
+          {/* dust motes drifting inside the light beam (slot canyon) */}
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className={`bmote bm${i}`} />
+          ))}
         </div>
         <div ref={groundRef} className="ground">
           <div className="mottle m1" />
@@ -227,10 +325,11 @@ export default function World() {
                 className="item decor"
                 data-gx={d.gx}
                 data-gy={d.gy}
+                data-flat={d.flat ? "1" : undefined}
                 aria-hidden="true"
               >
                 <div className="in">
-                  <DecorArt kind={d.kind} />
+                  <DecorArt kind={d.kind} v={d.v} />
                 </div>
               </div>
             ))}
@@ -283,9 +382,9 @@ export default function World() {
                 <div className="in">
                   <canvas
                     data-npc={n.kind}
-                    width={n.kind === "dog" ? DOG.w : CHEF.w}
-                    height={n.kind === "dog" ? DOG.h : CHEF.h}
-                    className={`npcCv ${n.kind === "dog" ? "npcDog" : "npcChef"}`}
+                    width={CHEF.w}
+                    height={CHEF.h}
+                    className="npcCv npcChef"
                     aria-hidden="true"
                   />
                 </div>
@@ -318,16 +417,34 @@ export default function World() {
       <div ref={faderRef} className="fader" />
 
       <div ref={cardRef} className={`card${card ? " on" : ""}`} aria-live="polite">
-        {card ? <CardContent id={card} /> : null}
+        {card ? (
+          <CardContent id={card} onOpenGallery={(id, index) => setLightbox({ id, index })} />
+        ) : null}
       </div>
+
+      {lightbox && lbImages.length > 0 ? (
+        <Lightbox
+          images={lbImages}
+          index={Math.min(lightbox.index, lbImages.length - 1)}
+          label={CARD_TITLES[lightbox.id]}
+          caption={photoCaption}
+          onNavigate={(index) => setLightbox({ id: lightbox.id, index })}
+          onClose={() => setLightbox(null)}
+        />
+      ) : null}
 
       <header className="who">
         <h1>{identity.name}</h1>
         <p>{identity.role}</p>
       </header>
       <div className="scind">
-        {scene.name} · {sceneIdx + 1}/{scenes.length}
+        {scene.name} — {scene.theme} · {sceneIdx + 1}/{scenes.length}
       </div>
+      {attractOn && (
+        <div className="watchHint" aria-hidden="true">
+          WATCHING — PRESS ANY KEY TO EXPLORE
+        </div>
+      )}
       <button
         className="autoBtn"
         data-auto-btn="true"

@@ -401,10 +401,6 @@
   display: block;
   image-rendering: pixelated;
 }
-.npcDog {
-  width: 36px;
-  height: 30px;
-}
 .npcChef {
   width: 45px;
   height: 66px;
@@ -473,10 +469,14 @@
 .stn.near .slabel {
   opacity: 1;
 }
+/* ---------- Todoclaw station: desk + the big standing planner board ----------
+   The board is a faithful mini-mock of the real app's priority grid — warm
+   paper, graph lines, quadrant tints, terracotta-edged cards. Color tokens
+   verbatim from todoclaw (grid-constants.ts / tailwind.config.js). */
 .tcWrap {
   position: relative;
-  width: 96px;
-  height: 112px;
+  width: 204px;
+  height: 174px;
 }
 .tcTable {
   position: absolute;
@@ -485,12 +485,176 @@
 }
 .tcBoardWrap {
   position: absolute;
-  left: 11px;
-  top: 14px;
+  left: 52px;
+  bottom: 2px;
+  width: 150px;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 .stn.opening .tcBoardWrap {
-  transform: perspective(420px) rotateX(16deg) scale(2.05) translateY(-10px);
+  transform: perspective(500px) rotateX(9deg) scale(1.3) translateY(-8px);
+}
+.tcBoard {
+  position: relative;
+  width: 150px;
+  height: 96px;
+  background: #7d5a36;
+  border: 2px solid #5c4126;
+  border-radius: 5px;
+  padding: 5px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    0 0 14px rgba(255, 214, 133, 0.18);
+}
+.tcGrid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 2px;
+  background-color: #f4efe6;
+  background-image:
+    linear-gradient(rgba(70, 130, 100, 0.13), rgba(70, 130, 100, 0.13)),
+    linear-gradient(rgba(205, 110, 50, 0.14), rgba(205, 110, 50, 0.14)),
+    linear-gradient(rgba(130, 120, 105, 0.06), rgba(130, 120, 105, 0.06)),
+    linear-gradient(rgba(170, 148, 50, 0.12), rgba(170, 148, 50, 0.12)),
+    linear-gradient(rgba(148, 136, 116, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 136, 116, 0.16) 1px, transparent 1px);
+  background-size:
+    50% 50%,
+    50% 50%,
+    50% 50%,
+    50% 50%,
+    10px 10px,
+    10px 10px;
+  background-position:
+    0 0,
+    100% 0,
+    0 100%,
+    100% 100%,
+    0 0,
+    0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat;
+}
+/* center axes (x = urgency, y = importance) */
+.tcGrid::before,
+.tcGrid::after {
+  content: "";
+  position: absolute;
+  background: rgba(0, 0, 0, 0.13);
+}
+.tcGrid::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+.tcGrid::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+.tcAxisX,
+.tcAxisY {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 6px;
+  letter-spacing: 0.6px;
+  color: #a59c88;
+  z-index: 1;
+  pointer-events: none;
+}
+.tcAxisX {
+  right: 3px;
+  bottom: 1px;
+}
+.tcAxisY {
+  left: 1px;
+  bottom: 3px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.tcCard {
+  position: absolute;
+  width: 24px;
+  height: 12px;
+  background: #fff;
+  border: 1px solid rgba(194, 105, 63, 0.75);
+  border-top: 3px solid #857c6e;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+.tcCard::before,
+.tcCard::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  height: 1.5px;
+  background: rgba(46, 42, 36, 0.5);
+}
+.tcCard::before {
+  right: 6px;
+  top: 2.5px;
+}
+.tcCard::after {
+  right: 11px;
+  top: 5.5px;
+  background: rgba(46, 42, 36, 0.28);
+}
+/* the real peeking pup, chin-clipped on the board's top edge (42.2/64 × 26px ≈ 17px) */
+.tcPeek {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  top: -17px;
+  right: 16px;
+  z-index: 2;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+}
+.tcBadge {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: -7px;
+  top: -8px;
+  z-index: 2;
+  background: #f8f2e6;
+  border-radius: 4px;
+  padding: 1px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.tcLegs {
+  display: block;
+  margin: -3px auto 0;
+}
+.tcPuppy {
+  position: absolute;
+  width: 48px;
+  height: 31px;
+  left: -16px;
+  bottom: -2px;
+  color: #cbbfa4;
+}
+.tcPaw {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  color: rgba(232, 228, 218, 0.38);
+}
+.tcPaw1 {
+  left: 44px;
+  bottom: 4px;
+  transform: rotate(-24deg);
+}
+.tcPaw2 {
+  left: 33px;
+  bottom: 12px;
+  transform: rotate(-8deg);
+}
+.tcPaw3 {
+  left: 24px;
+  bottom: 2px;
+  transform: rotate(-30deg);
 }
 .lglow {
   animation: flick 2.2s ease-in-out infinite;
@@ -534,6 +698,279 @@
 }
 .lakeStar {
   animation: tw 3s ease-in-out infinite;
+}
+
+/* ---------- ChefClaw station: prep table + neon recipe-library screen ----------
+   Palette from chefclaw/frontend/src/index.css (night #050505, panel #0b0b0d,
+   hairlines #1d1d23/#26262c, chili #ff2d55, cyan #35e0ff, gold #ffd60a,
+   warm #ffe9c9): neon lives in halos on hairline borders, never flat fills. */
+.ccWrap {
+  position: relative;
+  width: 244px;
+  height: 172px;
+}
+.ccPot {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+.ccStand {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 172px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ccIcon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  margin-bottom: -11px;
+  z-index: 2;
+  background: #050505;
+  box-shadow: 0 0 10px rgba(255, 45, 85, 0.55);
+}
+.ccScreen {
+  position: relative;
+  z-index: 1;
+  width: 160px;
+  background: #0b0b0d;
+  border: 1px solid #26262c;
+  border-radius: 8px;
+  padding: 4px 6px 6px;
+  margin-bottom: -3px;
+  box-shadow:
+    0 0 16px -2px rgba(255, 45, 85, 0.4),
+    0 0 24px -6px rgba(53, 224, 255, 0.25),
+    inset 0 0 14px rgba(53, 224, 255, 0.08);
+}
+.ccHead {
+  font-family: var(--mono);
+  font-size: 6.5px;
+  letter-spacing: 3px;
+  text-align: center;
+  color: #ffe9c9;
+  text-shadow: 0 0 6px rgba(255, 214, 10, 0.55);
+  padding: 9px 0 4px;
+  border-bottom: 1px solid #1d1d23;
+  margin-bottom: 5px;
+}
+.ccGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.ccCard {
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #1d1d23;
+  background: #08080a;
+}
+.ccCard img {
+  display: block;
+  width: 100%;
+  height: 21px;
+  object-fit: cover;
+}
+.ccChili {
+  border-color: rgba(255, 45, 85, 0.45);
+  box-shadow: 0 0 8px -2px rgba(255, 45, 85, 0.5);
+}
+.ccCyan {
+  border-color: rgba(53, 224, 255, 0.4);
+  box-shadow: 0 0 8px -2px rgba(53, 224, 255, 0.45);
+}
+.ccTable {
+  display: block;
+}
+
+/* ---------- meadow: bear on its rock (canvas animated by the engine) ---------- */
+.bearWrap {
+  position: relative;
+  width: 88px;
+  height: 68px;
+}
+.bearRock {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+.bearCv {
+  position: absolute;
+  width: 60px;
+  height: 36px;
+  left: 15px;
+  top: -3px;
+  image-rendering: pixelated;
+}
+
+/* ---------- meadow: GT sign + yellow jackets ---------- */
+.gtWrap {
+  position: relative;
+  width: 84px;
+  height: 104px;
+}
+.bee {
+  position: absolute;
+  left: 38px;
+  top: 16px;
+  animation: beeOrbitA 5.5s linear infinite;
+}
+.bee1 {
+  left: 24px;
+  top: 36px;
+  animation: beeOrbitB 6.8s linear infinite;
+}
+.bee2 {
+  left: 54px;
+  top: 46px;
+  animation: beeOrbitC 4.7s linear infinite;
+}
+.beeWing {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: beeFlap 0.16s ease-in-out infinite alternate;
+}
+
+/* ---------- ambient critters + camp dressing ---------- */
+.fishJump {
+  transform: translate(46px, 32px);
+  opacity: 0;
+  animation: fishJumpK 7s ease-in-out infinite;
+}
+.fishRip {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: fishRipK 7s ease-out infinite;
+}
+.birdHop {
+  animation: birdHopK 5.4s ease-in-out infinite;
+}
+.birdB {
+  animation-duration: 6.8s;
+  animation-delay: 1.6s;
+}
+.bflyDrift {
+  animation: bflyK 12s ease-in-out infinite;
+}
+.bflyB {
+  animation-duration: 15s;
+  animation-delay: 2.2s;
+}
+.bflyWings {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bflyFlap 0.32s ease-in-out infinite alternate;
+}
+.lanternWrap {
+  position: relative;
+  width: 170px;
+  height: 72px;
+}
+.lanternString {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: lanternSwayK 6s ease-in-out infinite alternate;
+}
+.lanternGlow {
+  filter: drop-shadow(0 0 4px rgba(255, 214, 133, 0.9));
+  animation: flick 2.8s ease-in-out infinite;
+}
+.moth {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #e8e0c8;
+  opacity: 0.85;
+  box-shadow: 0 0 4px 1px rgba(255, 230, 170, 0.4);
+}
+.mothA {
+  left: 59px;
+  top: 26px;
+  animation: mothK 4s linear infinite;
+}
+.mothB {
+  left: 106px;
+  top: 26px;
+  animation: mothK 5.3s linear infinite reverse;
+}
+.owlEyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: drop-shadow(0 0 3px rgba(255, 184, 77, 0.8));
+  animation: owlBlinkK 6s infinite;
+}
+.bobRip {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: bobRipK 8s ease-out infinite;
+}
+.towelSway {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: towelSwayK 5s ease-in-out infinite alternate;
+}
+.ravWing {
+  transform-box: fill-box;
+  transform-origin: 20% 80%;
+  animation: ravWingK 9s infinite;
+}
+/* dust motes drifting down the slot's light beam */
+.bmote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffeecd;
+  filter: blur(0.5px);
+  opacity: 0;
+  animation: bmoteK 9s linear infinite;
+}
+.bm0 {
+  left: 47%;
+  top: 12%;
+}
+.bm1 {
+  left: 51%;
+  top: 26%;
+  animation-delay: 1.6s;
+  animation-duration: 11s;
+}
+.bm2 {
+  left: 44%;
+  top: 38%;
+  animation-delay: 3.1s;
+}
+.bm3 {
+  left: 55%;
+  top: 18%;
+  animation-delay: 4.7s;
+  animation-duration: 8s;
+}
+.bm4 {
+  left: 49%;
+  top: 48%;
+  animation-delay: 6s;
+}
+.bm5 {
+  left: 53%;
+  top: 34%;
+  animation-delay: 7.4s;
+  animation-duration: 12s;
+}
+
+/* Todoclaw's blink, ported from todoclaw/src/index.css (.tc-eye-blink):
+   a quick scaleY squish of the eye groups every few seconds. */
+.tc-eye-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tc-blink 6.5s infinite;
 }
 
 /* ---------- overlays ---------- */
@@ -790,6 +1227,134 @@
 .mailto:hover {
   background: rgba(255, 190, 110, 0.28);
 }
+.recs {
+  font-family: var(--mono);
+  font-size: 11.5px !important;
+  letter-spacing: 0.6px;
+  color: #ffe9c0 !important;
+}
+.skills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.skills li {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  line-height: 1.6;
+  color: #e8e4da;
+  padding: 4px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.14);
+}
+.skills li:last-child {
+  border-bottom: none;
+}
+
+/* ---------- per-section photo galleries ---------- */
+.gal {
+  margin-top: 6px;
+}
+.galLabel {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  color: rgba(255, 217, 160, 0.85);
+  margin-bottom: 5px;
+}
+.galRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.galThumb {
+  width: 64px;
+  height: 42px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+  background: none;
+}
+.galThumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.galThumb:hover {
+  border-color: rgba(255, 217, 160, 0.85);
+}
+
+/* ---------- fullscreen lightbox ---------- */
+.lightbox {
+  position: absolute;
+  inset: 0;
+  z-index: 900;
+  background: rgba(5, 7, 6, 0.93);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: pan-y;
+}
+.lbImg {
+  max-width: 90%;
+  max-height: 82%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  box-shadow: 0 8px 44px rgba(0, 0, 0, 0.6);
+  -webkit-user-drag: none;
+}
+.lbClose {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(20, 26, 22, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #f2eee2;
+  font-size: 15px;
+  line-height: 1;
+}
+.lbClose:hover,
+.lbArrow:hover {
+  background: rgba(44, 54, 46, 0.9);
+}
+.lbArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 64px;
+  font-size: 32px;
+  line-height: 1;
+  color: #f2eee2;
+  background: rgba(20, 26, 22, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+}
+.lbPrev {
+  left: 14px;
+}
+.lbNext {
+  right: 14px;
+}
+.lbCap {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: rgba(242, 238, 226, 0.88);
+  background: rgba(8, 14, 12, 0.6);
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
 
 /* ---------- chrome ---------- */
 .who {
@@ -929,6 +1494,24 @@
 }
 .chips button:hover {
   background: rgba(30, 40, 32, 0.8);
+}
+/* subtle bottom-center hint while attract mode is driving */
+.watchHint {
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(255, 252, 240, 0.75);
+  background: rgba(8, 14, 12, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 5px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
 }
 .fine {
   position: absolute;
@@ -1150,6 +1733,247 @@
   }
   100% {
     transform: translateY(-32px) scale(2);
+    opacity: 0;
+  }
+}
+@keyframes tc-blink {
+  0%,
+  93.5%,
+  97%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.08);
+  }
+}
+@keyframes beeOrbitA {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(16px, -10px);
+  }
+  50% {
+    transform: translate(30px, 2px);
+  }
+  75% {
+    transform: translate(10px, 12px);
+  }
+}
+@keyframes beeOrbitB {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  30% {
+    transform: translate(-12px, -14px);
+  }
+  55% {
+    transform: translate(8px, -22px);
+  }
+  80% {
+    transform: translate(16px, -6px);
+  }
+}
+@keyframes beeOrbitC {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(10px, -14px);
+  }
+  50% {
+    transform: translate(-14px, -20px);
+  }
+  75% {
+    transform: translate(-18px, -4px);
+  }
+}
+@keyframes beeFlap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.35);
+  }
+}
+@keyframes fishJumpK {
+  0%,
+  1% {
+    transform: translate(46px, 32px) rotate(0deg);
+    opacity: 0;
+  }
+  2.5% {
+    opacity: 1;
+  }
+  5% {
+    transform: translate(58px, 16px) rotate(35deg);
+    opacity: 1;
+  }
+  8% {
+    transform: translate(72px, 27px) rotate(100deg);
+    opacity: 1;
+  }
+  9.5%,
+  100% {
+    transform: translate(76px, 33px) rotate(130deg);
+    opacity: 0;
+  }
+}
+@keyframes fishRipK {
+  0%,
+  8% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  11% {
+    opacity: 0.85;
+  }
+  22%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+@keyframes birdHopK {
+  0%,
+  14% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(5px, -4px);
+  }
+  22% {
+    transform: translate(10px, 0);
+  }
+  26% {
+    transform: translate(15px, -4px);
+  }
+  30%,
+  56% {
+    transform: translate(20px, 0);
+  }
+  61% {
+    transform: translate(12px, -4px);
+  }
+  66% {
+    transform: translate(5px, 0);
+  }
+  70%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+@keyframes bflyK {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(24px, -16px);
+  }
+  50% {
+    transform: translate(8px, -30px);
+  }
+  75% {
+    transform: translate(-16px, -12px);
+  }
+}
+@keyframes bflyFlap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.35);
+  }
+}
+@keyframes lanternSwayK {
+  from {
+    transform: rotate(-1.4deg);
+  }
+  to {
+    transform: rotate(1.4deg);
+  }
+}
+@keyframes mothK {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(7px, -5px);
+  }
+  50% {
+    transform: translate(1px, -10px);
+  }
+  75% {
+    transform: translate(-6px, -4px);
+  }
+}
+@keyframes owlBlinkK {
+  0%,
+  90%,
+  96%,
+  100% {
+    transform: scaleY(1);
+  }
+  93% {
+    transform: scaleY(0.06);
+  }
+}
+@keyframes bobRipK {
+  0%,
+  70% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  74% {
+    opacity: 0.8;
+  }
+  92%,
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@keyframes towelSwayK {
+  from {
+    transform: rotate(-1.6deg);
+  }
+  to {
+    transform: rotate(1.8deg);
+  }
+}
+@keyframes ravWingK {
+  0%,
+  90%,
+  97%,
+  100% {
+    transform: rotate(0deg);
+  }
+  92% {
+    transform: rotate(-17deg) translateY(-1.5px);
+  }
+  94.5% {
+    transform: rotate(5deg);
+  }
+}
+@keyframes bmoteK {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.75;
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(16px, 74px);
     opacity: 0;
   }
 }

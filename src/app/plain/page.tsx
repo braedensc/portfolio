@@ -5,6 +5,7 @@ import {
   aboutText,
   stats,
   projects,
+  skillGroups,
   experienceRows,
   photographyNote,
   worldPhotos,
@@ -87,6 +88,19 @@ export default function PlainPage() {
               </article>
             ))}
           </div>
+        </section>
+
+        <section className="mt-10" aria-labelledby="skills-h">
+          <h2 id="skills-h" className={sectionLabel}>
+            Skills
+          </h2>
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+            {skillGroups.map((group) => (
+              <li key={group} className="font-mono text-xs tracking-[0.08em] text-ink/80">
+                {group}
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="mt-10" aria-labelledby="experience-h">
