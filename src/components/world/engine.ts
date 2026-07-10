@@ -1,7 +1,8 @@
 /**
  * The world engine: game loop, keyboard/pointer movement, click-to-move,
- * camera deadzone panning, parallax planes, billboard projection, NPC idle
- * animation, proximity cards, scene transitions, and auto mode.
+ * camera deadzone panning, a translate-only photo backdrop, billboard
+ * projection, NPC idle animation, proximity cards, scene transitions, and
+ * auto mode.
  *
  * React owns UI state (which card is open, which scene renders, auto on/off)
  * via the EngineHooks callbacks; the engine owns all per-frame math and writes
@@ -29,10 +30,15 @@ export interface EngineHooks {
 
 export interface AttachRefs {
   root: HTMLElement;
-  planes: [HTMLElement, HTMLElement, HTMLElement];
+  /** The single photo backdrop plane (crisp: translate-only, never scaled). */
+  backdrop: HTMLElement;
+  /** Vector sky accent strip (drifting cloud wisps) — the one extra depth layer. */
+  sky: HTMLElement;
   ground: HTMLElement;
   fader: HTMLElement;
   card: HTMLElement;
+  /** Thin accent line from the docked card toward its source POI. */
+  link: HTMLElement;
   hiker: HTMLElement;
   hikerCanvas: HTMLCanvasElement;
   fx: HTMLElement;
@@ -47,8 +53,11 @@ type Dir = "l" | "r" | "u" | "d";
 
 const GW = 2.5; // gy-to-gx distance weighting
 const SPEED = 273; // 182 (round 1) × 1.5 (round-2 client feedback: "a decent amount more")
-const AUTO_DWELL = 4.5; // seconds a card stays open in the manual tour
-const ATTRACT_DWELL = 5; // seconds a card stays open while attract mode wanders
+const AUTO_DWELL = 4; // seconds a card stays open in the manual tour (round 3: compact cards read faster)
+const ATTRACT_DWELL = 4; // seconds a card stays open while attract mode wanders
+/* The field-note card's CSS dock (world.css .card) — the connector math needs them. */
+const CARD_LEFT = 12;
+const CARD_BOTTOM = 44;
 const ATTRACT_FIRST_DELAY = 4; // s after load before attract mode starts on its own
 const ATTRACT_IDLE_DELAY = 30; // s of no input before attract mode resumes
 
@@ -102,11 +111,6 @@ interface AutoState {
   dir: 1 | -1;
 }
 
-function setPlane(el: HTMLElement, z: number, f: number, p: number): void {
-  const s = (1000 - z) / 1000;
-  el.style.transform = `translate3d(${-p * f * s}px,0,${z}px) scale(${s})`;
-}
-
 export class WorldEngine {
   private hooks: EngineHooks;
   private refs: AttachRefs | null = null;
@@ -114,7 +118,8 @@ export class WorldEngine {
   private rm = false;
 
   private gx = 0;
-  private gy = 58;
+  // Spawn a step in front of the campfire (gy 72), not inside its footprint.
+  private gy = 72;
   private camX = 0;
   private facing = 1;
   private target: Vec | null = null;
@@ -221,7 +226,7 @@ export class WorldEngine {
     this.rescan(itemsEl, idx);
     this.measure();
     this.positionAll();
-    this.paintPlanes(0);
+    this.paintBackdrop(0);
     if (pending && pending.thenTarget) this.walkTo(pending.thenTarget);
     if (this.transitioning) {
       if (this.rm) this.transitioning = false;
@@ -287,6 +292,18 @@ export class WorldEngine {
     this.modalOpen = open;
     this.lastInput = performance.now();
     if (open && this.auto?.mode === "attract") this.cancelAuto();
+  }
+
+  /** ✕ on the field-note card: close it, and suppress a set-piece so
+   *  proximity doesn't instantly reopen it under the hiker's feet. Always
+   *  pushes the closed state to React, even if the engine lost track. */
+  dismissCard(): void {
+    const id = this.activeId;
+    if (id) {
+      const loc = poiLocations[id];
+      if (loc && loc.type === "setpiece") this.suppressed = id;
+    }
+    this.closeCard();
   }
 
   /* ---------- internals ---------- */
@@ -575,7 +592,14 @@ export class WorldEngine {
 
   /* ---------- per-frame ---------- */
 
-  private paintPlanes(dt: number): void {
+  /**
+   * Camera + backdrop. Crispness-first rig (round-3 client feedback): the
+   * photo backdrop is ONE plane at scale(1) — translate-only, so it is never
+   * fractionally resampled (no blur) and never overlaps a masked copy of
+   * itself (no ghost seams). Depth comes from the backdrop shifting a few px
+   * opposite the camera pan, plus the vector sky strip drifting a bit more.
+   */
+  private paintBackdrop(dt: number): void {
     if (!this.refs) return;
     const t = this.gy / 100;
     const k = 0.55 + 0.45 * t;
@@ -586,10 +610,8 @@ export class WorldEngine {
     else if (sx < -dz) tc = this.gx + dz / k;
     tc = Math.max(-this.camcl, Math.min(this.camcl, tc));
     this.camX = this.rm || dt === 0 ? tc : this.camX + (tc - this.camX) * Math.min(1, dt * 6);
-    const p = this.camX * 0.9;
-    setPlane(this.refs.planes[0], -420, 0.25, p);
-    setPlane(this.refs.planes[1], -220, 0.5, p);
-    setPlane(this.refs.planes[2], -70, 0.8, p);
+    this.refs.backdrop.style.transform = `translate3d(${-this.camX * 0.06}px,0,0)`;
+    this.refs.sky.style.transform = `translate3d(${-this.camX * 0.12}px,0,0)`;
     this.refs.ground.style.transform = `translate3d(${-this.camX * 0.72}px,0,0) rotateX(64deg)`;
   }
 
@@ -608,21 +630,38 @@ export class WorldEngine {
     this.refs.hikerCanvas.style.transform = this.facing < 0 ? "scaleX(-1)" : "";
   }
 
-  private positionCard(): void {
-    if (!this.refs || !this.activeId) return;
-    const loc = poiLocations[this.activeId];
-    if (!loc || loc.scene !== this.cur) return;
+  /**
+   * Field-note connector (round 3): the card itself is CSS-docked at the
+   * bottom-left; when its source POI is on-screen, a thin 1px accent line
+   * runs from the card's top-right corner toward the POI so the eye can
+   * find what the note belongs to. Hidden when the geometry would read as
+   * clutter (POI off-screen, behind/too close to the card, small screens).
+   */
+  private positionConnector(): void {
+    if (!this.refs) return;
+    const link = this.refs.link;
+    const loc = this.activeId ? poiLocations[this.activeId] : null;
+    if (!loc || loc.scene !== this.cur || this.transitioning || this.w < 600) {
+      link.classList.remove("on");
+      return;
+    }
     const card = this.refs.card;
+    const x0 = CARD_LEFT + card.offsetWidth;
+    const y0 = this.h - CARD_BOTTOM - card.offsetHeight + 18;
     const p = this.proj(loc.gx, loc.gy);
-    const cw = card.offsetWidth || 320;
-    const ch = card.offsetHeight || 200;
-    const cx = Math.max(cw / 2 + 8, Math.min(this.w - cw / 2 - 8, p.x));
-    let by = p.y - 72 * p.s;
-    const hp = this.proj(this.gx, this.gy);
-    if (Math.abs(hp.x - cx) < cw / 2 + 26) by = Math.min(by, hp.y - 72 * hp.s - 8);
-    if (by - ch < 52) by = 52 + ch;
-    card.style.left = `${cx}px`;
-    card.style.bottom = `${this.h - by}px`;
+    const tx = p.x;
+    const ty = p.y - 46 * p.s;
+    const dx = tx - x0;
+    const dy = ty - y0;
+    if (dx < 40 || tx > this.w - 10 || ty < 8) {
+      link.classList.remove("on");
+      return;
+    }
+    link.style.left = `${x0}px`;
+    link.style.top = `${y0}px`;
+    link.style.width = `${Math.hypot(dx, dy)}px`;
+    link.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+    link.classList.add("on");
   }
 
   private stepAuto(dt: number): void {
@@ -773,8 +812,8 @@ export class WorldEngine {
       }
     }
 
-    /* camera + planes + billboards */
-    this.paintPlanes(dt);
+    /* camera + backdrop + billboards */
+    this.paintBackdrop(dt);
     this.positionAll();
 
     /* proximity */
@@ -816,8 +855,8 @@ export class WorldEngine {
           }
         }
       }
-      if (this.activeId) this.positionCard();
     }
+    this.positionConnector();
 
     this.schedule();
   };

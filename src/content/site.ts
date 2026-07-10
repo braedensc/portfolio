@@ -27,19 +27,23 @@ export type DecorKind =
   | "flowers"
   | "mossRock"
   | "track"
-  | "pond"
   | "bird"
   | "butterfly"
   | "lanterns"
-  | "dryline"
   | "backpack"
   | "canister"
   | "stump"
   | "owltree"
-  | "dock"
   | "sandline"
   | "slab"
-  | "raven";
+  | "raven"
+  | "earth"
+  | "needles"
+  | "stones"
+  | "lightpool"
+  | "daisies"
+  | "clover"
+  | "worn";
 export type NpcKind = "chef";
 export type StationAnim = "opening" | "popping";
 
@@ -274,36 +278,52 @@ export const scenes: Scene[] = [
     theme: "PROJECTS",
     cls: "sc-camp",
     img: "/world/camp.jpg",
-    bgPos: "center 76%",
-    aria: "Stylized night campsite with a fire, project stations, lantern lights, a small lake with a dock, and a walkable hiker character",
+    // Wide-band asset (2400×1044): clouds top, mountain crest mid, glowing
+    // tent bottom-right — sits just above the drawn-ground seam.
+    bgPos: "center 62%",
+    aria: "Stylized night campsite with a fire, project stations, lantern lights, and a drawn mountain mirrored in a still lake with a fishing dock, with a walkable hiker character",
     gxClamp: 500,
     camClamp: 251,
     exits: { right: 1 },
     alwaysNight: true,
+    // Layout audited round 3: every position is a base-center ground anchor,
+    // spaced so no billboard footprint intersects another at the default
+    // camera (screen-projected rects checked pairwise).
     decor: [
-      { kind: "campRock", gx: -150, gy: 80 },
-      { kind: "campRock", gx: 340, gy: 32 },
-      { kind: "campRock", gx: 120, gy: 24 },
+      { kind: "campRock", gx: 75, gy: 20 },
+      { kind: "campRock", gx: 395, gy: 68 },
+      { kind: "log", gx: 415, gy: 76 },
       { kind: "log", gx: 110, gy: 74 },
-      { kind: "log", gx: -360, gy: 30 },
-      { kind: "lanterns", gx: -85, gy: 40 },
-      { kind: "dryline", gx: 175, gy: 36 },
-      { kind: "backpack", gx: -320, gy: 66 },
+      { kind: "lanterns", gx: -20, gy: 18 },
+      { kind: "backpack", gx: -270, gy: 70 },
       { kind: "canister", gx: 62, gy: 78 },
       { kind: "stump", gx: -45, gy: 66 },
       { kind: "stump", gx: 92, gy: 60, v: 1 },
-      { kind: "owltree", gx: 432, gy: 26 },
-      { kind: "dock", gx: -452, gy: 66, flat: true },
+      { kind: "owltree", gx: 498, gy: 64 },
+      // Night dressing: trodden earth, pine duff, stones, pooled lamplight.
+      { kind: "earth", gx: 20, gy: 72, flat: true },
+      { kind: "earth", gx: -225, gy: 62, v: 1, flat: true },
+      { kind: "earth", gx: 235, gy: 58, flat: true },
+      { kind: "needles", gx: -350, gy: 74, flat: true },
+      { kind: "needles", gx: 170, gy: 82, flat: true },
+      { kind: "stones", gx: 140, gy: 68 },
+      { kind: "stones", gx: -180, gy: 76 },
+      { kind: "stones", gx: 330, gy: 80 },
+      { kind: "lightpool", gx: -20, gy: 22, flat: true },
+      { kind: "lightpool", gx: -210, gy: 54, flat: true },
+      { kind: "lightpool", gx: 250, gy: 50, v: 1, flat: true },
     ],
-    signs: [{ text: "THE MEADOW →", gx: 440, gy: 52 }],
+    signs: [{ text: "THE MEADOW →", gx: 420, gy: 58 }],
     setPieces: [
+      // Round-4 correction: the About anchor is the camp's mountain-lake
+      // vignette, owning the otherwise-empty left side of the scene.
       {
         id: "about",
         kind: "lake",
         label: "ABOUT",
-        gx: -420,
-        gy: 55,
-        approach: { gx: -420, gy: 72 },
+        gx: -490,
+        gy: 60,
+        approach: { gx: -490, gy: 76 },
       },
     ],
     stations: [
@@ -311,9 +331,9 @@ export const scenes: Scene[] = [
         id: "todoclaw",
         kind: "desk",
         label: "TODOCLAW",
-        gx: -250,
-        gy: 48,
-        approach: { gx: -250, gy: 62 },
+        gx: -225,
+        gy: 50,
+        approach: { gx: -225, gy: 64 },
         anim: "opening",
         animMs: 350,
       },
@@ -330,14 +350,14 @@ export const scenes: Scene[] = [
         id: "chefclaw",
         kind: "pot",
         label: "CHEFCLAW",
-        gx: 260,
+        gx: 235,
         gy: 46,
-        approach: { gx: 260, gy: 60 },
+        approach: { gx: 235, gy: 60 },
         anim: "popping",
         animMs: 400,
       },
     ],
-    npcs: [{ kind: "chef", gx: 322, gy: 50 }],
+    npcs: [{ kind: "chef", gx: 165, gy: 58 }],
   },
   {
     id: "meadow",
@@ -345,59 +365,76 @@ export const scenes: Scene[] = [
     theme: "ABOUT & ATHLETICS",
     cls: "sc-meadow",
     img: "/world/meadow.jpg",
-    bgPos: "center 82%",
-    aria: "Stylized Yosemite meadow with giant sequoias, a running track with a Georgia Tech sign, a bear on a rock, a pond, and a walkable hiker character",
+    // Valley + cliffs centered, treeline meeting the ground seam.
+    bgPos: "center 67%",
+    aria: "Stylized Yosemite meadow with giant sequoias, a running track with a Georgia Tech sign, a bear on a rock, an alpine lake with a mountain reflection, and a walkable hiker character",
     gxClamp: 560,
     camClamp: 311,
     exits: { left: 0, right: 2 },
+    // Layout audited round 3 (round-4 correction: no pond here — its ground
+    // went back to grass and hand dressing). The right half is the track
+    // oval (footprint ~gx 70..590 / gy 24..82 with a small infield) — every
+    // anchor was checked against it.
     decor: [
+      { kind: "track", gx: 330, gy: 82, flat: true },
       { kind: "grass", gx: -520, gy: 30 },
-      { kind: "grass", gx: -300, gy: 72 },
-      { kind: "grass", gx: -150, gy: 25 },
-      { kind: "grass", gx: -60, gy: 62 },
-      { kind: "grass", gx: 80, gy: 42 },
-      { kind: "grass", gx: 380, gy: 28 },
-      { kind: "grass", gx: 480, gy: 62 },
-      { kind: "rock", gx: -120, gy: 52 },
+      { kind: "grass", gx: -420, gy: 58 },
+      { kind: "grass", gx: -300, gy: 80 },
+      { kind: "grass", gx: -260, gy: 20 },
+      { kind: "grass", gx: 10, gy: 58 },
+      { kind: "grass", gx: -130, gy: 90 },
+      { kind: "grass", gx: 120, gy: 78 },
+      { kind: "grass", gx: 445, gy: 48 },
+      { kind: "grass", gx: 555, gy: 86 },
+      { kind: "rock", gx: -160, gy: 48 },
       { kind: "rock", gx: 160, gy: 18 },
       { kind: "pine", gx: -545, gy: 16 },
+      { kind: "pine", gx: -480, gy: 12 },
       { kind: "pine", gx: 300, gy: 14 },
       { kind: "pine", gx: 530, gy: 20 },
       { kind: "log", gx: -180, gy: 86 },
-      { kind: "mossRock", gx: -480, gy: 72 },
-      { kind: "mossRock", gx: 400, gy: 68, v: 1 },
-      { kind: "flowers", gx: -340, gy: 26, v: 0 },
-      { kind: "flowers", gx: -195, gy: 66, v: 1 },
-      { kind: "flowers", gx: 60, gy: 28, v: 2 },
-      { kind: "flowers", gx: 255, gy: 24, v: 0 },
-      { kind: "flowers", gx: 445, gy: 80, v: 1 },
-      { kind: "track", gx: 150, gy: 80, flat: true },
-      { kind: "pond", gx: -70, gy: 86, flat: true },
-      { kind: "bird", gx: 60, gy: 66, v: 0 },
+      { kind: "mossRock", gx: -535, gy: 44 },
+      { kind: "mossRock", gx: 30, gy: 76, v: 1 },
+      { kind: "flowers", gx: -410, gy: 96, v: 0 },
+      { kind: "flowers", gx: -130, gy: 46, v: 1 },
+      { kind: "flowers", gx: 55, gy: 84, v: 2 },
+      { kind: "flowers", gx: 195, gy: 14, v: 0 },
+      // hand-dressing: daisy + clover ground cover, desire-line wear
+      { kind: "daisies", gx: 20, gy: 66, flat: true },
+      { kind: "daisies", gx: -250, gy: 88, flat: true },
+      { kind: "daisies", gx: -420, gy: 78, flat: true },
+      { kind: "daisies", gx: 480, gy: 90, flat: true },
+      { kind: "clover", gx: -320, gy: 92, flat: true },
+      { kind: "clover", gx: -360, gy: 70, flat: true },
+      { kind: "worn", gx: 0, gy: 62, flat: true },
+      { kind: "worn", gx: -150, gy: 56, v: 1, flat: true },
+      { kind: "worn", gx: -380, gy: 86, v: 2, flat: true },
+      { kind: "worn", gx: -60, gy: 88, v: 2, flat: true },
+      { kind: "bird", gx: 350, gy: 50, v: 0 },
       { kind: "bird", gx: 415, gy: 44, v: 1 },
       { kind: "butterfly", gx: -190, gy: 62, v: 0 },
       { kind: "butterfly", gx: 250, gy: 28, v: 1 },
     ],
     signs: [
-      { text: "← THE CAMP", gx: -498, gy: 52 },
-      { text: "THE SLOT →", gx: 498, gy: 52 },
+      { text: "← THE CAMP", gx: -505, gy: 90 },
+      { text: "THE SLOT →", gx: 505, gy: 90 },
     ],
     setPieces: [
       {
         id: "experience",
         kind: "grove",
         label: "EXPERIENCE",
-        gx: -270,
-        gy: 42,
-        approach: { gx: -270, gy: 58 },
+        gx: -180,
+        gy: 34,
+        approach: { gx: -180, gy: 48 },
       },
       {
         id: "bear",
         kind: "bear",
         label: "THE BEAR",
-        gx: -430,
-        gy: 55,
-        approach: { gx: -430, gy: 70 },
+        gx: -100,
+        gy: 78,
+        approach: { gx: -55, gy: 84 },
       },
       {
         id: "athletics",
@@ -492,6 +529,27 @@ function buildPoiLocations(): Record<CardId, PoiLocation> {
 }
 
 export const poiLocations: Record<CardId, PoiLocation> = buildPoiLocations();
+
+/**
+ * Dev-only alignment guard (round-3 audit): every POI interaction point must
+ * keep a minimum engine-weighted distance from its neighbors so two labels /
+ * markers / proximity zones can never collide. Warns at module load in dev.
+ */
+const MIN_POI_GAP = 110; // world units, gy weighted ×2.5 like the engine
+if (process.env.NODE_ENV !== "production") {
+  scenes.forEach((sc) => {
+    const pts = [...sc.setPieces, ...sc.stations];
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const d = Math.hypot(pts[i].gx - pts[j].gx, (pts[i].gy - pts[j].gy) * 2.5);
+        if (d < MIN_POI_GAP)
+          console.warn(
+            `[world] POIs too close in "${sc.id}": ${pts[i].id} ↔ ${pts[j].id} (${Math.round(d)} < ${MIN_POI_GAP})`,
+          );
+      }
+    }
+  });
+}
 
 export interface Chip {
   label: string;

@@ -31,14 +31,19 @@
   perspective: 1000px;
   overflow: hidden;
 }
+/* Crispness-first backdrop (round 3): ONE photo plane at scale(1), no mask —
+   the engine only ever translates it a few px, so the image is sampled 1:1
+   with background-size: cover and there is no masked copy to ghost against.
+   The plane is a sky band down to just past the ground seam; the drawn ground
+   carries everything below it. Side bleed covers the parallax shift. */
 .plane {
   position: absolute;
-  left: -25%;
-  top: -10%;
-  width: 150%;
-  height: 120%;
+  left: -44px;
+  right: -44px;
+  top: -20px;
+  height: calc(68% + 20px);
   background-size: cover;
-  background-position: center 32%;
+  background-position: center;
   transition: filter 0.9s;
   will-change: transform;
 }
@@ -51,13 +56,30 @@
 .world.sc-camp .plane {
   filter: brightness(0.94) saturate(1.05) !important;
 }
-.pMid {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 42%, #000 52%);
-  mask-image: linear-gradient(to bottom, transparent 42%, #000 52%);
+/* Vector sky accent — drifting cloud wisps above the horizon. The only extra
+   backdrop layer: pure vector, so it cannot ghost or double-expose. */
+.skyDrift {
+  position: absolute;
+  left: -48px;
+  right: -48px;
+  top: 0;
+  height: 32%;
+  pointer-events: none;
+  will-change: transform;
 }
-.pNear {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 65%, #000 75%);
-  mask-image: linear-gradient(to bottom, transparent 65%, #000 75%);
+.skyDrift svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.skyInner {
+  animation: skyDriftK 90s ease-in-out infinite alternate;
+}
+.world.sc-slot .skyDrift {
+  display: none;
+}
+.world.sc-camp .skyDrift {
+  opacity: 0.55;
 }
 
 .stars {
@@ -188,14 +210,15 @@
   width: 160%;
   height: 120%;
   transform-origin: top center;
+  /* Fresh alpine-meadow greens (round 3: lightened from forest-floor darks). */
   background: linear-gradient(
     to bottom,
-    #17251b 0%,
-    #203020 15%,
-    #2f4026 35%,
-    #465232 60%,
-    #5a6138 85%,
-    #5f6639 100%
+    #24371f 0%,
+    #33492a 14%,
+    #47603a 34%,
+    #5d7a44 58%,
+    #6f8c50 82%,
+    #7a9757 100%
   );
   will-change: transform;
 }
@@ -221,6 +244,33 @@
 .mottle {
   position: absolute;
   inset: 0;
+}
+/* Per-scene ground stipple: grass-blade flecks in the meadow, needle duff
+   and ember-lit specks at the camp. Pure gradients — cheap and crisp. */
+.groundTex {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.world.sc-meadow .groundTex {
+  opacity: 1;
+  background-image:
+    radial-gradient(3px 7px at 30% 42%, rgba(24, 42, 20, 0.5), transparent 70%),
+    radial-gradient(2px 6px at 68% 64%, rgba(220, 238, 168, 0.32), transparent 70%),
+    radial-gradient(2px 5px at 12% 78%, rgba(30, 52, 26, 0.42), transparent 70%);
+  background-size:
+    42px 30px,
+    56px 38px,
+    28px 22px;
+}
+.world.sc-camp .groundTex {
+  opacity: 0.85;
+  background-image:
+    radial-gradient(2px 4px at 40% 50%, rgba(150, 100, 52, 0.22), transparent 70%),
+    radial-gradient(2px 3px at 72% 30%, rgba(0, 0, 0, 0.3), transparent 70%);
+  background-size:
+    38px 26px,
+    52px 34px;
 }
 .m1 {
   background-image: radial-gradient(ellipse 40px 22px at 30% 40%, rgba(0, 0, 0, 0.28), transparent 70%);
@@ -316,20 +366,41 @@
 .world.sc-camp .fglow {
   display: block;
 }
+/* Horizon strip (round 3): a soft band matched to each photo's bottom-edge
+   colors. It peaks over the photo→ground boundary (61.5%) and releases both
+   ways, so the seam blends instead of cutting. */
 .seam {
   position: absolute;
   left: 0;
   right: 0;
-  top: 58%;
-  height: 6.5%;
-  background: linear-gradient(to bottom, rgba(23, 37, 27, 0), rgba(23, 37, 27, 0.9) 82%, #17251b);
+  top: 56%;
+  height: 11%;
+  background: linear-gradient(
+    to bottom,
+    rgba(26, 38, 23, 0) 0%,
+    rgba(26, 38, 23, 0.85) 40%,
+    rgba(30, 44, 26, 0.9) 60%,
+    rgba(36, 55, 31, 0) 100%
+  );
   pointer-events: none;
 }
 .world.sc-slot .seam {
-  background: linear-gradient(to bottom, rgba(45, 18, 7, 0), rgba(45, 18, 7, 0.9) 82%, #2d1207);
+  background: linear-gradient(
+    to bottom,
+    rgba(58, 24, 10, 0) 0%,
+    rgba(58, 24, 10, 0.85) 40%,
+    rgba(66, 31, 14, 0.9) 60%,
+    rgba(66, 31, 14, 0) 100%
+  );
 }
 .world.sc-camp .seam {
-  background: linear-gradient(to bottom, rgba(16, 11, 7, 0), rgba(16, 11, 7, 0.92) 82%, #100b07);
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 13, 8, 0) 0%,
+    rgba(20, 13, 8, 0.88) 40%,
+    rgba(30, 20, 11, 0.9) 60%,
+    rgba(30, 20, 11, 0) 100%
+  );
 }
 
 /* ---------- ground items (screen-space billboards) ---------- */
@@ -358,6 +429,32 @@
   top: 0;
   width: max-content;
   transform: translate(-50%, -100%);
+}
+/* Shared contact shadow (round 3): the same soft ellipse under every
+   standing object, scaled with the item's depth transform. Flat ground art,
+   ground cover, airborne critters, water, wall art and the fire (which pools
+   its own light) opt out. */
+.item .in::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  z-index: -1;
+  width: 62%;
+  height: 9px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+}
+.item[data-flat="1"] .in::after,
+.item[data-kind="grass"] .in::after,
+.item[data-kind="flowers"] .in::after,
+.item[data-kind="butterfly"] .in::after,
+.item[data-kind="lanterns"] .in::after,
+.item[data-kind="lake"] .in::after,
+.item[data-kind="climb"] .in::after,
+.item[data-kind="fire"] .in::after {
+  display: none;
 }
 .marker .in,
 .spost .in,
@@ -836,16 +933,19 @@
 }
 
 /* ---------- ambient critters + camp dressing ---------- */
-.fishJump {
-  transform: translate(46px, 32px);
-  opacity: 0;
-  animation: fishJumpK 7s ease-in-out infinite;
+/* Pooled lamplight on the ground under a light source (flat decor). */
+.lightPool {
+  width: 120px;
+  height: 34px;
 }
-.fishRip {
-  transform-box: fill-box;
-  transform-origin: center;
+/* Mountain-lake shimmer: thin highlight lines drifting across the water. */
+.shimmer {
   opacity: 0;
-  animation: fishRipK 7s ease-out infinite;
+  animation: shimmerK 6.5s ease-in-out infinite;
+}
+.sh2 {
+  animation-delay: 2.2s;
+  animation-duration: 7.5s;
 }
 .birdHop {
   animation: birdHopK 5.4s ease-in-out infinite;
@@ -910,11 +1010,6 @@
   transform-origin: center;
   opacity: 0;
   animation: bobRipK 8s ease-out infinite;
-}
-.towelSway {
-  transform-box: fill-box;
-  transform-origin: 50% 0;
-  animation: towelSwayK 5s ease-in-out infinite alternate;
 }
 .ravWing {
   transform-box: fill-box;
@@ -1116,19 +1211,24 @@
   pointer-events: auto;
 }
 
-/* ---------- card ---------- */
+/* ---------- card (round 3: compact field-note, docked bottom-left) ----------
+   The dock keeps it off the hiker (center), the chips (bottom-center) and
+   the scene pill (top-center); the body scrolls internally. The engine draws
+   a thin accent line (.cardLink) from the card toward its source POI.
+   Engine constants CARD_LEFT/CARD_BOTTOM mirror the left/bottom values. */
 .card {
   position: absolute;
-  left: 50%;
-  bottom: 40%;
-  width: min(320px, calc(100% - 24px));
-  max-height: calc(100% - 130px);
-  overflow-y: auto;
-  background: rgba(10, 16, 14, 0.86);
+  left: 12px;
+  bottom: 44px;
+  width: min(300px, calc(100% - 24px));
+  max-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(10, 16, 14, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 10px;
-  padding: 13px 15px;
-  transform: translateX(-50%) translateY(12px);
+  transform: translateY(10px);
   opacity: 0;
   pointer-events: none;
   transition:
@@ -1142,8 +1242,48 @@
 }
 .card.on {
   opacity: 1;
-  transform: translateX(-50%);
+  transform: none;
   pointer-events: auto;
+}
+/* only the body scrolls — the shell (and the ✕) stay put */
+.cardBody {
+  overflow-y: auto;
+  min-height: 0;
+  padding: 12px 14px;
+}
+.card .ct {
+  padding-right: 24px;
+}
+.cardClose {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #e8e4da;
+  font-size: 13px;
+  line-height: 1;
+}
+.cardClose:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.cardLink {
+  position: absolute;
+  height: 1px;
+  transform-origin: 0 0;
+  background: linear-gradient(to right, rgba(255, 217, 160, 0.75), rgba(255, 217, 160, 0));
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 490;
+  pointer-events: none;
+}
+.cardLink.on {
+  opacity: 1;
 }
 .ct {
   font-family: var(--mono);
@@ -1540,9 +1680,28 @@
   .fine {
     display: none;
   }
+  /* Mobile: the field note becomes a slim bottom sheet (≤45vh). It rides
+     above the chips while open; the ✕ (or walking away) dismisses it. */
+  .card {
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    width: auto;
+    max-height: 45vh;
+    border-radius: 12px 12px 0 0;
+    z-index: 650;
+  }
 }
 
 /* ---------- keyframes ---------- */
+@keyframes skyDriftK {
+  from {
+    transform: translateX(-30px);
+  }
+  to {
+    transform: translateX(30px);
+  }
+}
 @keyframes tw {
   0%,
   100% {
@@ -1800,42 +1959,22 @@
     transform: scaleY(0.35);
   }
 }
-@keyframes fishJumpK {
+@keyframes shimmerK {
   0%,
-  1% {
-    transform: translate(46px, 32px) rotate(0deg);
-    opacity: 0;
-  }
-  2.5% {
-    opacity: 1;
-  }
-  5% {
-    transform: translate(58px, 16px) rotate(35deg);
-    opacity: 1;
-  }
-  8% {
-    transform: translate(72px, 27px) rotate(100deg);
-    opacity: 1;
-  }
-  9.5%,
   100% {
-    transform: translate(76px, 33px) rotate(130deg);
     opacity: 0;
+    transform: translateX(0);
   }
-}
-@keyframes fishRipK {
-  0%,
-  8% {
-    transform: scale(0.3);
+  18% {
+    opacity: 0.55;
+  }
+  55% {
+    opacity: 0.25;
+    transform: translateX(26px);
+  }
+  88% {
     opacity: 0;
-  }
-  11% {
-    opacity: 0.85;
-  }
-  22%,
-  100% {
-    transform: scale(2);
-    opacity: 0;
+    transform: translateX(42px);
   }
 }
 @keyframes birdHopK {
@@ -1937,14 +2076,6 @@
   100% {
     transform: scale(1.9);
     opacity: 0;
-  }
-}
-@keyframes towelSwayK {
-  from {
-    transform: rotate(-1.6deg);
-  }
-  to {
-    transform: rotate(1.8deg);
   }
 }
 @keyframes ravWingK {
