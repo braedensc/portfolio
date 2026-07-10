@@ -475,7 +475,12 @@ export class WorldEngine {
     return { gx: this.gx, gy: this.gy };
   }
 
-  /** Move toward (nx, ny), sliding along blocker edges. True if we moved. */
+  /**
+   * Move toward (nx, ny), sliding along blocker edges. On a hit, the WHOLE
+   * step is re-aimed along a free axis (a wall glide) — otherwise shallow
+   * -angle collisions would creep by only their tiny cross component and
+   * read as stuck. Returns true if the position changed.
+   */
   private slideTo(nx: number, ny: number): boolean {
     nx = Math.max(-this.gxcl, Math.min(this.gxcl, nx));
     ny = Math.max(0, Math.min(100, ny));
@@ -484,8 +489,27 @@ export class WorldEngine {
     if (!this.blockedAt(nx, ny)) {
       this.gx = nx;
       this.gy = ny;
-    } else if (!this.blockedAt(nx, oy)) this.gx = nx;
-    else if (!this.blockedAt(ox, ny)) this.gy = ny;
+    } else {
+      const step = Math.hypot(nx - ox, (ny - oy) * GW);
+      const sx = nx !== ox ? Math.sign(nx - ox) : 0;
+      const sy = ny !== oy ? Math.sign(ny - oy) : oy > 50 ? -1 : 1;
+      const cands: Array<[number, number]> = [
+        [ox + sx * step, oy],
+        [ox, oy + (sy * step) / GW],
+        [ox, oy - (sy * step) / GW],
+      ];
+      // Mostly-vertical pushes glide vertically first.
+      if (Math.abs((ny - oy) * GW) > Math.abs(nx - ox)) cands.unshift(cands.splice(1, 1)[0]);
+      for (const [cx, cy] of cands) {
+        const gx = Math.max(-this.gxcl, Math.min(this.gxcl, cx));
+        const gy = Math.max(0, Math.min(100, cy));
+        if ((Math.abs(gx - ox) > 1e-4 || Math.abs(gy - oy) > 1e-4) && !this.blockedAt(gx, gy)) {
+          this.gx = gx;
+          this.gy = gy;
+          break;
+        }
+      }
+    }
     return Math.abs(this.gx - ox) > 1e-4 || Math.abs(this.gy - oy) > 1e-4;
   }
 

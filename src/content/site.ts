@@ -619,8 +619,8 @@ export const scenes: Scene[] = [
     cls: "sc-snow",
     img: "/world/snow.jpg",
     // Banff ranges + snow-dusted firs across the mid-band, footprinted trail
-    // meeting the drawn snowpack at the seam.
-    bgPos: "center 55%",
+    // meeting the drawn snowpack at the seam (38%: sunlit peaks stay in view).
+    bgPos: "center 38%",
     aria: "Stylized Banff snow trail with switchbacks, snow-dusted firs, a frozen teal river crossed by a plank, carved trail signs listing career stops, and a walkable hiker character",
     gxClamp: 540,
     camClamp: 291,
@@ -634,13 +634,19 @@ export const scenes: Scene[] = [
     ],
     decor: [
       ...pathStamps(SNOW_PATH, 2),
-      // The frozen teal river, running from the ranges toward the viewer.
+      // The frozen teal river, running from the ranges toward the viewer —
+      // segments overlap along gy so it reads as one continuous band.
       { kind: "river", gx: 340, gy: 10, flat: true },
-      { kind: "river", gx: 340, gy: 26, v: 1, flat: true },
+      { kind: "river", gx: 340, gy: 18, v: 1, flat: true },
+      { kind: "river", gx: 340, gy: 26, flat: true },
+      { kind: "river", gx: 340, gy: 34, v: 1, flat: true },
       { kind: "river", gx: 340, gy: 42, flat: true },
-      { kind: "river", gx: 340, gy: 58, v: 1, flat: true },
+      { kind: "river", gx: 340, gy: 50, v: 1, flat: true },
+      { kind: "river", gx: 340, gy: 58, flat: true },
+      { kind: "river", gx: 340, gy: 67, v: 1, flat: true },
       { kind: "river", gx: 340, gy: 76, flat: true },
-      { kind: "river", gx: 340, gy: 92, v: 1, flat: true },
+      { kind: "river", gx: 340, gy: 84, v: 1, flat: true },
+      { kind: "river", gx: 340, gy: 92, flat: true },
       { kind: "plank", gx: 340, gy: 59, flat: true },
       { kind: "snowpine", gx: -500, gy: 20 },
       { kind: "snowpine", gx: -440, gy: 12 },

@@ -165,6 +165,7 @@ function CardContent({
               <li key={group}>{group}</li>
             ))}
           </ul>
+          {gallery}
         </div>
       );
     case "photography":
