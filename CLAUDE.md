@@ -9,18 +9,22 @@ Guidance for Claude Code sessions in this repository.
 ## What This Is
 
 Braeden Collins' personal portfolio — **an explorable HD-2D world built from his own photographs**.
-The visitor walks a pixel-art hiker through stylized scenes (night campsite, Yosemite meadow,
-Antelope slot canyon, more to come: snow, desert, El Capitan…), each rendered from a real photo
-via the posterization pipeline. Content lives at themed points of interest (a mountain lake, a
-sequoia grove, a planner desk); the projects are in-world stations with single-click launches.
-A **plain view** presents the same content in a normal recruiter-readable layout, same art style.
+The visitor walks a pixel-art hiker through five stylized scenes (Yosemite meadow → Antelope
+slot canyon → Banff snow → Monument Valley desert → night campsite; more to come: El Capitan…),
+each rendered from a real photo via the posterization pipeline. Content lives at themed points
+of interest (a trailhead kiosk, carved trail signs, a gear cache, a planner desk); the projects
+are in-world stations with single-click launches. A **plain view** presents the same content in
+a normal recruiter-readable layout, same art style.
 
 Design direction was locked 2026-07-10 after a 12-mock workshop (mocks live outside this repo).
-Key decisions:
+Key decisions (start scene revised round 4):
 
-- **Start scene: the camp** (always night, campfire, both project stations).
-- **Stations:** Todoclaw = planner desk (dog NPC), ChefClaw = camp kitchen (chef NPC, lid-pop
-  reveal), Contact = the campfire. Single-click opens — no hold-to-open interactions.
+- **Start scene: the meadow** (About & Athletics); **the camp is the finale** (always night,
+  campfire, both project stations).
+- **Stations:** Todoclaw = planner desk (the app's own mascot art), ChefClaw = camp kitchen
+  (neon recipe screen + ingredient prep table — no chef NPC since round 4B; the small cook pot
+  keeps the lid-pop reveal), Contact = the campfire. Single-click opens — no hold-to-open
+  interactions.
 - **Waypoints are furnished set-pieces** (lake, grove, signposts), never bare markers in empty ground.
 - **Auto mode:** a play button walks the expedition through every stop on its own.
 - **Day/night** relighting; movement modestly brisk; reduced-motion = teleport + no ambient animation.

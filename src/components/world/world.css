@@ -56,6 +56,18 @@
 .world.sc-camp .plane {
   filter: brightness(0.94) saturate(1.05) !important;
 }
+/* Snow: a cold blue-hour cast by day; deep blue at night (aurora joins it). */
+.world.sc-snow .plane {
+  filter: brightness(0.97) saturate(0.88);
+}
+.world.night.sc-snow .plane {
+  filter: brightness(0.45) saturate(0.62) hue-rotate(-16deg);
+}
+/* Desert night: grade the backdrop way down so the Mittens read as black
+   silhouettes against the boosted starfield. */
+.world.night.sc-desert .plane {
+  filter: brightness(0.3) saturate(0.4) contrast(1.25);
+}
 /* Vector sky accent — drifting cloud wisps above the horizon. The only extra
    backdrop layer: pure vector, so it cannot ghost or double-expose. */
 .skyDrift {
@@ -107,6 +119,13 @@
   border-radius: 50%;
   animation: tw 3s ease-in-out infinite;
 }
+/* Desert-only starfield boost — the huge open night sky over the Mittens. */
+.stX {
+  display: none;
+}
+.world.sc-desert .stX {
+  display: block;
+}
 
 .shafts {
   position: absolute;
@@ -119,7 +138,8 @@
   opacity: 0;
 }
 .world.sc-slot .shafts,
-.world.sc-camp .shafts {
+.world.sc-camp .shafts,
+.world.sc-desert .shafts {
   display: none;
 }
 .shaft {
@@ -233,12 +253,38 @@
   );
 }
 .world.sc-camp .ground {
+  /* Round 4B: the camp widened (camClamp 391) for the billboard-scale
+     stations — extra side bleed so the panning ground never shows an edge. */
+  left: -40%;
+  width: 180%;
   background: radial-gradient(
     ellipse 58% 52% at 50% 26%,
     #54381c 0%,
     #3d2a16 34%,
     #271c10 62%,
     #150f09 100%
+  );
+}
+.world.sc-snow .ground {
+  background: linear-gradient(
+    to bottom,
+    #a2b4cb 0%,
+    #bccbdf 16%,
+    #d2deec 38%,
+    #e2eaf4 62%,
+    #ecf2f8 84%,
+    #f3f7fb 100%
+  );
+}
+.world.sc-desert .ground {
+  background: linear-gradient(
+    to bottom,
+    #74371a 0%,
+    #8e451e 16%,
+    #a85424 38%,
+    #bd662c 62%,
+    #cc7634 82%,
+    #d5843e 100%
   );
 }
 .mottle {
@@ -272,6 +318,29 @@
     38px 26px,
     52px 34px;
 }
+/* Snow: wind-ripple shading + sun sparkle; desert: dark grit + pale sand flecks. */
+.world.sc-snow .groundTex {
+  opacity: 0.9;
+  background-image:
+    radial-gradient(3px 6px at 34% 44%, rgba(118, 146, 184, 0.34), transparent 70%),
+    radial-gradient(2px 4px at 70% 62%, rgba(255, 255, 255, 0.8), transparent 70%),
+    radial-gradient(2px 6px at 14% 80%, rgba(118, 146, 184, 0.26), transparent 70%);
+  background-size:
+    46px 32px,
+    58px 40px,
+    30px 24px;
+}
+.world.sc-desert .groundTex {
+  opacity: 0.9;
+  background-image:
+    radial-gradient(3px 5px at 32% 40%, rgba(84, 32, 10, 0.38), transparent 70%),
+    radial-gradient(2px 4px at 66% 66%, rgba(240, 190, 130, 0.32), transparent 70%),
+    radial-gradient(2px 5px at 12% 78%, rgba(84, 32, 10, 0.3), transparent 70%);
+  background-size:
+    46px 32px,
+    60px 40px,
+    32px 24px;
+}
 .m1 {
   background-image: radial-gradient(ellipse 40px 22px at 30% 40%, rgba(0, 0, 0, 0.28), transparent 70%);
   background-size: 110px 70px;
@@ -290,41 +359,17 @@
 .world.sc-camp .m2 {
   opacity: 0.12;
 }
-.trail {
-  position: absolute;
-  left: 50%;
-  background: linear-gradient(
-    to right,
-    rgba(178, 158, 110, 0),
-    rgba(178, 158, 110, 0.42) 35%,
-    rgba(178, 158, 110, 0.42) 65%,
-    rgba(178, 158, 110, 0)
-  );
-  filter: blur(3px);
-  border-radius: 60px;
+.world.sc-snow .m1 {
+  opacity: 0.14;
 }
-.world.sc-slot .trail,
-.world.sc-camp .trail {
-  display: none;
+.world.sc-snow .m2 {
+  opacity: 0.4;
 }
-.t1 {
-  top: -2%;
-  height: 38%;
-  width: 60px;
-  transform: translateX(-55%) rotate(4deg);
+.world.sc-desert .m2 {
+  opacity: 0.2;
 }
-.t2 {
-  top: 32%;
-  height: 40%;
-  width: 95px;
-  transform: translateX(-45%) rotate(-6deg);
-}
-.t3 {
-  top: 68%;
-  height: 36%;
-  width: 140px;
-  transform: translateX(-58%) rotate(3deg);
-}
+/* (round 4: the old blurred meadow trail strips are gone — every scene's
+   path is now drawn from its waypoints as flat pathstamp decor.) */
 .sandl {
   display: none;
   position: absolute;
@@ -402,6 +447,24 @@
     rgba(30, 20, 11, 0) 100%
   );
 }
+.world.sc-snow .seam {
+  background: linear-gradient(
+    to bottom,
+    rgba(142, 162, 190, 0) 0%,
+    rgba(142, 162, 190, 0.85) 40%,
+    rgba(162, 180, 203, 0.9) 60%,
+    rgba(162, 180, 203, 0) 100%
+  );
+}
+.world.sc-desert .seam {
+  background: linear-gradient(
+    to bottom,
+    rgba(104, 48, 20, 0) 0%,
+    rgba(104, 48, 20, 0.85) 40%,
+    rgba(116, 55, 26, 0.9) 60%,
+    rgba(116, 55, 26, 0) 100%
+  );
+}
 
 /* ---------- ground items (screen-space billboards) ---------- */
 .items {
@@ -452,7 +515,10 @@
 .item[data-kind="butterfly"] .in::after,
 .item[data-kind="lanterns"] .in::after,
 .item[data-kind="lake"] .in::after,
-.item[data-kind="climb"] .in::after,
+.item[data-kind="scrub"] .in::after,
+.item[data-kind="tent"] .in::after,
+.item[data-kind="waveledge"] .in::after,
+.item[data-kind="sandfall"] .in::after,
 .item[data-kind="fire"] .in::after {
   display: none;
 }
@@ -493,14 +559,6 @@
   height: 66px;
   image-rendering: pixelated;
   display: block;
-}
-.npcCv {
-  display: block;
-  image-rendering: pixelated;
-}
-.npcChef {
-  width: 45px;
-  height: 66px;
 }
 .lant {
   position: absolute;
@@ -552,6 +610,8 @@
 .pbtn:hover {
   filter: drop-shadow(0 0 16px rgba(255, 220, 150, 0.55));
 }
+/* Round 4: station labels are always visible (world rule — every meaningful
+   POI wears its name); proximity now just brightens them. */
 .slabel {
   font-family: var(--mono);
   font-size: 10px;
@@ -559,7 +619,7 @@
   color: #ffe9c0;
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.95);
   white-space: nowrap;
-  opacity: 0;
+  opacity: 0.85;
   transition: opacity 0.35s;
   pointer-events: none;
 }
@@ -569,38 +629,40 @@
 /* ---------- Todoclaw station: desk + the big standing planner board ----------
    The board is a faithful mini-mock of the real app's priority grid — warm
    paper, graph lines, quadrant tints, terracotta-edged cards. Color tokens
-   verbatim from todoclaw (grid-constants.ts / tailwind.config.js). */
+   verbatim from todoclaw (grid-constants.ts / tailwind.config.js).
+   Round 4B: resized to a readable billboard (client: "much bigger, like
+   maybe 3 times"). */
 .tcWrap {
   position: relative;
-  width: 204px;
-  height: 174px;
+  width: 470px;
+  height: 312px;
 }
 .tcTable {
   position: absolute;
-  left: 0;
+  right: -16px;
   bottom: 0;
 }
 .tcBoardWrap {
   position: absolute;
-  left: 52px;
-  bottom: 2px;
-  width: 150px;
+  left: 35px;
+  bottom: 4px;
+  width: 400px;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 .stn.opening .tcBoardWrap {
-  transform: perspective(500px) rotateX(9deg) scale(1.3) translateY(-8px);
+  transform: perspective(900px) rotateX(4deg) scale(1.07) translateY(-6px);
 }
 .tcBoard {
   position: relative;
-  width: 150px;
-  height: 96px;
+  width: 400px;
+  height: 256px;
   background: #7d5a36;
-  border: 2px solid #5c4126;
-  border-radius: 5px;
-  padding: 5px;
+  border: 3px solid #5c4126;
+  border-radius: 8px;
+  padding: 10px;
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.45),
-    0 0 14px rgba(255, 214, 133, 0.18);
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    0 0 26px rgba(255, 214, 133, 0.2);
 }
 .tcGrid {
   position: relative;
@@ -621,8 +683,8 @@
     50% 50%,
     50% 50%,
     50% 50%,
-    10px 10px,
-    10px 10px;
+    16px 16px,
+    16px 16px;
   background-position:
     0 0,
     100% 0,
@@ -655,102 +717,131 @@
 .tcAxisY {
   position: absolute;
   font-family: var(--mono);
-  font-size: 6px;
-  letter-spacing: 0.6px;
+  font-size: 12px;
+  letter-spacing: 1px;
   color: #a59c88;
   z-index: 1;
   pointer-events: none;
 }
 .tcAxisX {
-  right: 3px;
-  bottom: 1px;
+  right: 7px;
+  bottom: 3px;
 }
 .tcAxisY {
-  left: 1px;
-  bottom: 3px;
+  left: 3px;
+  bottom: 7px;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
 }
+/* quadrant names, faint — matches the app's four-quadrant layout */
+.tcQ {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: #b3a88f;
+  opacity: 0.85;
+  z-index: 1;
+  pointer-events: none;
+}
 .tcCard {
   position: absolute;
-  width: 24px;
-  height: 12px;
+  width: 56px;
+  height: 28px;
   background: #fff;
-  border: 1px solid rgba(194, 105, 63, 0.75);
-  border-top: 3px solid #857c6e;
-  border-radius: 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  border: 1.5px solid rgba(194, 105, 63, 0.75);
+  border-top: 6px solid #857c6e;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 .tcCard::before,
 .tcCard::after {
   content: "";
   position: absolute;
-  left: 3px;
-  height: 1.5px;
+  left: 7px;
+  height: 3px;
+  border-radius: 1.5px;
   background: rgba(46, 42, 36, 0.5);
 }
 .tcCard::before {
-  right: 6px;
-  top: 2.5px;
+  right: 13px;
+  top: 5.5px;
 }
 .tcCard::after {
-  right: 11px;
-  top: 5.5px;
+  right: 25px;
+  top: 12.5px;
   background: rgba(46, 42, 36, 0.28);
 }
-/* the real peeking pup, chin-clipped on the board's top edge (42.2/64 × 26px ≈ 17px) */
+/* the cluster's count chip (the app shows folded clusters with a count) */
+.tcCount {
+  position: absolute;
+  left: 53%;
+  top: 51%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #bf5e2a;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+/* the real peeking pup, chin-clipped on the board's top edge (42.2/64 × 62px ≈ 41px) */
 .tcPeek {
   position: absolute;
-  width: 26px;
-  height: 26px;
-  top: -17px;
-  right: 16px;
+  width: 62px;
+  height: 62px;
+  top: -41px;
+  right: 44px;
   z-index: 2;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 .tcBadge {
   position: absolute;
-  width: 16px;
-  height: 16px;
-  left: -7px;
-  top: -8px;
+  width: 34px;
+  height: 34px;
+  left: -14px;
+  top: -15px;
   z-index: 2;
   background: #f8f2e6;
-  border-radius: 4px;
-  padding: 1px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 .tcLegs {
   display: block;
-  margin: -3px auto 0;
+  margin: -4px auto 0;
 }
 .tcPuppy {
   position: absolute;
-  width: 48px;
-  height: 31px;
-  left: -16px;
+  width: 76px;
+  height: 49px;
+  left: -12px;
   bottom: -2px;
   color: #cbbfa4;
 }
 .tcPaw {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
   color: rgba(232, 228, 218, 0.38);
 }
 .tcPaw1 {
-  left: 44px;
-  bottom: 4px;
+  left: 92px;
+  bottom: 6px;
   transform: rotate(-24deg);
 }
 .tcPaw2 {
-  left: 33px;
-  bottom: 12px;
+  left: 74px;
+  bottom: 16px;
   transform: rotate(-8deg);
 }
 .tcPaw3 {
-  left: 24px;
-  bottom: 2px;
+  left: 58px;
+  bottom: 3px;
   transform: rotate(-30deg);
 }
 .lglow {
@@ -768,6 +859,38 @@
 .fl3 {
   animation-duration: 1.3s;
   animation-delay: 0.2s;
+}
+/* white-hot core: quickest, subtlest wobble */
+.fl4 {
+  animation-duration: 1.05s;
+  animation-delay: 0.1s;
+}
+/* the occasional extra flame lick off the fire's flank */
+.flLick {
+  transform-box: fill-box;
+  transform-origin: 80% 100%;
+  animation: lickK 5.2s ease-in-out infinite;
+}
+/* rising sparks off the campfire — opacity 0 at rest (reduced-motion hides) */
+.spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: sparkK 3.2s ease-out infinite;
+}
+/* softly pulsing pool of firelight on the ground */
+.fireGlow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fireGlowK 3s ease-in-out infinite;
+}
+.fg2 {
+  animation-duration: 2.2s;
+  animation-delay: 0.6s;
+}
+/* warm light spilling from the tent door */
+.tentGlow {
+  animation: flick 3.6s ease-in-out infinite;
 }
 .ckLid {
   transform-box: fill-box;
@@ -800,68 +923,71 @@
 /* ---------- ChefClaw station: prep table + neon recipe-library screen ----------
    Palette from chefclaw/frontend/src/index.css (night #050505, panel #0b0b0d,
    hairlines #1d1d23/#26262c, chili #ff2d55, cyan #35e0ff, gold #ffd60a,
-   warm #ffe9c9): neon lives in halos on hairline borders, never flat fills. */
+   warm #ffe9c9): neon lives in halos on hairline borders, never flat fills.
+   Round 4B: screen scaled to a readable billboard; the ingredient prep
+   table (not a person) anchors the station; the tripod pot tucks in small
+   at the left and keeps its lid-pop reveal. */
 .ccWrap {
   position: relative;
-  width: 244px;
-  height: 172px;
+  width: 440px;
+  height: 336px;
 }
 .ccPot {
   position: absolute;
   left: 0;
-  bottom: 0;
+  bottom: 2px;
 }
 .ccStand {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 172px;
+  width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 .ccIcon {
   position: relative;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  margin-bottom: -11px;
+  width: 46px;
+  height: 46px;
+  border-radius: 11px;
+  margin-bottom: -23px;
   z-index: 2;
   background: #050505;
-  box-shadow: 0 0 10px rgba(255, 45, 85, 0.55);
+  box-shadow: 0 0 16px rgba(255, 45, 85, 0.55);
 }
 .ccScreen {
   position: relative;
   z-index: 1;
-  width: 160px;
+  width: 380px;
   background: #0b0b0d;
-  border: 1px solid #26262c;
-  border-radius: 8px;
-  padding: 4px 6px 6px;
-  margin-bottom: -3px;
+  border: 1.5px solid #26262c;
+  border-radius: 13px;
+  padding: 8px 12px 12px;
+  margin-bottom: -8px;
   box-shadow:
-    0 0 16px -2px rgba(255, 45, 85, 0.4),
-    0 0 24px -6px rgba(53, 224, 255, 0.25),
-    inset 0 0 14px rgba(53, 224, 255, 0.08);
+    0 0 30px -2px rgba(255, 45, 85, 0.42),
+    0 0 46px -8px rgba(53, 224, 255, 0.28),
+    inset 0 0 28px rgba(53, 224, 255, 0.08);
 }
 .ccHead {
   font-family: var(--mono);
-  font-size: 6.5px;
-  letter-spacing: 3px;
+  font-size: 14px;
+  letter-spacing: 7px;
   text-align: center;
   color: #ffe9c9;
-  text-shadow: 0 0 6px rgba(255, 214, 10, 0.55);
-  padding: 9px 0 4px;
+  text-shadow: 0 0 10px rgba(255, 214, 10, 0.6);
+  padding: 16px 0 9px;
   border-bottom: 1px solid #1d1d23;
-  margin-bottom: 5px;
+  margin-bottom: 9px;
 }
 .ccGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  gap: 8px;
 }
 .ccCard {
-  border-radius: 4px;
+  border-radius: 7px;
   overflow: hidden;
   border: 1px solid #1d1d23;
   background: #08080a;
@@ -869,19 +995,21 @@
 .ccCard img {
   display: block;
   width: 100%;
-  height: 21px;
+  height: 56px;
   object-fit: cover;
 }
 .ccChili {
   border-color: rgba(255, 45, 85, 0.45);
-  box-shadow: 0 0 8px -2px rgba(255, 45, 85, 0.5);
+  box-shadow: 0 0 12px -2px rgba(255, 45, 85, 0.5);
 }
 .ccCyan {
   border-color: rgba(53, 224, 255, 0.4);
-  box-shadow: 0 0 8px -2px rgba(53, 224, 255, 0.45);
+  box-shadow: 0 0 12px -2px rgba(53, 224, 255, 0.45);
 }
-.ccTable {
+.ccPrep {
   display: block;
+  position: relative;
+  z-index: 2;
 }
 
 /* ---------- meadow: bear on its rock (canvas animated by the engine) ---------- */
@@ -904,32 +1032,86 @@
   image-rendering: pixelated;
 }
 
-/* ---------- meadow: GT sign + yellow jackets ---------- */
-.gtWrap {
-  position: relative;
-  width: 84px;
-  height: 104px;
-}
-.bee {
+/* ---------- meadow: roaming yellow jackets (round 4B) ----------
+   Bigger, readable bees wandering the WHOLE meadow: each .beeR animates X
+   and its .beeRy child animates Y over different seeded periods (a lazy
+   Lissajous drift that never visibly repeats). Meadow-only; reduced motion
+   hides the layer entirely (see the rm block at the bottom). */
+.bees {
   position: absolute;
-  left: 38px;
-  top: 16px;
-  animation: beeOrbitA 5.5s linear infinite;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.9s;
+  pointer-events: none;
 }
-.bee1 {
-  left: 24px;
-  top: 36px;
-  animation: beeOrbitB 6.8s linear infinite;
+.world.sc-meadow .bees {
+  opacity: 1;
 }
-.bee2 {
-  left: 54px;
-  top: 46px;
-  animation: beeOrbitC 4.7s linear infinite;
+.beeR {
+  position: absolute;
+  animation: beeRoamX linear infinite alternate;
+  will-change: transform;
+}
+.beeRy {
+  animation: beeRoamY ease-in-out infinite alternate;
 }
 .beeWing {
   transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: beeFlap 0.16s ease-in-out infinite alternate;
+}
+.beeWingB {
+  animation-delay: 0.08s;
+}
+/* ---------- meadow: waterfall accent on the backdrop crags ----------
+   A thin white fall line + drifting mist puff, drawn over the photo plane
+   (so it parallaxes with it). Meadow-only. */
+.falls {
+  display: none;
+  position: absolute;
+  left: 63%;
+  top: 17%;
+  width: 30px;
+  height: 24%;
+  pointer-events: none;
+}
+.world.sc-meadow .falls {
+  display: block;
+}
+.falls::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(240, 246, 252, 0),
+    rgba(240, 246, 252, 0.5) 12%,
+    rgba(240, 246, 252, 0.62) 55%,
+    rgba(240, 246, 252, 0.4)
+  );
+  filter: blur(0.6px);
+}
+.falls::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  width: 27px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(240, 246, 252, 0.4), rgba(240, 246, 252, 0) 70%);
+  filter: blur(2px);
+  animation: mistK 5.5s ease-in-out infinite;
+}
+/* the crow on the climbing boulder — an occasional wing ruffle */
+.crowWing {
+  transform-box: fill-box;
+  transform-origin: 30% 80%;
+  animation: ravWingK 11s infinite;
 }
 
 /* ---------- ambient critters + camp dressing ---------- */
@@ -1059,6 +1241,172 @@
   animation-delay: 7.4s;
   animation-duration: 12s;
 }
+/* round-4B density pass: four more motes, varied sizes */
+.bm6 {
+  left: 46%;
+  top: 8%;
+  width: 2px;
+  height: 2px;
+  animation-delay: 2.2s;
+  animation-duration: 10s;
+}
+.bm7 {
+  left: 57%;
+  top: 42%;
+  width: 4px;
+  height: 4px;
+  animation-delay: 5.3s;
+  animation-duration: 13s;
+}
+.bm8 {
+  left: 42%;
+  top: 22%;
+  width: 2px;
+  height: 2px;
+  animation-delay: 8.6s;
+  animation-duration: 9s;
+}
+.bm9 {
+  left: 50%;
+  top: 56%;
+  width: 4px;
+  height: 4px;
+  animation-delay: 0.8s;
+  animation-duration: 11s;
+}
+/* sand trickling off the slot ledge: grains cycle downward; the static
+   dashes still read as a trickle under reduced motion */
+.sandTrickle {
+  stroke-dasharray: 2.5 5.5;
+  animation: sandK 1.1s linear infinite;
+}
+.st2 {
+  stroke-dasharray: 2 7;
+  animation-duration: 1.5s;
+  animation-delay: 0.4s;
+}
+/* drifting glint on the beam-lit puddle */
+.puddleGlint {
+  opacity: 0;
+  animation: shimmerK 6s ease-in-out infinite;
+}
+
+/* ---------- round-4 scene ambience: snow + desert ---------- */
+/* Sparse falling snow (engine-built .flake divs; snow scene only). Flakes
+   are opacity 0 at rest, so reduced-motion (animation: none) hides them. */
+.snowfall {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.9s;
+  pointer-events: none;
+}
+.world.sc-snow .snowfall {
+  opacity: 1;
+}
+.flake {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #eef4fc;
+  filter: blur(0.4px);
+  opacity: 0;
+  animation: flakeK 10s linear infinite;
+}
+/* Cold-air breath puff off the hiker every ~6s (snow scene only). */
+.breath {
+  position: absolute;
+  left: 27px;
+  top: 7px;
+  width: 9px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(226, 238, 250, 0.7);
+  filter: blur(1.5px);
+  opacity: 0;
+  pointer-events: none;
+}
+.world.sc-snow .breath {
+  animation: breathK 6s ease-out infinite;
+}
+/* Aurora hint band — snow scene at night only, drifting slowly. */
+.aurora {
+  display: none;
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 5%;
+  height: 24%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    104deg,
+    rgba(90, 255, 190, 0) 8%,
+    rgba(90, 255, 190, 0.24) 30%,
+    rgba(120, 205, 255, 0.26) 52%,
+    rgba(150, 130, 255, 0.18) 70%,
+    rgba(90, 255, 190, 0) 92%
+  );
+  filter: blur(14px);
+}
+.world.night.sc-snow .aurora {
+  display: block;
+  animation: auroraK 16s ease-in-out infinite alternate;
+}
+/* Heat-shimmer band above the desert horizon — day only, very subtle. */
+.heatShimmer {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 49%;
+  height: 10%;
+  pointer-events: none;
+  backdrop-filter: blur(1.6px);
+  -webkit-backdrop-filter: blur(1.6px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 62%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 62%, transparent);
+  opacity: 0.4;
+}
+.world.sc-desert:not(.night) .heatShimmer {
+  display: block;
+  animation: heatK 7s ease-in-out infinite;
+}
+/* Circling hawk silhouette, high over the desert (fades out at night). */
+.hawkPath {
+  display: none;
+  position: absolute;
+  left: 58%;
+  top: 13%;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.9s;
+}
+.world.sc-desert .hawkPath {
+  display: block;
+  animation: hawkX 34s ease-in-out infinite alternate;
+}
+.world.night .hawkPath {
+  opacity: 0;
+}
+.hawkDrift {
+  animation: hawkY 11s ease-in-out infinite alternate;
+}
+.hawkDrift svg {
+  display: block;
+  animation: hawkTilt 9s ease-in-out infinite alternate;
+}
+/* Jackrabbit: hop out to the far bush, pause, flip, hop home. */
+.jackHop {
+  animation: jackK 9s ease-in-out infinite;
+}
+/* Open-water glint drifting along the frozen river. */
+.riverGlint {
+  opacity: 0;
+  animation: shimmerK 7s ease-in-out infinite;
+}
 
 /* Todoclaw's blink, ported from todoclaw/src/index.css (.tc-eye-blink):
    a quick scaleY squish of the eye groups every few seconds. */
@@ -1115,7 +1463,9 @@
   opacity: 1;
 }
 .world.sc-slot .ffs,
-.world.sc-camp .ffs {
+.world.sc-camp .ffs,
+.world.sc-snow .ffs,
+.world.sc-desert .ffs {
   opacity: 0 !important;
 }
 .ff {
@@ -1858,6 +2208,55 @@
     transform: scaleY(0.92) skewX(2deg);
   }
 }
+@keyframes sandK {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+@keyframes sparkK {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate(var(--sdx, 8px), -58px);
+    opacity: 0;
+  }
+}
+@keyframes fireGlowK {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+}
+@keyframes lickK {
+  0%,
+  52%,
+  90%,
+  100% {
+    transform: scaleY(0.1);
+    opacity: 0;
+  }
+  62% {
+    transform: scaleY(1.1) skewX(-4deg);
+    opacity: 1;
+  }
+  74% {
+    transform: scaleY(0.85) skewX(3deg);
+    opacity: 0.9;
+  }
+}
 @keyframes lidK {
   0% {
     transform: none;
@@ -1906,49 +2305,31 @@
     transform: scaleY(0.08);
   }
 }
-@keyframes beeOrbitA {
-  0%,
-  100% {
-    transform: translate(0, 0);
+@keyframes beeRoamX {
+  from {
+    transform: translateX(calc(var(--brx, 160px) * -1));
   }
-  25% {
-    transform: translate(16px, -10px);
-  }
-  50% {
-    transform: translate(30px, 2px);
-  }
-  75% {
-    transform: translate(10px, 12px);
+  to {
+    transform: translateX(var(--brx, 160px));
   }
 }
-@keyframes beeOrbitB {
-  0%,
-  100% {
-    transform: translate(0, 0);
+@keyframes beeRoamY {
+  from {
+    transform: translateY(calc(var(--bry, 40px) * -1));
   }
-  30% {
-    transform: translate(-12px, -14px);
-  }
-  55% {
-    transform: translate(8px, -22px);
-  }
-  80% {
-    transform: translate(16px, -6px);
+  to {
+    transform: translateY(var(--bry, 40px));
   }
 }
-@keyframes beeOrbitC {
+@keyframes mistK {
   0%,
   100% {
-    transform: translate(0, 0);
-  }
-  20% {
-    transform: translate(10px, -14px);
+    opacity: 0.55;
+    transform: scale(1);
   }
   50% {
-    transform: translate(-14px, -20px);
-  }
-  75% {
-    transform: translate(-18px, -4px);
+    opacity: 0.95;
+    transform: scale(1.25);
   }
 }
 @keyframes beeFlap {
@@ -2108,11 +2489,132 @@
     opacity: 0;
   }
 }
+@keyframes flakeK {
+  0% {
+    transform: translate3d(0, -4vh, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate3d(var(--sx, 16px), 74vh, 0);
+    opacity: 0;
+  }
+}
+@keyframes breathK {
+  0%,
+  90% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  93% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(9px, -7px) scale(1.5);
+  }
+}
+@keyframes auroraK {
+  from {
+    transform: translateX(-26px) skewX(-4deg);
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(26px) skewX(3deg);
+    opacity: 0.8;
+  }
+}
+@keyframes heatK {
+  0%,
+  100% {
+    opacity: 0.24;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(-3px);
+  }
+}
+@keyframes hawkX {
+  from {
+    transform: translateX(-150px);
+  }
+  to {
+    transform: translateX(130px);
+  }
+}
+@keyframes hawkY {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(46px);
+  }
+}
+@keyframes hawkTilt {
+  from {
+    transform: rotate(-6deg);
+  }
+  to {
+    transform: rotate(7deg);
+  }
+}
+@keyframes jackK {
+  0%,
+  18% {
+    transform: translate(0, 0) scaleX(1);
+  }
+  22% {
+    transform: translate(14px, -8px) scaleX(1);
+  }
+  26% {
+    transform: translate(28px, 0) scaleX(1);
+  }
+  30% {
+    transform: translate(42px, -8px) scaleX(1);
+  }
+  34%,
+  60% {
+    transform: translate(56px, 0) scaleX(1);
+  }
+  62%,
+  63% {
+    transform: translate(56px, 0) scaleX(-1);
+  }
+  67% {
+    transform: translate(42px, -8px) scaleX(-1);
+  }
+  71% {
+    transform: translate(28px, 0) scaleX(-1);
+  }
+  75% {
+    transform: translate(14px, -8px) scaleX(-1);
+  }
+  79%,
+  97% {
+    transform: translate(0, 0) scaleX(-1);
+  }
+  100% {
+    transform: translate(0, 0) scaleX(1);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .world *,
   .world *::before,
   .world *::after {
     animation: none !important;
     transition-duration: 0.01s !important;
+  }
+  /* ambience that would read as frozen mid-air: remove it entirely */
+  .bees {
+    display: none !important;
   }
 }

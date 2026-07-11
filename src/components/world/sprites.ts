@@ -1,10 +1,11 @@
 /**
- * Canvas pixel-art painters for the hiker, the chef NPC, and the meadow bear.
- * All sprites share one logical-pixel style; canvases are displayed at 3x
- * with image-rendering: pixelated.
+ * Canvas pixel-art painters for the hiker and the meadow bear. All sprites
+ * share one logical-pixel style; canvases are displayed at 3x with
+ * image-rendering: pixelated.
  *
  * (The old generic pixel dog is gone — Todoclaw's desk now uses the app's own
- * mascot art, see todoclaw-art.tsx.)
+ * mascot art, see todoclaw-art.tsx. The chef NPC retired round 4B: the
+ * ChefClaw station's anchor is the ingredient prep table.)
  */
 
 type Palette = Record<string, string>;
@@ -139,67 +140,4 @@ const BEAR_FRAMES: readonly [readonly string[], readonly string[]] = [
 
 export function paintBear(ctx: CanvasRenderingContext2D, frame: 0 | 1): void {
   paint(ctx, BEAR_FRAMES[frame], BEAR_PAL, BEAR.w, BEAR.h);
-}
-
-/* ---------- chef (15×22, 2-frame stirring loop) ---------- */
-
-export const CHEF = { w: 15, h: 22 } as const;
-
-const CHEF_PAL: Palette = {
-  W: "#f2ede2",
-  S: "#e6b48d",
-  E: "#26201c",
-  R: "#7a3d34",
-  A: "#e6e0d2",
-  P: "#232a3d",
-  K: "#3a2f22",
-  M: "#8a6a44",
-};
-
-const CHEF_BODY = [
-  "...AAAAAAAA....",
-  "...AAAAAAAA....",
-  "...AAAAAAAA....",
-  "...AAAAAAAA....",
-  "....AAAAAA.....",
-  "....PPPPPP.....",
-  "....PPPPPP.....",
-  "....PP..PP.....",
-  "....PP..PP.....",
-  "....PP..PP.....",
-  "...KKK..KKK....",
-  "...............",
-];
-
-const CHEF_FRAMES: readonly [readonly string[], readonly string[]] = [
-  [
-    "....WWWWWW.....",
-    "...WWWWWWWW....",
-    "....WWWWWW.....",
-    "....SSSSSS.....",
-    "....SESSSS.....",
-    ".....SSSS......",
-    "......SS.......",
-    "M...RRRRRR.....",
-    ".MSSRRRRRRR....",
-    "...AAAAAAAA....",
-    ...CHEF_BODY,
-  ],
-  [
-    "....WWWWWW.....",
-    "...WWWWWWWW....",
-    "....WWWWWW.....",
-    "....SSSSSS.....",
-    "....SESSSS.....",
-    ".....SSSS......",
-    "......SS.......",
-    "....RRRRRR.....",
-    "..SSRRRRRRR....",
-    ".M.AAAAAAAA....",
-    ...CHEF_BODY,
-  ],
-];
-
-export function paintChef(ctx: CanvasRenderingContext2D, frame: 0 | 1): void {
-  paint(ctx, CHEF_FRAMES[frame], CHEF_PAL, CHEF.w, CHEF.h);
 }

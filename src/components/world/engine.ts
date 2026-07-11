@@ -13,12 +13,13 @@ import {
   scenes,
   poiLocations,
   autoRoute,
+  type Blocker,
   type CardId,
   type SetPiece,
   type Station,
   type Vec,
 } from "@/content/site";
-import { paintHiker, paintChef, paintBear, type HikerFrame } from "./sprites";
+import { paintHiker, paintBear, type HikerFrame } from "./sprites";
 
 export interface EngineHooks {
   setScene: (idx: number) => void;
@@ -46,6 +47,7 @@ export interface AttachRefs {
   motes: HTMLElement;
   fireflies: HTMLElement;
   embers: HTMLElement;
+  snowfall: HTMLElement;
 }
 
 type Side = "left" | "right" | null;
@@ -93,9 +95,9 @@ interface StationRec {
   gy: number;
 }
 
+/** Ambient pixel-art critters painted by the engine (currently the bear). */
 interface NpcRec {
   ctx: CanvasRenderingContext2D;
-  kind: "chef" | "bear";
   frame: 0 | 1;
   acc: number;
   period: number;
@@ -118,11 +120,13 @@ export class WorldEngine {
   private rm = false;
 
   private gx = 0;
-  // Spawn a step in front of the campfire (gy 72), not inside its footprint.
+  // Spawn on the meadow trail (round 4: the world starts at the meadow).
   private gy = 72;
   private camX = 0;
   private facing = 1;
   private target: Vec | null = null;
+  /** Waypoints still to visit after `target` (path-following travel). */
+  private queue: Vec[] = [];
   private walkAcc = 0;
   private walking = false;
   private curFrame: HikerFrame = "idle";
@@ -131,8 +135,17 @@ export class WorldEngine {
   private cur = 0;
   private gxcl = scenes[0].gxClamp;
   private camcl = scenes[0].camClamp;
+  private blockers: Blocker[] = scenes[0].blockers;
+  private scenePath: Vec[] = scenes[0].path;
   private transitioning = false;
   private pending: { idx: number; side: Side; thenTarget: Vec | null } | null = null;
+  /**
+   * A navigation request (chip click / travelTo) that landed DURING a scene
+   * fade. Instead of dropping it (the old behavior), the latest one is kept
+   * and executed when the transition completes. Only idx + target are
+   * stored — the entry side is recomputed against wherever we end up.
+   */
+  private queuedNav: { idx: number; thenTarget: Vec | null } | null = null;
 
   private activeId: CardId | null = null;
   private suppressed: CardId | null = null;
@@ -196,11 +209,15 @@ export class WorldEngine {
     window.removeEventListener("keyup", this.onKeyUp);
     if (this.refs) {
       this.refs.root.removeEventListener("pointerdown", this.onPointerDown);
-      [this.refs.stars, this.refs.motes, this.refs.fireflies, this.refs.embers].forEach(
-        (el) => {
-          el.innerHTML = "";
-        },
-      );
+      [
+        this.refs.stars,
+        this.refs.motes,
+        this.refs.fireflies,
+        this.refs.embers,
+        this.refs.snowfall,
+      ].forEach((el) => {
+        el.innerHTML = "";
+      });
     }
     this.refs = null;
     this.itemsEl = null;
@@ -213,6 +230,8 @@ export class WorldEngine {
     this.cur = idx;
     this.gxcl = sc.gxClamp;
     this.camcl = sc.camClamp;
+    this.blockers = sc.blockers;
+    this.scenePath = sc.path;
     const pending = this.pending;
     this.pending = null;
     const side = pending ? pending.side : null;
@@ -220,21 +239,36 @@ export class WorldEngine {
     else if (side === "right") this.gx = this.gxcl - 90;
     else if (!pending) this.gx = 0;
     this.gy = Math.max(20, Math.min(92, this.gy));
+    if (this.blockedAt(this.gx, this.gy)) this.unstick();
     this.camX = Math.max(-this.camcl, Math.min(this.camcl, this.gx));
     this.target = null;
+    this.queue = [];
     this.suppressed = null;
     this.rescan(itemsEl, idx);
     this.measure();
     this.positionAll();
     this.paintBackdrop(0);
-    if (pending && pending.thenTarget) this.walkTo(pending.thenTarget);
+    if (pending && pending.thenTarget) this.walkVia(pending.thenTarget);
     if (this.transitioning) {
-      if (this.rm) this.transitioning = false;
+      if (this.rm) this.endTransition();
       else
         this.after(80, () => {
           this.refs?.fader.classList.remove("on");
-          this.transitioning = false;
+          this.endTransition();
         });
+    }
+  }
+
+  /** Fade finished: release the guard, then run any queued navigation. */
+  private endTransition(): void {
+    this.transitioning = false;
+    const q = this.queuedNav;
+    this.queuedNav = null;
+    if (!q) return;
+    if (q.idx === this.cur) {
+      if (q.thenTarget) this.walkVia(q.thenTarget);
+    } else {
+      this.requestScene(q.idx, q.idx > this.cur ? "left" : "right", q.thenTarget);
     }
   }
 
@@ -243,7 +277,10 @@ export class WorldEngine {
   travelTo(poi: CardId): void {
     const loc = poiLocations[poi];
     this.suppressed = null;
-    if (loc.scene === this.cur) this.walkTo({ ...loc.approach });
+    // Mid-fade the current scene is about to change, so even a "same scene"
+    // walk must be queued (requestScene queues) — otherwise a chip click
+    // landing during a transition is silently lost.
+    if (!this.transitioning && loc.scene === this.cur) this.walkVia({ ...loc.approach });
     else
       this.requestScene(loc.scene, loc.scene > this.cur ? "left" : "right", {
         ...loc.approach,
@@ -254,7 +291,7 @@ export class WorldEngine {
     if (this.transitioning) return;
     this.suppressed = null;
     const d = Math.hypot(this.gx - p.gx, (this.gy - p.gy) * GW);
-    if (d > 85) this.walkTo({ ...p.approach });
+    if (d > 85) this.walkVia({ ...p.approach });
     else this.openCard(p.id);
   }
 
@@ -265,7 +302,7 @@ export class WorldEngine {
     this.suppressed = null;
     const d = Math.hypot(this.gx - s.gx, (this.gy - s.gy) * GW);
     if (d > 85)
-      this.walkTo({ gx: s.gx + (this.gx < s.gx ? -52 : 52), gy: Math.min(96, s.gy + 12) });
+      this.walkVia({ gx: s.gx + (this.gx < s.gx ? -52 : 52), gy: Math.min(96, s.gy + 12) });
     if (s.anim && !this.rm && el) {
       el.dataset.busy = "1";
       el.classList.add(s.anim);
@@ -333,6 +370,8 @@ export class WorldEngine {
       this.closeCard();
     }
     this.target = null;
+    this.queue = [];
+    this.queuedNav = null;
   }
 
   private startAuto(mode: "manual" | "attract"): void {
@@ -340,6 +379,7 @@ export class WorldEngine {
     this.closeCard();
     this.keys = { l: 0, r: 0, u: 0, d: 0 };
     this.target = null;
+    this.queue = [];
     const idx = mode === "attract" ? this.nearestRouteIdx() : 0;
     this.auto = { idx, phase: "go", timer: 0, mode, dir: 1 };
     if (mode === "manual") this.hooks.setAuto(true);
@@ -374,6 +414,8 @@ export class WorldEngine {
     const mode = this.auto.mode;
     this.auto = null;
     this.target = null;
+    this.queue = [];
+    this.queuedNav = null;
     if (mode === "attract") {
       this.hooks.setAttract(false);
       if (this.activeId && this.refs && !this.refs.card.matches(":hover")) {
@@ -401,16 +443,174 @@ export class WorldEngine {
     };
   }
 
+  /* ----- walkability (round 4): blockers, sliding, nearest-walkable ----- */
+
+  private blockedAt(gx: number, gy: number): boolean {
+    for (const b of this.blockers) {
+      const dx = Math.abs(gx - b.gx);
+      const dy = Math.abs(gy - b.gy);
+      if (b.shape === "rect") {
+        if (dx <= b.hw && dy <= b.hh) return true;
+      } else {
+        const ex = dx / b.hw;
+        const ey = dy / b.hh;
+        if (ex * ex + ey * ey <= 1) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Spawn landed inside a blocker (scene entry) — nudge to open ground. */
+  private unstick(): void {
+    for (let r = 2; r <= 60; r += 2) {
+      for (const [dx, dy] of [
+        [0, r],
+        [0, -r],
+        [r * 2, 0],
+        [-r * 2, 0],
+        [r * 2, r],
+        [-r * 2, r],
+      ] as const) {
+        const gx = Math.max(-this.gxcl, Math.min(this.gxcl, this.gx + dx));
+        const gy = Math.max(0, Math.min(100, this.gy + dy));
+        if (!this.blockedAt(gx, gy)) {
+          this.gx = gx;
+          this.gy = gy;
+          return;
+        }
+      }
+    }
+  }
+
+  /**
+   * Resolve a blocked walk target to the nearest walkable point on the
+   * segment back toward the hiker (i.e. the shore/edge the walk approaches
+   * from). Falls back to standing still if the whole segment is blocked.
+   */
+  private toWalkable(tg: Vec): Vec {
+    if (!this.blockedAt(tg.gx, tg.gy)) return tg;
+    const dx = this.gx - tg.gx;
+    const dy = this.gy - tg.gy;
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy * GW) / 3));
+    for (let i = 1; i <= steps; i++) {
+      const gx = tg.gx + (dx * i) / steps;
+      const gy = tg.gy + (dy * i) / steps;
+      if (!this.blockedAt(gx, gy)) return { gx, gy };
+    }
+    return { gx: this.gx, gy: this.gy };
+  }
+
+  /**
+   * Move toward (nx, ny), sliding along blocker edges. On a hit, the WHOLE
+   * step is re-aimed along a free axis (a wall glide) — otherwise shallow
+   * -angle collisions would creep by only their tiny cross component and
+   * read as stuck. Returns true if the position changed.
+   */
+  private slideTo(nx: number, ny: number): boolean {
+    nx = Math.max(-this.gxcl, Math.min(this.gxcl, nx));
+    ny = Math.max(0, Math.min(100, ny));
+    const ox = this.gx;
+    const oy = this.gy;
+    if (!this.blockedAt(nx, ny)) {
+      this.gx = nx;
+      this.gy = ny;
+    } else {
+      const step = Math.hypot(nx - ox, (ny - oy) * GW);
+      const sx = nx !== ox ? Math.sign(nx - ox) : 0;
+      const sy = ny !== oy ? Math.sign(ny - oy) : oy > 50 ? -1 : 1;
+      const cands: Array<[number, number]> = [
+        [ox + sx * step, oy],
+        [ox, oy + (sy * step) / GW],
+        [ox, oy - (sy * step) / GW],
+      ];
+      // Mostly-vertical pushes glide vertically first.
+      if (Math.abs((ny - oy) * GW) > Math.abs(nx - ox)) cands.unshift(cands.splice(1, 1)[0]);
+      for (const [cx, cy] of cands) {
+        const gx = Math.max(-this.gxcl, Math.min(this.gxcl, cx));
+        const gy = Math.max(0, Math.min(100, cy));
+        if ((Math.abs(gx - ox) > 1e-4 || Math.abs(gy - oy) > 1e-4) && !this.blockedAt(gx, gy)) {
+          this.gx = gx;
+          this.gy = gy;
+          break;
+        }
+      }
+    }
+    return Math.abs(this.gx - ox) > 1e-4 || Math.abs(this.gy - oy) > 1e-4;
+  }
+
+  private wdist(a: Vec, b: Vec): number {
+    return Math.hypot(a.gx - b.gx, (a.gy - b.gy) * GW);
+  }
+
+  /** Direct walk (raw click-to-move / ground taps). Blocked targets resolve
+   *  to the nearest walkable point; blockers are slid along en route. */
   private walkTo(tg: Vec): void {
-    const t = {
+    const t = this.toWalkable({
       gx: Math.max(-this.gxcl, Math.min(this.gxcl, tg.gx)),
       gy: Math.max(0, Math.min(100, tg.gy)),
-    };
+    });
+    this.queue = [];
     if (this.rm) {
       this.gx = t.gx;
       this.gy = t.gy;
       this.target = null;
     } else this.target = t;
+    this.ripple(t);
+  }
+
+  /**
+   * Programmatic travel (chips, POI approach walks, auto/attract): follow
+   * the scene's drawn path between here and the destination — enter at the
+   * nearest waypoint, walk node to node, then peel off to the target.
+   */
+  private walkVia(tg: Vec): void {
+    const t = this.toWalkable({
+      gx: Math.max(-this.gxcl, Math.min(this.gxcl, tg.gx)),
+      gy: Math.max(0, Math.min(100, tg.gy)),
+    });
+    if (this.rm) {
+      this.gx = t.gx;
+      this.gy = t.gy;
+      this.target = null;
+      this.queue = [];
+      return;
+    }
+    const here = { gx: this.gx, gy: this.gy };
+    const path = this.scenePath;
+    const nodes: Vec[] = [];
+    if (path.length >= 2 && this.wdist(here, t) > 130) {
+      let ai = 0;
+      let bi = 0;
+      let ad = Infinity;
+      let bd = Infinity;
+      path.forEach((p, i) => {
+        const da = this.wdist(here, p);
+        if (da < ad) {
+          ad = da;
+          ai = i;
+        }
+        const db = this.wdist(t, p);
+        if (db < bd) {
+          bd = db;
+          bi = i;
+        }
+      });
+      const dir = bi >= ai ? 1 : -1;
+      for (let i = ai; i !== bi + dir; i += dir) nodes.push(path[i]);
+      // Don't backtrack to enter the path, and don't overshoot the goal.
+      while (nodes.length >= 2 && this.wdist(here, nodes[1]) <= this.wdist(nodes[0], nodes[1]))
+        nodes.shift();
+      while (
+        nodes.length >= 2 &&
+        this.wdist(nodes[nodes.length - 2], t) <= this.wdist(nodes[nodes.length - 1], t)
+      )
+        nodes.pop();
+      while (nodes.length && this.wdist(here, nodes[0]) < 24) nodes.shift();
+      if (nodes.length && this.wdist(t, nodes[nodes.length - 1]) < 24) nodes.pop();
+    }
+    const pts = [...nodes.map((n) => ({ ...n })), t];
+    this.target = pts.shift() ?? null;
+    this.queue = pts;
     this.ripple(t);
   }
 
@@ -430,7 +630,12 @@ export class WorldEngine {
   }
 
   private requestScene(idx: number, side: Side, thenTarget: Vec | null): void {
-    if (this.transitioning) return;
+    if (this.transitioning) {
+      // A click landed mid-fade (chips especially): queue the latest request
+      // and run it from endTransition() instead of dropping it.
+      this.queuedNav = { idx, thenTarget };
+      return;
+    }
     if (idx === this.cur) {
       if (thenTarget) this.walkTo(thenTarget);
       return;
@@ -465,23 +670,15 @@ export class WorldEngine {
     itemsEl.querySelectorAll<HTMLCanvasElement>("canvas[data-npc]").forEach((cv) => {
       const ctx = cv.getContext("2d");
       if (!ctx) return;
-      const kind: "chef" | "bear" = cv.dataset.npc === "bear" ? "bear" : "chef";
-      const rec: NpcRec = {
-        ctx,
-        kind,
-        frame: 0,
-        acc: kind === "chef" ? 0.5 : 0,
-        // The bear's head-turn is a slow, occasional gesture (~3s a frame).
-        period: kind === "chef" ? 1 : 3,
-      };
+      // The bear's head-turn is a slow, occasional gesture (~3s a frame).
+      const rec: NpcRec = { ctx, frame: 0, acc: 0, period: 3 };
       this.paintNpc(rec);
       this.npcs.push(rec);
     });
   }
 
   private paintNpc(n: NpcRec): void {
-    if (n.kind === "bear") paintBear(n.ctx, n.frame);
-    else paintChef(n.ctx, n.frame);
+    paintBear(n.ctx, n.frame);
   }
 
   private setFrame(f: HikerFrame): void {
@@ -493,14 +690,17 @@ export class WorldEngine {
 
   private buildParticles(): void {
     if (!this.refs) return;
-    const { stars, motes, fireflies, embers } = this.refs;
+    const { stars, motes, fireflies, embers, snowfall } = this.refs;
     stars.innerHTML = "";
     motes.innerHTML = "";
     fireflies.innerHTML = "";
     embers.innerHTML = "";
-    for (let i = 0; i < 42; i++) {
+    snowfall.innerHTML = "";
+    // Base starfield + a desert-only booster set (.stX, CSS-gated): the
+    // desert night is a huge open sky, so it gets roughly 2.5× the stars.
+    for (let i = 0; i < 106; i++) {
       const st = document.createElement("div");
-      st.className = "st";
+      st.className = i < 42 ? "st" : "st stX";
       st.style.left = `${Math.random() * 100}%`;
       st.style.top = `${Math.random() * 33}%`;
       const sz = Math.random() < 0.3 ? 2 : 1;
@@ -509,6 +709,17 @@ export class WorldEngine {
       st.style.animationDelay = `${Math.random() * 4}s`;
       st.style.animationDuration = `${2 + Math.random() * 3}s`;
       stars.appendChild(st);
+    }
+    // Sparse falling snow — visible only in the snow scene (CSS-gated), and
+    // stays invisible under reduced motion (base opacity 0, animation only).
+    for (let i = 0; i < 16; i++) {
+      const fl = document.createElement("div");
+      fl.className = "flake";
+      fl.style.left = `${Math.random() * 100}%`;
+      fl.style.setProperty("--sx", `${Math.round(Math.random() * 60 - 30)}px`);
+      fl.style.animationDelay = `${Math.random() * 9}s`;
+      fl.style.animationDuration = `${8 + Math.random() * 7}s`;
+      snowfall.appendChild(fl);
     }
     for (let i = 0; i < 8; i++) {
       const mo = document.createElement("div");
@@ -557,6 +768,7 @@ export class WorldEngine {
     if (k) {
       this.keys[k] = 1;
       this.target = null;
+      this.queue = [];
       if (e.key.startsWith("Arrow")) e.preventDefault();
     }
   };
@@ -705,7 +917,7 @@ export class WorldEngine {
           this.requestScene(loc.scene, loc.scene > this.cur ? "left" : "right", {
             ...loc.approach,
           });
-        else this.walkTo({ ...loc.approach });
+        else this.walkVia({ ...loc.approach });
         a.phase = "travel";
       }
     } else if (!this.transitioning && this.cur === loc.scene && !this.target) {
@@ -758,16 +970,17 @@ export class WorldEngine {
     this.maybeStartAttract(now);
     this.stepAuto(dt);
 
-    /* movement */
+    /* movement (round 4: all motion resolves through the blocker slide) */
     if (!this.transitioning) {
       const vx = this.keys.r - this.keys.l;
       const vy = this.keys.d - this.keys.u;
       let moved = false;
       if (vx || vy) {
         const inv = 1 / Math.hypot(vx, vy);
-        this.gx += vx * inv * SPEED * dt;
-        this.gy += (vy * inv * SPEED * dt) / GW;
-        moved = true;
+        moved = this.slideTo(
+          this.gx + vx * inv * SPEED * dt,
+          this.gy + (vy * inv * SPEED * dt) / GW,
+        );
         if (vx) this.facing = vx > 0 ? 1 : -1;
       } else if (this.target) {
         const dx = this.target.gx - this.gx;
@@ -777,11 +990,12 @@ export class WorldEngine {
         if (d <= stp || d < 2) {
           this.gx = this.target.gx;
           this.gy = this.target.gy;
-          this.target = null;
+          this.target = this.queue.shift() ?? null;
+          moved = this.target !== null;
         } else {
-          this.gx += (dx / d) * stp;
-          this.gy += (dyw / d) * stp / GW;
-          moved = true;
+          moved = this.slideTo(this.gx + (dx / d) * stp, this.gy + ((dyw / d) * stp) / GW);
+          // Wedged against a blocker: skip to the next waypoint, not stall.
+          if (!moved) this.target = this.queue.shift() ?? null;
           if (Math.abs(dx) > 1) this.facing = dx > 0 ? 1 : -1;
         }
       }
