@@ -56,7 +56,6 @@ export type DecorKind =
   | "daisies"
   | "clover"
   | "worn"
-  | "climb"
   | "pathstamp"
   | "snowpine"
   | "snowmound"
@@ -71,7 +70,10 @@ export type DecorKind =
   | "tent"
   | "bench"
   | "poles"
-  | "seedheads";
+  | "seedheads"
+  | "waveledge"
+  | "sandfall"
+  | "puddle";
 export type StationAnim = "opening" | "popping";
 
 export interface Vec {
@@ -625,27 +627,45 @@ export const scenes: Scene[] = [
     cls: "sc-slot",
     img: "/world/slot.jpg",
     bgPos: "center 30%",
-    aria: "Stylized slot canyon with a light beam, drifting dust, a camera tripod, a climbing rope on the wall, a raven, and a walkable hiker character",
+    aria: "Stylized slot canyon with sculpted wave ledges on both walls, a light beam with drifting dust, a trickle of falling sand, a shallow reflective puddle, smooth stones, a photographer's tripod setup with an open camera bag and a laid-out print, a raven, and a walkable hiker character",
     gxClamp: 336,
     camClamp: 92,
     exits: { left: 0, right: 2 },
     path: SLOT_PATH,
-    blockers: [],
+    // Round 4B redress: sculpted wave-ledges hug both walls (their bases
+    // blocked), the photographer's setup gets a small base blocker, and
+    // everything on the floor is identifiable at a glance — smooth stones,
+    // wind-rippled sand, a beam-lit puddle. (The old climbing wall dressing
+    // moved to the meadow's boulder.)
+    blockers: [
+      { shape: "ellipse", gx: -290, gy: 32, hw: 60, hh: 5 }, // west wave-ledge
+      { shape: "ellipse", gx: 295, gy: 34, hw: 60, hh: 5 }, // east wave-ledge
+      { shape: "ellipse", gx: 50, gy: 56, hw: 30, hh: 4 }, // photographer's setup
+    ],
     decor: [
       ...pathStamps(SLOT_PATH, 1),
-      { kind: "slotRock", gx: -180, gy: 30 },
+      // sculpted wave-ledges (stepped curved shelves echoing the walls)
+      { kind: "waveledge", gx: -290, gy: 32 },
+      { kind: "waveledge", gx: 295, gy: 34, v: 1 },
+      // sand trickling off the east ledge, piling below
+      { kind: "sandfall", gx: 252, gy: 50 },
+      // the beam-lit puddle
+      { kind: "puddle", gx: -40, gy: 62, flat: true },
+      // floor dressing: rocks, smooth sand-polished stones, rippled sand
       { kind: "slotRock", gx: 120, gy: 76 },
       { kind: "slotRock", gx: -70, gy: 84 },
-      { kind: "slotRock", gx: -140, gy: 62 },
+      { kind: "slotRock", gx: -140, gy: 58 },
+      { kind: "stones", gx: -120, gy: 86, v: 1 },
+      { kind: "stones", gx: 180, gy: 82, v: 1 },
+      { kind: "stones", gx: -230, gy: 66, v: 1 },
       { kind: "sandline", gx: -210, gy: 74, flat: true },
       { kind: "sandline", gx: 110, gy: 84, v: 1, flat: true },
       { kind: "sandline", gx: -30, gy: 90, v: 2, flat: true },
       { kind: "sandline", gx: 235, gy: 70, v: 1, flat: true },
       { kind: "slab", gx: -115, gy: 72, flat: true },
-      { kind: "raven", gx: -255, gy: 22 },
-      // Round 4: the climbing vignette stays as wall dressing (Skills moved
-      // to the desert gear cache).
-      { kind: "climb", gx: 235, gy: 42 },
+      // the raven sits just in front of the west fin, reading as perched on
+      // its lowest shelf (fin anchors at gy 32; the raven draws over it)
+      { kind: "raven", gx: -262, gy: 37 },
     ],
     signs: [
       { text: "← THE MEADOW", gx: -282, gy: 52 },

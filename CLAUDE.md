@@ -21,8 +21,10 @@ Key decisions (start scene revised round 4):
 
 - **Start scene: the meadow** (About & Athletics); **the camp is the finale** (always night,
   campfire, both project stations).
-- **Stations:** Todoclaw = planner desk (dog NPC), ChefClaw = camp kitchen (chef NPC, lid-pop
-  reveal), Contact = the campfire. Single-click opens — no hold-to-open interactions.
+- **Stations:** Todoclaw = planner desk (the app's own mascot art), ChefClaw = camp kitchen
+  (neon recipe screen + ingredient prep table — no chef NPC since round 4B; the small cook pot
+  keeps the lid-pop reveal), Contact = the campfire. Single-click opens — no hold-to-open
+  interactions.
 - **Waypoints are furnished set-pieces** (lake, grove, signposts), never bare markers in empty ground.
 - **Auto mode:** a play button walks the expedition through every stop on its own.
 - **Day/night** relighting; movement modestly brisk; reduced-motion = teleport + no ambient animation.

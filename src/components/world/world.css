@@ -515,9 +515,10 @@
 .item[data-kind="butterfly"] .in::after,
 .item[data-kind="lanterns"] .in::after,
 .item[data-kind="lake"] .in::after,
-.item[data-kind="climb"] .in::after,
 .item[data-kind="scrub"] .in::after,
 .item[data-kind="tent"] .in::after,
+.item[data-kind="waveledge"] .in::after,
+.item[data-kind="sandfall"] .in::after,
 .item[data-kind="fire"] .in::after {
   display: none;
 }
@@ -1239,6 +1240,55 @@
   top: 34%;
   animation-delay: 7.4s;
   animation-duration: 12s;
+}
+/* round-4B density pass: four more motes, varied sizes */
+.bm6 {
+  left: 46%;
+  top: 8%;
+  width: 2px;
+  height: 2px;
+  animation-delay: 2.2s;
+  animation-duration: 10s;
+}
+.bm7 {
+  left: 57%;
+  top: 42%;
+  width: 4px;
+  height: 4px;
+  animation-delay: 5.3s;
+  animation-duration: 13s;
+}
+.bm8 {
+  left: 42%;
+  top: 22%;
+  width: 2px;
+  height: 2px;
+  animation-delay: 8.6s;
+  animation-duration: 9s;
+}
+.bm9 {
+  left: 50%;
+  top: 56%;
+  width: 4px;
+  height: 4px;
+  animation-delay: 0.8s;
+  animation-duration: 11s;
+}
+/* sand trickling off the slot ledge: grains cycle downward; the static
+   dashes still read as a trickle under reduced motion */
+.sandTrickle {
+  stroke-dasharray: 2.5 5.5;
+  animation: sandK 1.1s linear infinite;
+}
+.st2 {
+  stroke-dasharray: 2 7;
+  animation-duration: 1.5s;
+  animation-delay: 0.4s;
+}
+/* drifting glint on the beam-lit puddle */
+.puddleGlint {
+  opacity: 0;
+  animation: shimmerK 6s ease-in-out infinite;
 }
 
 /* ---------- round-4 scene ambience: snow + desert ---------- */
@@ -2156,6 +2206,11 @@
   }
   60% {
     transform: scaleY(0.92) skewX(2deg);
+  }
+}
+@keyframes sandK {
+  to {
+    stroke-dashoffset: -16;
   }
 }
 @keyframes sparkK {

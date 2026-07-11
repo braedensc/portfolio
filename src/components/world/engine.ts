@@ -139,6 +139,13 @@ export class WorldEngine {
   private scenePath: Vec[] = scenes[0].path;
   private transitioning = false;
   private pending: { idx: number; side: Side; thenTarget: Vec | null } | null = null;
+  /**
+   * A navigation request (chip click / travelTo) that landed DURING a scene
+   * fade. Instead of dropping it (the old behavior), the latest one is kept
+   * and executed when the transition completes. Only idx + target are
+   * stored — the entry side is recomputed against wherever we end up.
+   */
+  private queuedNav: { idx: number; thenTarget: Vec | null } | null = null;
 
   private activeId: CardId | null = null;
   private suppressed: CardId | null = null;
@@ -243,12 +250,25 @@ export class WorldEngine {
     this.paintBackdrop(0);
     if (pending && pending.thenTarget) this.walkVia(pending.thenTarget);
     if (this.transitioning) {
-      if (this.rm) this.transitioning = false;
+      if (this.rm) this.endTransition();
       else
         this.after(80, () => {
           this.refs?.fader.classList.remove("on");
-          this.transitioning = false;
+          this.endTransition();
         });
+    }
+  }
+
+  /** Fade finished: release the guard, then run any queued navigation. */
+  private endTransition(): void {
+    this.transitioning = false;
+    const q = this.queuedNav;
+    this.queuedNav = null;
+    if (!q) return;
+    if (q.idx === this.cur) {
+      if (q.thenTarget) this.walkVia(q.thenTarget);
+    } else {
+      this.requestScene(q.idx, q.idx > this.cur ? "left" : "right", q.thenTarget);
     }
   }
 
@@ -257,7 +277,10 @@ export class WorldEngine {
   travelTo(poi: CardId): void {
     const loc = poiLocations[poi];
     this.suppressed = null;
-    if (loc.scene === this.cur) this.walkVia({ ...loc.approach });
+    // Mid-fade the current scene is about to change, so even a "same scene"
+    // walk must be queued (requestScene queues) — otherwise a chip click
+    // landing during a transition is silently lost.
+    if (!this.transitioning && loc.scene === this.cur) this.walkVia({ ...loc.approach });
     else
       this.requestScene(loc.scene, loc.scene > this.cur ? "left" : "right", {
         ...loc.approach,
@@ -348,6 +371,7 @@ export class WorldEngine {
     }
     this.target = null;
     this.queue = [];
+    this.queuedNav = null;
   }
 
   private startAuto(mode: "manual" | "attract"): void {
@@ -391,6 +415,7 @@ export class WorldEngine {
     this.auto = null;
     this.target = null;
     this.queue = [];
+    this.queuedNav = null;
     if (mode === "attract") {
       this.hooks.setAttract(false);
       if (this.activeId && this.refs && !this.refs.card.matches(":hover")) {
@@ -605,7 +630,12 @@ export class WorldEngine {
   }
 
   private requestScene(idx: number, side: Side, thenTarget: Vec | null): void {
-    if (this.transitioning) return;
+    if (this.transitioning) {
+      // A click landed mid-fade (chips especially): queue the latest request
+      // and run it from endTransition() instead of dropping it.
+      this.queuedNav = { idx, thenTarget };
+      return;
+    }
     if (idx === this.cur) {
       if (thenTarget) this.walkTo(thenTarget);
       return;

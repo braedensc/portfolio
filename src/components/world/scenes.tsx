@@ -336,14 +336,17 @@ function NeedlesArt() {
   );
 }
 
-/** Small stone cluster. */
-function StonesArt() {
+/** Small stone cluster. v1 = smooth sand-polished sandstone (slot canyon). */
+function StonesArt({ v = 0 }: { v?: number }) {
+  const [a, b, c, ridge] = v
+    ? ["#a4713f", "#b98450", "#8a5c33", "#c9955e"]
+    : ["#55504a", "#625c54", "#4c4640", "#6e685f"];
   return (
     <svg width="30" height="12" viewBox="0 0 30 12" aria-hidden="true">
-      <ellipse cx="7" cy="8" rx="5" ry="3.4" fill="#55504a" />
-      <ellipse cx="16" cy="9" rx="3.6" ry="2.6" fill="#625c54" />
-      <ellipse cx="24" cy="7.5" rx="4" ry="3" fill="#4c4640" />
-      <path d="M4 6.5Q7 4.5 10 6" stroke="#6e685f" strokeWidth="1" fill="none" />
+      <ellipse cx="7" cy="8" rx="5" ry="3.4" fill={a} />
+      <ellipse cx="16" cy="9" rx="3.6" ry="2.6" fill={b} />
+      <ellipse cx="24" cy="7.5" rx="4" ry="3" fill={c} />
+      <path d="M4 6.5Q7 4.5 10 6" stroke={ridge} strokeWidth="1" fill="none" />
     </svg>
   );
 }
@@ -956,7 +959,7 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
     case "needles":
       return <NeedlesArt />;
     case "stones":
-      return <StonesArt />;
+      return <StonesArt v={v} />;
     case "lightpool":
       return <LightPoolArt v={v} />;
     case "daisies":
@@ -965,8 +968,12 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <CloverArt />;
     case "worn":
       return <WornArt v={v} />;
-    case "climb":
-      return <ClimbArt />;
+    case "waveledge":
+      return <WaveLedgeArt v={v} />;
+    case "sandfall":
+      return <SandfallArt />;
+    case "puddle":
+      return <PuddleArt />;
     case "pathstamp":
       return <PathStampArt v={v} />;
     case "snowpine":
@@ -1252,19 +1259,38 @@ function GroveArt() {
   );
 }
 
+/**
+ * The photographer's setup (upgraded round 4B): tripod + camera, an open
+ * camera bag with a spare lens, and a print laid out on a ground cloth.
+ */
 function PhotoArt() {
   return (
-    <svg width="66" height="70" viewBox="0 0 66 70" aria-hidden="true">
-      <path d="M30 30L14 66" stroke="#4a3a2c" strokeWidth="3" strokeLinecap="round" />
-      <path d="M30 30L46 66" stroke="#4a3a2c" strokeWidth="3" strokeLinecap="round" />
-      <path d="M30 30L30 64" stroke="#3d3024" strokeWidth="3" strokeLinecap="round" />
-      <rect x="17" y="12" width="26" height="17" rx="2" fill="#38312c" />
-      <rect x="21" y="8" width="10" height="5" rx="1.5" fill="#38312c" />
-      <circle cx="30" cy="20.5" r="5.5" fill="#1d1a17" stroke="#6e6b5e" strokeWidth="1.5" />
-      <circle cx="41" cy="16" r="1.5" fill="#c9524a" />
-      <g transform="rotate(-8 55 58)">
-        <rect x="48" y="46" width="15" height="12" fill="#8a6a42" />
-        <rect x="50" y="48" width="11" height="8" fill="#d8cfc0" />
+    <svg width="118" height="86" viewBox="0 0 118 86" aria-hidden="true">
+      {/* tripod + camera */}
+      <path d="M36 38L18 82" stroke="#4a3a2c" strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M36 38L54 82" stroke="#4a3a2c" strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M36 38L36 78" stroke="#3d3024" strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M27 60L45 60" stroke="#3d3024" strokeWidth="1.6" />
+      <rect x="21" y="17" width="30" height="20" rx="2.5" fill="#38312c" />
+      <rect x="26" y="12" width="12" height="6" rx="2" fill="#38312c" />
+      <circle cx="36" cy="27" r="6.5" fill="#1d1a17" stroke="#6e6b5e" strokeWidth="1.8" />
+      <circle cx="36" cy="27" r="2.4" fill="#3a4a5f" />
+      <circle cx="48" cy="21" r="1.7" fill="#c9524a" />
+      {/* open camera bag with a spare lens */}
+      <g>
+        <path d="M66 62Q66 50 78 50L92 50Q100 50 100 60L100 74L66 74Z" fill="#4a3a2c" />
+        <path d="M66 62L100 60" stroke="#38291c" strokeWidth="1.6" />
+        <path d="M64 52Q76 40 96 46L92 52Q78 46 68 56Z" fill="#5c4936" />
+        <circle cx="83" cy="60" r="6" fill="#1d1a17" stroke="#6e6b5e" strokeWidth="1.4" />
+        <circle cx="83" cy="60" r="2.2" fill="#3a4a5f" />
+        <path d="M70 74L70 66M96 74L96 66" stroke="#38291c" strokeWidth="1.4" />
+      </g>
+      {/* print laid out on a ground cloth */}
+      <g transform="rotate(-5 96 80)">
+        <rect x="80" y="76" width="34" height="10" rx="1.5" fill="#8a7a5e" opacity="0.6" />
+        <rect x="84" y="74" width="24" height="12" fill="#f2eee2" />
+        <rect x="86" y="76" width="20" height="5" fill="#46608c" />
+        <rect x="86" y="81" width="20" height="3" fill="#a55f36" />
       </g>
     </svg>
   );
@@ -1379,44 +1405,92 @@ function BearRockArt() {
 }
 
 /**
- * Climbing vignette on the slot canyon wall: rope, three anchor bolts, and a
- * chalk bag — the SKILLS point of interest.
+ * Sculpted wave-ledge (round 4B slot redress): a stack of stepped, curved
+ * sandstone shelves hugging the canyon wall, echoing the backdrop's flow —
+ * each shelf has a lit top edge, a shadowed face, and strata lines. v1
+ * mirrors it for the opposite wall.
  */
-function ClimbArt() {
+function WaveLedgeArt({ v = 0 }: { v?: number }) {
   return (
-    <svg width="72" height="160" viewBox="0 0 72 160" aria-hidden="true">
-      {/* rope from out of frame, gently wavy */}
+    <svg
+      width="200"
+      height="216"
+      viewBox="0 0 200 216"
+      aria-hidden="true"
+      style={v ? { transform: "scaleX(-1)" } : undefined}
+    >
+      {/* the fin's core mass: an S-curved sandstone blade, wide at the foot,
+          leaning with the flow — no straight edges anywhere */}
       <path
-        d="M38 0Q33 24 38 46Q43 68 37 92Q32 116 38 138L38 152"
-        stroke="#d8cfc0"
-        strokeWidth="2.2"
-        fill="none"
+        d="M28 216Q10 168 30 128Q52 86 34 56Q24 34 52 18Q86 4 116 22Q142 38 128 66Q112 96 134 124Q158 154 144 184Q134 208 108 214Q64 220 28 216Z"
+        fill="#6b3418"
+      />
+      {/* shadowed under-curves of the wave */}
+      <path d="M36 62Q60 92 46 128Q34 160 48 196Q80 206 108 200Q84 178 92 142Q100 110 82 84Q60 58 36 62Z" fill="#4f2410" />
+      {/* shelf lips: stepped curved ledges catching the beam light */}
+      <path d="M46 34Q84 16 112 32Q132 44 122 62Q94 48 62 52Q46 44 46 34Z" fill="#8a4a24" />
+      <path d="M46 34Q84 16 112 32Q132 44 122 62" fill="none" stroke="#c97a42" strokeWidth="3" strokeLinecap="round" />
+      <path d="M42 84Q76 70 104 84Q126 96 116 116Q88 100 58 102Q40 96 42 84Z" fill="#7c3f1e" />
+      <path d="M42 84Q76 70 104 84Q126 96 116 116" fill="none" stroke="#b86a38" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M48 136Q84 124 116 138Q142 150 130 170Q98 154 66 156Q46 148 48 136Z" fill="#743a1c" />
+      <path d="M48 136Q84 124 116 138Q142 150 130 170" fill="none" stroke="#a55d30" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M40 186Q76 176 110 188Q128 196 120 210Q90 200 60 202Q42 196 40 186Z" fill="#5e2c14" />
+      <path d="M40 186Q76 176 110 188Q128 196 120 210" fill="none" stroke="#96522a" strokeWidth="2.2" strokeLinecap="round" />
+      {/* strata lines following the flow */}
+      <g stroke="#451f0d" strokeWidth="1.3" fill="none" opacity="0.75">
+        <path d="M44 48Q82 34 116 46M42 100Q76 88 110 100M46 152Q84 140 122 154M44 198Q76 190 108 200" />
+      </g>
+      <g stroke="#d98f57" strokeWidth="1" fill="none" opacity="0.5">
+        <path d="M48 42Q84 28 116 40M46 94Q78 82 110 94M50 146Q86 134 120 148" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * A slow sand-trickle off a wave-ledge lip (round 4B): animated falling
+ * grains (dashed strokes cycling downward, CSS .sandTrickle) landing on a
+ * small piled mound.
+ */
+function SandfallArt() {
+  return (
+    <svg width="30" height="108" viewBox="0 0 30 108" aria-hidden="true">
+      {/* the lip it spills from */}
+      <path d="M2 8Q14 2 27 9L24 15Q14 10 5 14Z" fill="#8a4a24" />
+      <path d="M2 8Q14 2 27 9" fill="none" stroke="#c97a42" strokeWidth="1.8" strokeLinecap="round" />
+      {/* falling grains */}
+      <path className="sandTrickle" d="M14.5 13L14.5 92" stroke="#e8c48a" strokeWidth="1.7" strokeLinecap="round" fill="none" />
+      <path className="sandTrickle st2" d="M17 14L16.5 90" stroke="#d8ac6e" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* the pile */}
+      <path d="M3 105Q6 90 15 89Q24 90 27 105Z" fill="#c98a4e" />
+      <path d="M8 96Q15 91 22 96" stroke="#e0b276" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <ellipse cx="15" cy="105" rx="13" ry="2.6" fill="#a5663a" />
+    </svg>
+  );
+}
+
+/**
+ * Shallow reflective puddle on the slot floor (flat), catching the light
+ * beam: dark water, a warm mirrored streak, and a drifting glint.
+ */
+function PuddleArt() {
+  return (
+    <svg width="118" height="30" viewBox="0 0 118 30" aria-hidden="true">
+      {/* irregular wet-sand ring, then the water */}
+      <path
+        d="M8 16Q14 7 36 5Q66 2 92 7Q112 11 110 17Q106 25 76 27Q34 29 14 24Q6 21 8 16Z"
+        fill="#4f2f18"
       />
       <path
-        d="M38 0Q33 24 38 46Q43 68 37 92"
-        stroke="#b8ab94"
-        strokeWidth="0.8"
-        fill="none"
-        strokeDasharray="3 4"
+        d="M14 16Q20 9 40 8Q66 5 88 9Q104 12 103 17Q99 23 74 24Q38 26 20 22Q13 20 14 16Z"
+        fill="#67401f"
       />
-      {/* three anchor bolts, clipped to the rope */}
-      {[
-        [43, 34],
-        [32, 78],
-        [43, 118],
-      ].map(([x, y]) => (
-        <g key={y}>
-          <circle cx={x} cy={y} r="3.2" fill="#8a8a92" stroke="#4c4c52" strokeWidth="1.2" />
-          <circle cx={x} cy={y} r="1.1" fill="#3a3a40" />
-          <path d={`M${x} ${y + 3}Q${x + 3} ${y + 7} ${x} ${y + 10}Q${x - 3} ${y + 7} ${x} ${y + 3}`} fill="none" stroke="#9a9aa2" strokeWidth="1.6" />
-        </g>
-      ))}
-      {/* chalk bag on a loop near the base, with a dust smudge */}
-      <path d="M38 138L50 144" stroke="#4a3a2c" strokeWidth="1.4" />
-      <path d="M46 143L58 143Q59 156 52 158Q45 156 46 143Z" fill="#c97a4a" />
-      <path d="M46 143L58 143L57.4 147L46.6 147Z" fill="#a55f36" />
-      <ellipse cx="52" cy="144" rx="4.5" ry="1.6" fill="#e8e4da" />
-      <ellipse cx="59" cy="152" rx="3.5" ry="1.2" fill="#e8e4da" opacity="0.45" />
+      {/* the beam's warm reflection — a soft vertical-ish streak, not a disc */}
+      <path d="M44 9Q56 8 66 9L74 22Q58 24 40 22Z" fill="#ffe9c9" opacity="0.5" />
+      <path d="M52 9Q58 8.5 62 9L66 22Q56 23 48 22Z" fill="#fff6e4" opacity="0.7" />
+      <path className="puddleGlint" d="M30 18Q58 15 86 18" stroke="#ffd9a0" strokeWidth="1.2" fill="none" />
+      {/* damp rim highlight */}
+      <path d="M16 13Q34 6 62 6" stroke="#8a5c33" strokeWidth="1.2" fill="none" opacity="0.8" />
     </svg>
   );
 }

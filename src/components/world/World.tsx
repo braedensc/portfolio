@@ -405,7 +405,7 @@ export default function World() {
         <div className="beam">
           <div className="bw" />
           {/* dust motes drifting inside the light beam (slot canyon) */}
-          {[0, 1, 2, 3, 4, 5].map((i) => (
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
             <div key={i} className={`bmote bm${i}`} />
           ))}
         </div>
