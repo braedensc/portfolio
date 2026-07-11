@@ -5,6 +5,7 @@ import {
   aboutText,
   stats,
   projects,
+  scenes,
   skillGroups,
   experienceRows,
   recordsStats,
@@ -60,6 +61,10 @@ export default function PlainPage() {
           >
             Enter the world →
           </Link>
+          <p className="mt-3 font-mono text-[11px] tracking-[0.1em] text-ink/55">
+            Five scenes drawn from my photographs:{" "}
+            {scenes.map((s) => s.place).join(" · ")}.
+          </p>
         </header>
 
         <ul className="mt-10 flex flex-wrap gap-x-5 gap-y-2 border-y border-ink/15 py-4">
