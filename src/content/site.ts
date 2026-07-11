@@ -65,8 +65,10 @@ export type DecorKind =
   | "scrub"
   | "cracked"
   | "cairn"
-  | "jackrabbit";
-export type NpcKind = "chef";
+  | "jackrabbit"
+  | "tent"
+  | "bench"
+  | "poles";
 export type StationAnim = "opening" | "popping";
 
 export interface Vec {
@@ -131,12 +133,6 @@ export interface Signpost {
   gy: number;
 }
 
-export interface Npc {
-  kind: NpcKind;
-  gx: number;
-  gy: number;
-}
-
 export interface Scene {
   id: SceneId;
   name: string;
@@ -162,7 +158,6 @@ export interface Scene {
   signs: Signpost[];
   setPieces: SetPiece[];
   stations: Station[];
-  npcs: Npc[];
 }
 
 /* ---------- identity + copy (verbatim; no puns) ---------- */
@@ -416,15 +411,24 @@ const DESERT_PATH: Vec[] = [
   { gx: 560, gy: 66 },
 ];
 
+/**
+ * Round 4B: the camp widened (gxClamp 700) so the billboard-scale project
+ * stations fit — lake far west, planner board west-center, campfire + tent
+ * mid-east, camp kitchen far east.
+ */
 const CAMP_PATH: Vec[] = [
+  { gx: -660, gy: 80 },
   { gx: -560, gy: 84 },
-  { gx: -420, gy: 84 },
-  { gx: -300, gy: 78 },
-  { gx: -225, gy: 68 },
-  { gx: -90, gy: 78 },
-  { gx: 20, gy: 74 },
-  { gx: 140, gy: 70 },
-  { gx: 235, gy: 62 },
+  { gx: -420, gy: 80 },
+  { gx: -260, gy: 74 },
+  { gx: -150, gy: 66 },
+  { gx: -20, gy: 70 },
+  { gx: 130, gy: 74 },
+  { gx: 250, gy: 72 },
+  { gx: 355, gy: 68 },
+  { gx: 500, gy: 66 },
+  { gx: 640, gy: 62 },
+  { gx: 695, gy: 60 },
 ];
 
 /**
@@ -564,7 +568,6 @@ export const scenes: Scene[] = [
       },
     ],
     stations: [],
-    npcs: [],
   },
   {
     id: "slot",
@@ -610,7 +613,6 @@ export const scenes: Scene[] = [
       },
     ],
     stations: [],
-    npcs: [],
   },
   {
     id: "snow",
@@ -685,7 +687,6 @@ export const scenes: Scene[] = [
       },
     ],
     stations: [],
-    npcs: [],
   },
   {
     id: "desert",
@@ -742,7 +743,6 @@ export const scenes: Scene[] = [
       },
     ],
     stations: [],
-    npcs: [],
   },
   {
     id: "camp",
@@ -753,48 +753,53 @@ export const scenes: Scene[] = [
     // Wide-band asset (2400×1044): clouds top, mountain crest mid, glowing
     // tent bottom-right — sits just above the drawn-ground seam.
     bgPos: "center 62%",
-    aria: "Stylized night campsite with a fire, project stations, lantern lights, and a drawn mountain mirrored in a still lake with a fishing dock, with a walkable hiker character",
-    gxClamp: 500,
-    camClamp: 251,
+    aria: "Stylized night campsite with a detailed campfire, a glowing blue dome tent, billboard-scale project stations, lantern lights, and a drawn mountain mirrored in a still lake with a fishing dock and a bench, with a walkable hiker character",
+    gxClamp: 700,
+    camClamp: 391,
     exits: { left: 3 },
     alwaysNight: true,
     path: CAMP_PATH,
     blockers: [
-      { shape: "ellipse", gx: -490, gy: 57, hw: 145, hh: 8 }, // the lake
-      { shape: "ellipse", gx: -225, gy: 50, hw: 105, hh: 5 }, // planner desk
-      { shape: "ellipse", gx: 20, gy: 58, hw: 40, hh: 4 }, // campfire ring
-      { shape: "ellipse", gx: 235, gy: 46, hw: 115, hh: 5 }, // camp kitchen
-      { shape: "ellipse", gx: 498, gy: 64, hw: 14, hh: 3 }, // owl tree trunk
+      { shape: "ellipse", gx: -600, gy: 57, hw: 150, hh: 8 }, // the lake
+      { shape: "ellipse", gx: -670, gy: 86, hw: 14, hh: 3 }, // owl tree trunk
+      { shape: "ellipse", gx: -150, gy: 50, hw: 230, hh: 5 }, // planner board base
+      { shape: "ellipse", gx: 250, gy: 58, hw: 42, hh: 4 }, // campfire ring
+      { shape: "ellipse", gx: 355, gy: 52, hw: 62, hh: 5 }, // dome tent
+      { shape: "ellipse", gx: 705, gy: 47, hw: 235, hh: 5 }, // camp kitchen base
     ],
-    // Layout audited round 3: every position is a base-center ground anchor,
-    // spaced so no billboard footprint intersects another at the default
-    // camera (screen-projected rects checked pairwise).
+    // Layout audited round 4B for the 3× stations: lake far west (bench on
+    // its near shore), planner board west-center, campfire with the blue
+    // dome tent to its right (the real campfire photo's composition), camp
+    // kitchen far east. Screen-projected footprints checked pairwise.
     decor: [
       ...pathStamps(CAMP_PATH, 4),
       { kind: "campRock", gx: 75, gy: 20 },
-      { kind: "campRock", gx: 395, gy: 68 },
-      { kind: "log", gx: 415, gy: 76 },
+      { kind: "campRock", gx: -40, gy: 88 },
+      { kind: "log", gx: 455, gy: 78 },
       { kind: "log", gx: 110, gy: 74 },
-      { kind: "lanterns", gx: -20, gy: 18 },
+      { kind: "lanterns", gx: 60, gy: 18 },
       { kind: "backpack", gx: -270, gy: 70 },
       { kind: "canister", gx: 62, gy: 78 },
-      { kind: "stump", gx: -45, gy: 66 },
-      { kind: "stump", gx: 92, gy: 60, v: 1 },
-      { kind: "owltree", gx: 498, gy: 64 },
+      { kind: "stump", gx: 165, gy: 64 },
+      { kind: "stump", gx: 330, gy: 66, v: 1 },
+      { kind: "owltree", gx: -670, gy: 86 },
+      { kind: "bench", gx: -480, gy: 84 },
+      { kind: "tent", gx: 355, gy: 53 },
+      { kind: "poles", gx: 440, gy: 57 },
       // Night dressing: trodden earth, pine duff, stones, pooled lamplight.
-      { kind: "earth", gx: 20, gy: 72, flat: true },
-      { kind: "earth", gx: -225, gy: 62, v: 1, flat: true },
-      { kind: "earth", gx: 235, gy: 58, flat: true },
+      { kind: "earth", gx: 250, gy: 72, flat: true },
+      { kind: "earth", gx: -150, gy: 62, v: 1, flat: true },
+      { kind: "earth", gx: 700, gy: 58, flat: true },
       { kind: "needles", gx: -350, gy: 74, flat: true },
       { kind: "needles", gx: 170, gy: 82, flat: true },
       { kind: "stones", gx: 140, gy: 68 },
       { kind: "stones", gx: -180, gy: 76 },
-      { kind: "stones", gx: 330, gy: 80 },
-      { kind: "lightpool", gx: -20, gy: 22, flat: true },
-      { kind: "lightpool", gx: -210, gy: 54, flat: true },
-      { kind: "lightpool", gx: 250, gy: 50, v: 1, flat: true },
+      { kind: "stones", gx: 500, gy: 80 },
+      { kind: "lightpool", gx: 60, gy: 22, flat: true },
+      { kind: "lightpool", gx: -140, gy: 54, flat: true },
+      { kind: "lightpool", gx: 700, gy: 52, v: 1, flat: true },
     ],
-    signs: [{ text: "← THE DESERT", gx: -430, gy: 88 }],
+    signs: [{ text: "← THE DESERT", gx: -640, gy: 92 }],
     setPieces: [
       // The camp's mountain-lake vignette (round 4: About moved to the
       // meadow kiosk; the lake keeps a discovery-only flavor card).
@@ -802,9 +807,9 @@ export const scenes: Scene[] = [
         id: "lake",
         kind: "lake",
         label: "MOUNTAIN LAKE",
-        gx: -490,
+        gx: -600,
         gy: 60,
-        approach: { gx: -490, gy: 76 },
+        approach: { gx: -600, gy: 78 },
         discovery: true,
       },
     ],
@@ -813,9 +818,9 @@ export const scenes: Scene[] = [
         id: "todoclaw",
         kind: "desk",
         label: "TODOCLAW",
-        gx: -225,
+        gx: -150,
         gy: 50,
-        approach: { gx: -225, gy: 64 },
+        approach: { gx: -150, gy: 64 },
         anim: "opening",
         animMs: 350,
       },
@@ -823,23 +828,22 @@ export const scenes: Scene[] = [
         id: "contact",
         kind: "fire",
         label: "CONTACT",
-        gx: 20,
+        gx: 250,
         gy: 58,
-        approach: { gx: 20, gy: 72 },
+        approach: { gx: 250, gy: 72 },
         animMs: 0,
       },
       {
         id: "chefclaw",
         kind: "pot",
         label: "CHEFCLAW",
-        gx: 235,
-        gy: 46,
-        approach: { gx: 235, gy: 60 },
+        gx: 705,
+        gy: 47,
+        approach: { gx: 695, gy: 60 },
         anim: "popping",
         animMs: 400,
       },
     ],
-    npcs: [{ kind: "chef", gx: 165, gy: 58 }],
   },
 ];
 

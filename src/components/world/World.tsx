@@ -37,7 +37,7 @@ import {
 import { WorldEngine } from "./engine";
 import { DecorArt, HawkArt, SignArt, SetPieceArt, SkyDriftArt, StationArt } from "./scenes";
 import { Lightbox } from "./Lightbox";
-import { HIKER, CHEF } from "./sprites";
+import { HIKER } from "./sprites";
 import "./world.css";
 
 /** Human-readable card titles — reused for gallery alt text / lightbox labels. */
@@ -420,19 +420,6 @@ export default function World() {
                   >
                     <StationArt kind={s.kind} />
                   </button>
-                </div>
-              </div>
-            ))}
-            {scene.npcs.map((n) => (
-              <div key={n.kind} className="item npc" data-gx={n.gx} data-gy={n.gy}>
-                <div className="in">
-                  <canvas
-                    data-npc={n.kind}
-                    width={CHEF.w}
-                    height={CHEF.h}
-                    className="npcCv npcChef"
-                    aria-hidden="true"
-                  />
                 </div>
               </div>
             ))}

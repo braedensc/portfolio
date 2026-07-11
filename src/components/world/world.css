@@ -253,6 +253,10 @@
   );
 }
 .world.sc-camp .ground {
+  /* Round 4B: the camp widened (camClamp 391) for the billboard-scale
+     stations — extra side bleed so the panning ground never shows an edge. */
+  left: -40%;
+  width: 180%;
   background: radial-gradient(
     ellipse 58% 52% at 50% 26%,
     #54381c 0%,
@@ -513,6 +517,7 @@
 .item[data-kind="lake"] .in::after,
 .item[data-kind="climb"] .in::after,
 .item[data-kind="scrub"] .in::after,
+.item[data-kind="tent"] .in::after,
 .item[data-kind="fire"] .in::after {
   display: none;
 }
@@ -553,14 +558,6 @@
   height: 66px;
   image-rendering: pixelated;
   display: block;
-}
-.npcCv {
-  display: block;
-  image-rendering: pixelated;
-}
-.npcChef {
-  width: 45px;
-  height: 66px;
 }
 .lant {
   position: absolute;
@@ -631,38 +628,40 @@
 /* ---------- Todoclaw station: desk + the big standing planner board ----------
    The board is a faithful mini-mock of the real app's priority grid — warm
    paper, graph lines, quadrant tints, terracotta-edged cards. Color tokens
-   verbatim from todoclaw (grid-constants.ts / tailwind.config.js). */
+   verbatim from todoclaw (grid-constants.ts / tailwind.config.js).
+   Round 4B: resized to a readable billboard (client: "much bigger, like
+   maybe 3 times"). */
 .tcWrap {
   position: relative;
-  width: 204px;
-  height: 174px;
+  width: 470px;
+  height: 312px;
 }
 .tcTable {
   position: absolute;
-  left: 0;
+  right: -16px;
   bottom: 0;
 }
 .tcBoardWrap {
   position: absolute;
-  left: 52px;
-  bottom: 2px;
-  width: 150px;
+  left: 35px;
+  bottom: 4px;
+  width: 400px;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 .stn.opening .tcBoardWrap {
-  transform: perspective(500px) rotateX(9deg) scale(1.3) translateY(-8px);
+  transform: perspective(900px) rotateX(4deg) scale(1.07) translateY(-6px);
 }
 .tcBoard {
   position: relative;
-  width: 150px;
-  height: 96px;
+  width: 400px;
+  height: 256px;
   background: #7d5a36;
-  border: 2px solid #5c4126;
-  border-radius: 5px;
-  padding: 5px;
+  border: 3px solid #5c4126;
+  border-radius: 8px;
+  padding: 10px;
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.45),
-    0 0 14px rgba(255, 214, 133, 0.18);
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    0 0 26px rgba(255, 214, 133, 0.2);
 }
 .tcGrid {
   position: relative;
@@ -683,8 +682,8 @@
     50% 50%,
     50% 50%,
     50% 50%,
-    10px 10px,
-    10px 10px;
+    16px 16px,
+    16px 16px;
   background-position:
     0 0,
     100% 0,
@@ -717,102 +716,131 @@
 .tcAxisY {
   position: absolute;
   font-family: var(--mono);
-  font-size: 6px;
-  letter-spacing: 0.6px;
+  font-size: 12px;
+  letter-spacing: 1px;
   color: #a59c88;
   z-index: 1;
   pointer-events: none;
 }
 .tcAxisX {
-  right: 3px;
-  bottom: 1px;
+  right: 7px;
+  bottom: 3px;
 }
 .tcAxisY {
-  left: 1px;
-  bottom: 3px;
+  left: 3px;
+  bottom: 7px;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
 }
+/* quadrant names, faint — matches the app's four-quadrant layout */
+.tcQ {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: #b3a88f;
+  opacity: 0.85;
+  z-index: 1;
+  pointer-events: none;
+}
 .tcCard {
   position: absolute;
-  width: 24px;
-  height: 12px;
+  width: 56px;
+  height: 28px;
   background: #fff;
-  border: 1px solid rgba(194, 105, 63, 0.75);
-  border-top: 3px solid #857c6e;
-  border-radius: 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  border: 1.5px solid rgba(194, 105, 63, 0.75);
+  border-top: 6px solid #857c6e;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 .tcCard::before,
 .tcCard::after {
   content: "";
   position: absolute;
-  left: 3px;
-  height: 1.5px;
+  left: 7px;
+  height: 3px;
+  border-radius: 1.5px;
   background: rgba(46, 42, 36, 0.5);
 }
 .tcCard::before {
-  right: 6px;
-  top: 2.5px;
+  right: 13px;
+  top: 5.5px;
 }
 .tcCard::after {
-  right: 11px;
-  top: 5.5px;
+  right: 25px;
+  top: 12.5px;
   background: rgba(46, 42, 36, 0.28);
 }
-/* the real peeking pup, chin-clipped on the board's top edge (42.2/64 × 26px ≈ 17px) */
+/* the cluster's count chip (the app shows folded clusters with a count) */
+.tcCount {
+  position: absolute;
+  left: 53%;
+  top: 51%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #bf5e2a;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+/* the real peeking pup, chin-clipped on the board's top edge (42.2/64 × 62px ≈ 41px) */
 .tcPeek {
   position: absolute;
-  width: 26px;
-  height: 26px;
-  top: -17px;
-  right: 16px;
+  width: 62px;
+  height: 62px;
+  top: -41px;
+  right: 44px;
   z-index: 2;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 .tcBadge {
   position: absolute;
-  width: 16px;
-  height: 16px;
-  left: -7px;
-  top: -8px;
+  width: 34px;
+  height: 34px;
+  left: -14px;
+  top: -15px;
   z-index: 2;
   background: #f8f2e6;
-  border-radius: 4px;
-  padding: 1px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 .tcLegs {
   display: block;
-  margin: -3px auto 0;
+  margin: -4px auto 0;
 }
 .tcPuppy {
   position: absolute;
-  width: 48px;
-  height: 31px;
-  left: -16px;
+  width: 76px;
+  height: 49px;
+  left: -12px;
   bottom: -2px;
   color: #cbbfa4;
 }
 .tcPaw {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
   color: rgba(232, 228, 218, 0.38);
 }
 .tcPaw1 {
-  left: 44px;
-  bottom: 4px;
+  left: 92px;
+  bottom: 6px;
   transform: rotate(-24deg);
 }
 .tcPaw2 {
-  left: 33px;
-  bottom: 12px;
+  left: 74px;
+  bottom: 16px;
   transform: rotate(-8deg);
 }
 .tcPaw3 {
-  left: 24px;
-  bottom: 2px;
+  left: 58px;
+  bottom: 3px;
   transform: rotate(-30deg);
 }
 .lglow {
@@ -830,6 +858,38 @@
 .fl3 {
   animation-duration: 1.3s;
   animation-delay: 0.2s;
+}
+/* white-hot core: quickest, subtlest wobble */
+.fl4 {
+  animation-duration: 1.05s;
+  animation-delay: 0.1s;
+}
+/* the occasional extra flame lick off the fire's flank */
+.flLick {
+  transform-box: fill-box;
+  transform-origin: 80% 100%;
+  animation: lickK 5.2s ease-in-out infinite;
+}
+/* rising sparks off the campfire — opacity 0 at rest (reduced-motion hides) */
+.spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: sparkK 3.2s ease-out infinite;
+}
+/* softly pulsing pool of firelight on the ground */
+.fireGlow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fireGlowK 3s ease-in-out infinite;
+}
+.fg2 {
+  animation-duration: 2.2s;
+  animation-delay: 0.6s;
+}
+/* warm light spilling from the tent door */
+.tentGlow {
+  animation: flick 3.6s ease-in-out infinite;
 }
 .ckLid {
   transform-box: fill-box;
@@ -862,68 +922,71 @@
 /* ---------- ChefClaw station: prep table + neon recipe-library screen ----------
    Palette from chefclaw/frontend/src/index.css (night #050505, panel #0b0b0d,
    hairlines #1d1d23/#26262c, chili #ff2d55, cyan #35e0ff, gold #ffd60a,
-   warm #ffe9c9): neon lives in halos on hairline borders, never flat fills. */
+   warm #ffe9c9): neon lives in halos on hairline borders, never flat fills.
+   Round 4B: screen scaled to a readable billboard; the ingredient prep
+   table (not a person) anchors the station; the tripod pot tucks in small
+   at the left and keeps its lid-pop reveal. */
 .ccWrap {
   position: relative;
-  width: 244px;
-  height: 172px;
+  width: 440px;
+  height: 336px;
 }
 .ccPot {
   position: absolute;
   left: 0;
-  bottom: 0;
+  bottom: 2px;
 }
 .ccStand {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 172px;
+  width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 .ccIcon {
   position: relative;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  margin-bottom: -11px;
+  width: 46px;
+  height: 46px;
+  border-radius: 11px;
+  margin-bottom: -23px;
   z-index: 2;
   background: #050505;
-  box-shadow: 0 0 10px rgba(255, 45, 85, 0.55);
+  box-shadow: 0 0 16px rgba(255, 45, 85, 0.55);
 }
 .ccScreen {
   position: relative;
   z-index: 1;
-  width: 160px;
+  width: 380px;
   background: #0b0b0d;
-  border: 1px solid #26262c;
-  border-radius: 8px;
-  padding: 4px 6px 6px;
-  margin-bottom: -3px;
+  border: 1.5px solid #26262c;
+  border-radius: 13px;
+  padding: 8px 12px 12px;
+  margin-bottom: -8px;
   box-shadow:
-    0 0 16px -2px rgba(255, 45, 85, 0.4),
-    0 0 24px -6px rgba(53, 224, 255, 0.25),
-    inset 0 0 14px rgba(53, 224, 255, 0.08);
+    0 0 30px -2px rgba(255, 45, 85, 0.42),
+    0 0 46px -8px rgba(53, 224, 255, 0.28),
+    inset 0 0 28px rgba(53, 224, 255, 0.08);
 }
 .ccHead {
   font-family: var(--mono);
-  font-size: 6.5px;
-  letter-spacing: 3px;
+  font-size: 14px;
+  letter-spacing: 7px;
   text-align: center;
   color: #ffe9c9;
-  text-shadow: 0 0 6px rgba(255, 214, 10, 0.55);
-  padding: 9px 0 4px;
+  text-shadow: 0 0 10px rgba(255, 214, 10, 0.6);
+  padding: 16px 0 9px;
   border-bottom: 1px solid #1d1d23;
-  margin-bottom: 5px;
+  margin-bottom: 9px;
 }
 .ccGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  gap: 8px;
 }
 .ccCard {
-  border-radius: 4px;
+  border-radius: 7px;
   overflow: hidden;
   border: 1px solid #1d1d23;
   background: #08080a;
@@ -931,19 +994,21 @@
 .ccCard img {
   display: block;
   width: 100%;
-  height: 21px;
+  height: 56px;
   object-fit: cover;
 }
 .ccChili {
   border-color: rgba(255, 45, 85, 0.45);
-  box-shadow: 0 0 8px -2px rgba(255, 45, 85, 0.5);
+  box-shadow: 0 0 12px -2px rgba(255, 45, 85, 0.5);
 }
 .ccCyan {
   border-color: rgba(53, 224, 255, 0.4);
-  box-shadow: 0 0 8px -2px rgba(53, 224, 255, 0.45);
+  box-shadow: 0 0 12px -2px rgba(53, 224, 255, 0.45);
 }
-.ccTable {
+.ccPrep {
   display: block;
+  position: relative;
+  z-index: 2;
 }
 
 /* ---------- meadow: bear on its rock (canvas animated by the engine) ---------- */
@@ -2037,6 +2102,50 @@
   }
   60% {
     transform: scaleY(0.92) skewX(2deg);
+  }
+}
+@keyframes sparkK {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate(var(--sdx, 8px), -58px);
+    opacity: 0;
+  }
+}
+@keyframes fireGlowK {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+}
+@keyframes lickK {
+  0%,
+  52%,
+  90%,
+  100% {
+    transform: scaleY(0.1);
+    opacity: 0;
+  }
+  62% {
+    transform: scaleY(1.1) skewX(-4deg);
+    opacity: 1;
+  }
+  74% {
+    transform: scaleY(0.85) skewX(3deg);
+    opacity: 0.9;
   }
 }
 @keyframes lidK {

@@ -737,6 +737,78 @@ function JackrabbitArt() {
   );
 }
 
+/**
+ * The blue dome tent by the campfire (round 4B, from the client's real
+ * campfire photo): dome body under a blue fly, crossed pole seams, a warm
+ * glow spilling from the part-open door, and guy-lines staked out on
+ * both sides.
+ */
+function TentArt() {
+  return (
+    <svg width="184" height="130" viewBox="0 0 170 120" aria-hidden="true">
+      {/* guy-lines + stakes */}
+      <path d="M38 62L10 108M132 62L160 108M85 20L85 8" stroke="#8a8272" strokeWidth="1.4" fill="none" />
+      <path d="M8 106L14 112M158 106L164 112" stroke="#5c4426" strokeWidth="3" strokeLinecap="round" />
+      {/* dome body — blue fly over a darker inner wall */}
+      <path d="M18 110Q18 34 85 30Q152 34 152 110Z" fill="#24496e" />
+      <path d="M22 108Q26 42 85 36Q144 42 148 108L128 110L42 110Z" fill="#2e5e8e" />
+      {/* pole seams crossing the dome */}
+      <path d="M48 108Q52 42 100 34M122 108Q118 42 70 34" stroke="#4a7cab" strokeWidth="2.2" fill="none" />
+      <path d="M18 110Q60 100 85 100Q110 100 152 110" fill="none" stroke="#1c3a58" strokeWidth="2.5" />
+      {/* fly ridge highlight */}
+      <path d="M34 74Q50 42 85 38Q120 42 136 74" stroke="#6fa0cc" strokeWidth="1.8" fill="none" opacity="0.8" />
+      {/* door: unzipped flap folded aside, warm interior */}
+      <path d="M66 110Q64 58 85 54Q106 58 104 110Z" fill="#173049" />
+      <path className="tentGlow" d="M70 110Q69 62 85 58Q101 62 100 110Z" fill="#ffce7e" />
+      <path d="M85 58Q66 62 66 96Q56 88 60 68Q66 56 85 54Z" fill="#254e77" />
+      <path d="M70 110Q69 62 85 58" stroke="#8a6a3a" strokeWidth="1.2" fill="none" strokeDasharray="2.5 2.5" />
+      {/* a sliver of sleeping bag inside */}
+      <path d="M76 104Q86 98 98 103L98 108L76 108Z" fill="#8f3a34" />
+      <ellipse cx="85" cy="112" rx="60" ry="6" fill="rgba(0,0,0,0.3)" />
+    </svg>
+  );
+}
+
+/**
+ * Weathered wooden bench overlooking the mirror lake (round 4B, from the
+ * client's Two Medicine photo) — side-on, facing the water.
+ */
+function BenchArt() {
+  return (
+    <svg width="88" height="52" viewBox="0 0 88 52" aria-hidden="true">
+      {/* backrest planks */}
+      <rect x="10" y="4" width="70" height="6.5" rx="2" fill="#6b5a44" />
+      <rect x="10" y="13" width="70" height="6.5" rx="2" fill="#5f4f3b" />
+      {/* seat */}
+      <rect x="6" y="24" width="78" height="8" rx="2.5" fill="#77644c" />
+      <path d="M8 26L82 26" stroke="#8a765a" strokeWidth="1.3" />
+      {/* frame + legs */}
+      <path d="M16 4L16 44M74 4L74 44" stroke="#4a3c2c" strokeWidth="5" strokeLinecap="round" />
+      <path d="M12 44L22 44M70 44L80 44" stroke="#3a2f22" strokeWidth="4" strokeLinecap="round" />
+      {/* wood grain nicks */}
+      <path d="M28 7.5L40 7.5M52 16L64 16M30 28.5L44 28.5" stroke="#57483a" strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Two trekking poles leaning by the tent, straps up, baskets at the tips. */
+function PolesArt() {
+  return (
+    <svg width="36" height="66" viewBox="0 0 36 66" aria-hidden="true">
+      <path d="M12 8L22 62" stroke="#b0b6bd" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M26 6L14 62" stroke="#9aa1a9" strokeWidth="2.4" strokeLinecap="round" />
+      {/* cork grips + straps */}
+      <path d="M11 6L13 15" stroke="#a37a4e" strokeWidth="5" strokeLinecap="round" />
+      <path d="M27 4L25 13" stroke="#a37a4e" strokeWidth="5" strokeLinecap="round" />
+      <path d="M10 5q-4 -3 -1 -5q3 -1 4 3M28 3q4 -3 1 -5q-3 -1 -4 3" stroke="#6b5236" strokeWidth="1.4" fill="none" />
+      {/* baskets near the tips */}
+      <path d="M17 54L27 54M10 54L20 54" stroke="#3a3a40" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="22" cy="62" r="1.6" fill="#3a3a40" />
+      <circle cx="14" cy="62" r="1.6" fill="#3a3a40" />
+    </svg>
+  );
+}
+
 /** Circling hawk silhouette for the desert sky (positioned by world.css). */
 export function HawkArt() {
   return (
@@ -828,6 +900,12 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <CairnArt v={v} />;
     case "jackrabbit":
       return <JackrabbitArt />;
+    case "tent":
+      return <TentArt />;
+    case "bench":
+      return <BenchArt />;
+    case "poles":
+      return <PolesArt />;
   }
 }
 
@@ -1387,24 +1465,31 @@ export function SetPieceArt({ kind }: { kind: SetPieceKind }) {
 /* ---------- project stations ---------- */
 
 /**
- * Todoclaw's planner desk. The billboard shows a faithful mini-mock of the
- * real app: warm-paper canvas, graph-paper lines, the four quadrant tints,
- * center axes with URGENCY/IMPORTANCE labels, white task cards whose top
- * border carries the quadrant color (sides terracotta), one two-card cluster
- * — colors verbatim from todoclaw/src/features/grid/grid-constants.ts and
+ * Todoclaw's planner desk — resized round 4B to a billboard the client can
+ * actually read ("much bigger, like maybe 3 times"). The board is a faithful
+ * mini-mock of the real app: warm-paper canvas, graph-paper lines, the four
+ * quadrant tints with their names, center axes with URGENCY/IMPORTANCE
+ * labels, white task cards whose top border carries the quadrant color
+ * (sides terracotta), and a three-card cluster with its count chip — colors
+ * verbatim from todoclaw/src/features/grid/grid-constants.ts and
  * tailwind.config.js. The real TodoClawPeek pup hangs over the board's top
- * edge exactly as he does on the app's grid.
+ * edge exactly as he does on the app's grid, sized to the bigger board.
  */
 function DeskArt() {
   // [left%, top%, quadrant top-border color] — mirrors the app's quadrants:
   // schedule green TL, do-now terracotta TR, someday grey BL, errands olive BR.
   const cards: ReadonlyArray<readonly [number, number, string]> = [
-    [10, 14, "#3d7a5f"],
-    [30, 30, "#3d7a5f"],
-    [62, 10, "#bf5e2a"],
-    [80, 26, "#bf5e2a"],
-    [14, 66, "#857c6e"],
-    [66, 62, "#7d6b1e"],
+    [7, 16, "#3d7a5f"],
+    [20, 30, "#3d7a5f"],
+    [32, 12, "#3d7a5f"],
+    [57, 9, "#bf5e2a"],
+    [72, 20, "#bf5e2a"],
+    [86, 10, "#bf5e2a"],
+    [63, 33, "#bf5e2a"],
+    [8, 62, "#857c6e"],
+    [22, 78, "#857c6e"],
+    [82, 64, "#7d6b1e"],
+    [68, 80, "#7d6b1e"],
   ];
   return (
     <div className="tcWrap" aria-hidden="true">
@@ -1415,19 +1500,38 @@ function DeskArt() {
           <div className="tcGrid">
             <span className="tcAxisX">URGENCY →</span>
             <span className="tcAxisY">IMPORTANCE →</span>
+            <span className="tcQ" style={{ left: "3%", top: "3%" }}>
+              SCHEDULE
+            </span>
+            <span className="tcQ" style={{ right: "3%", top: "3%" }}>
+              DO NOW
+            </span>
+            <span className="tcQ" style={{ left: "3%", bottom: "14%" }}>
+              SOMEDAY
+            </span>
+            <span className="tcQ" style={{ right: "3%", bottom: "14%" }}>
+              ERRANDS
+            </span>
             {cards.map(([l, t, c]) => (
               <div key={`${l}-${t}`} className="tcCard" style={{ left: `${l}%`, top: `${t}%`, borderTopColor: c }} />
             ))}
-            {/* the two-card cluster */}
-            <div className="tcCard" style={{ left: "38%", top: "58%", borderTopColor: "#857c6e" }} />
-            <div className="tcCard" style={{ left: "42%", top: "64%", borderTopColor: "#7d6b1e" }} />
+            {/* the three-card cluster with its count chip */}
+            <div className="tcCard" style={{ left: "38%", top: "56%", borderTopColor: "#857c6e" }} />
+            <div className="tcCard" style={{ left: "42%", top: "63%", borderTopColor: "#7d6b1e" }} />
+            <div className="tcCard" style={{ left: "46%", top: "70%", borderTopColor: "#3d7a5f" }} />
+            <div className="tcCount">3</div>
           </div>
         </div>
-        <svg className="tcLegs" width="150" height="26" viewBox="0 0 150 26">
-          <path d="M30 0L16 24M120 0L134 24M75 0L75 22" stroke="#5c4126" strokeWidth="5" strokeLinecap="round" />
+        <svg className="tcLegs" width="400" height="48" viewBox="0 0 400 48">
+          <path
+            d="M84 0L48 44M316 0L352 44M200 0L200 40"
+            stroke="#5c4126"
+            strokeWidth="9"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
-      <svg className="tcTable" width="126" height="74" viewBox="0 0 126 74">
+      <svg className="tcTable" width="176" height="104" viewBox="0 0 126 74">
         <rect x="6" y="22" width="114" height="9" rx="2" fill="#7d5a36" />
         <rect x="11" y="31" width="104" height="6" fill="#6a4a2b" />
         <rect x="17" y="37" width="7" height="36" fill="#5c4126" />
@@ -1449,32 +1553,99 @@ function DeskArt() {
   );
 }
 
+/**
+ * The campfire, detailed round 4B: a stone ring whose near faces catch the
+ * firelight, split logs with pale open faces, three flame depths over a
+ * white-hot core, an occasional extra flame lick, rising sparks that fade,
+ * and a softly pulsing pool of ground glow. All motion is CSS (world.css)
+ * so reduced-motion neutralizes it in one place.
+ */
 function FireArt() {
+  const sparks: ReadonlyArray<readonly [number, number, number, number]> = [
+    // [x, y, drift-x, delay]
+    [66, 52, 10, 0],
+    [72, 46, -8, 0.9],
+    [78, 55, 14, 1.7],
+    [70, 40, -12, 2.6],
+    [64, 48, 6, 3.4],
+    [76, 44, -5, 4.2],
+  ];
   return (
-    <svg width="110" height="92" viewBox="0 0 110 92" aria-hidden="true">
-      <ellipse cx="55" cy="62" rx="42" ry="15" fill="rgba(255,150,60,.22)" />
+    <svg width="144" height="118" viewBox="0 0 144 118" aria-hidden="true">
+      {/* pulsing ground glow */}
+      <ellipse className="fireGlow" cx="72" cy="86" rx="58" ry="19" fill="rgba(255,150,60,.24)" />
+      <ellipse className="fireGlow fg2" cx="72" cy="86" rx="34" ry="11" fill="rgba(255,190,90,.2)" />
+      {/* back stones — night faces, only a rim of light on top */}
+      <g>
+        <ellipse cx="34" cy="76" rx="9" ry="5.5" fill="#3a342e" />
+        <path d="M26 74Q34 70 42 74" stroke="#6e5236" strokeWidth="1.4" fill="none" />
+        <ellipse cx="56" cy="72" rx="8" ry="5" fill="#332e29" />
+        <path d="M49 70Q56 66.5 63 70" stroke="#7a5c3a" strokeWidth="1.4" fill="none" />
+        <ellipse cx="88" cy="72" rx="8" ry="5" fill="#332e29" />
+        <path d="M81 70Q88 66.5 95 70" stroke="#7a5c3a" strokeWidth="1.4" fill="none" />
+        <ellipse cx="110" cy="76" rx="9" ry="5.5" fill="#3a342e" />
+        <path d="M102 74Q110 70 118 74" stroke="#6e5236" strokeWidth="1.4" fill="none" />
+      </g>
+      {/* split logs: bark barrels with pale split faces */}
+      <g>
+        <rect x="30" y="80" width="46" height="9" rx="4.5" fill="#4a3423" transform="rotate(7 53 84)" />
+        <path d="M34 82L72 87" stroke="#c8a878" strokeWidth="3" strokeLinecap="round" transform="rotate(7 53 84)" />
+        <rect x="66" y="80" width="46" height="9" rx="4.5" fill="#40301f" transform="rotate(-8 89 84)" />
+        <path d="M70 83L108 86" stroke="#b3906a" strokeWidth="3" strokeLinecap="round" transform="rotate(-8 89 84)" />
+        <rect x="56" y="87" width="34" height="8" rx="4" fill="#3a2a18" />
+        <ellipse cx="90" cy="91" rx="3" ry="4" fill="#8a5230" />
+      </g>
+      {/* flames: three depths + white-hot core + an occasional lick */}
       <path
         className="flame"
-        d="M55 8Q72 30 66 52Q62 66 55 68Q48 66 44 52Q38 30 55 8"
+        d="M72 14Q92 40 85 64Q80 80 72 82Q64 80 59 64Q52 40 72 14"
         fill="#ff8c2e"
       />
       <path
+        className="flame flLick"
+        d="M56 42Q50 52 54 66Q57 75 62 78Q60 66 61 56Q62 48 56 42"
+        fill="#ff9c3a"
+      />
+      <path
         className="flame fl2"
-        d="M55 24Q64 36 61 52Q58 61 55 62Q52 61 49 52Q46 36 55 24"
+        d="M72 32Q83 46 79 64Q76 74 72 76Q68 74 65 64Q61 46 72 32"
         fill="#ffc94d"
       />
       <path
         className="flame fl3"
-        d="M55 38Q59 45 58 53Q56 58 55 58Q54 58 52 53Q51 45 55 38"
+        d="M72 48Q77 56 76 66Q74 73 72 73Q70 73 68 66Q67 56 72 48"
         fill="#fff3c4"
       />
-      <rect x="24" y="62" width="34" height="7" rx="3" fill="#4a3423" transform="rotate(8 41 65)" />
-      <rect x="52" y="62" width="34" height="7" rx="3" fill="#40301f" transform="rotate(-9 69 65)" />
-      <ellipse cx="16" cy="72" rx="7" ry="4.5" fill="#55504a" />
-      <ellipse cx="34" cy="78" rx="8" ry="5" fill="#625c54" />
-      <ellipse cx="55" cy="81" rx="8" ry="5" fill="#55504a" />
-      <ellipse cx="76" cy="78" rx="8" ry="5" fill="#625c54" />
-      <ellipse cx="94" cy="72" rx="7" ry="4.5" fill="#55504a" />
+      <path
+        className="flame fl4"
+        d="M72 58Q74.5 62 74 68Q73 71.5 72 71.5Q71 71.5 70 68Q69.5 62 72 58"
+        fill="#fffdf2"
+      />
+      {/* rising sparks */}
+      {sparks.map(([x, y, dx, delay]) => (
+        <circle
+          key={`${x}-${y}`}
+          className="spark"
+          cx={x}
+          cy={y}
+          r="1.6"
+          fill="#ffd27a"
+          style={{ "--sdx": `${dx}px`, animationDelay: `${delay}s` } as React.CSSProperties}
+        />
+      ))}
+      {/* front stones — firelit faces toward the flames */}
+      <g>
+        <ellipse cx="30" cy="92" rx="10" ry="6" fill="#5a4a3c" />
+        <path d="M22 89Q30 84.5 38 89" stroke="#a3805a" strokeWidth="1.6" fill="none" />
+        <ellipse cx="50" cy="98" rx="10.5" ry="6.5" fill="#6e5a44" />
+        <path d="M41 95Q50 90 59 95" stroke="#c89a66" strokeWidth="1.8" fill="none" />
+        <ellipse cx="72" cy="101" rx="11" ry="6.5" fill="#77624a" />
+        <path d="M62 98Q72 92.5 82 98" stroke="#d8a870" strokeWidth="1.8" fill="none" />
+        <ellipse cx="94" cy="98" rx="10.5" ry="6.5" fill="#6e5a44" />
+        <path d="M85 95Q94 90 103 95" stroke="#c89a66" strokeWidth="1.8" fill="none" />
+        <ellipse cx="114" cy="92" rx="10" ry="6" fill="#5a4a3c" />
+        <path d="M106 89Q114 84.5 122 89" stroke="#a3805a" strokeWidth="1.6" fill="none" />
+      </g>
     </svg>
   );
 }
@@ -1492,35 +1663,21 @@ const CC_SPRITES = [
 ] as const;
 
 /**
- * ChefClaw's camp kitchen: the cook pot (kept, with its lid-pop reveal) plus
- * a big prep table carrying a standing screen in the app's real neon
- * night-market style — near-black panel, hairline border, chili/cyan halos,
- * a grid of recipe cards wearing the app's actual dish sprites, and the real
- * app icon mounted on the frame (palette from chefclaw/frontend/src/index.css).
+ * ChefClaw's camp kitchen, rebuilt round 4B: the standing screen scaled to a
+ * readable billboard in the app's real neon night-market style — near-black
+ * panel, hairline border, chili/cyan halos, a grid of recipe cards wearing
+ * the app's actual dish sprites, the real app icon on the frame (palette
+ * from chefclaw/frontend/src/index.css) — with a detailed ingredient PREP
+ * TABLE as the station's visual anchor (the chef NPC is gone): cutting
+ * board with chopped vegetables, knife, mixing bowls, spice tins, a stack
+ * of plates, a hanging pan rack above, and an open produce crate beside.
+ * The tripod cook pot stays, smaller, tucked at the left (its lid-pop
+ * reveal is the station's click animation).
  */
 function PotArt() {
   return (
     <div className="ccWrap" aria-hidden="true">
-      <div className="ccStand">
-        <img className="ccIcon" src="/apps/chefclaw/app-icon.svg" alt="" />
-        <div className="ccScreen">
-          <div className="ccHead">CHEFCLAW</div>
-          <div className="ccGrid">
-            {CC_SPRITES.map((name, i) => (
-              <div key={name} className={`ccCard ${i % 2 ? "ccCyan" : "ccChili"}`}>
-                <img src={`/apps/chefclaw/sprites/${name}.svg`} alt="" />
-              </div>
-            ))}
-          </div>
-        </div>
-        <svg className="ccTable" width="170" height="46" viewBox="0 0 170 46">
-          <rect x="2" y="2" width="166" height="9" rx="2" fill="#3a2a20" />
-          <rect x="8" y="11" width="154" height="5" fill="#241a12" />
-          <rect x="16" y="16" width="7" height="30" fill="#241a12" />
-          <rect x="147" y="16" width="7" height="30" fill="#241a12" />
-        </svg>
-      </div>
-      <svg className="ccPot" width="88" height="98" viewBox="0 0 88 98">
+      <svg className="ccPot" width="74" height="86" viewBox="0 0 88 98">
         <path d="M44 6L14 90" stroke="#4a3a2c" strokeWidth="3" strokeLinecap="round" />
         <path d="M44 6L74 90" stroke="#4a3a2c" strokeWidth="3" strokeLinecap="round" />
         <path d="M44 6L44 16" stroke="#4a3a2c" strokeWidth="3" strokeLinecap="round" />
@@ -1543,6 +1700,98 @@ function PotArt() {
         <path className="flame" d="M44 66Q51 75 48 84Q44 89 40 84Q37 75 44 66" fill="#ff8c2e" />
         <path className="flame fl2" d="M44 72Q48 77 46 83Q44 86 42 83Q40 77 44 72" fill="#ffd23d" />
       </svg>
+      <div className="ccStand">
+        <img className="ccIcon" src="/apps/chefclaw/app-icon.svg" alt="" />
+        <div className="ccScreen">
+          <div className="ccHead">CHEFCLAW</div>
+          <div className="ccGrid">
+            {CC_SPRITES.map((name, i) => (
+              <div key={name} className={`ccCard ${i % 2 ? "ccCyan" : "ccChili"}`}>
+                <img src={`/apps/chefclaw/sprites/${name}.svg`} alt="" />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* the ingredient prep table — the station's visual anchor */}
+        <svg className="ccPrep" width="400" height="150" viewBox="0 0 400 150">
+          {/* pan-rack posts + rail */}
+          <rect x="28" y="8" width="6" height="80" fill="#2e1f12" />
+          <rect x="330" y="8" width="6" height="80" fill="#2e1f12" />
+          <rect x="24" y="4" width="316" height="6" rx="3" fill="#3d2a16" />
+          {/* hanging pans + ladle */}
+          <g>
+            <path d="M92 10L92 22" stroke="#55504a" strokeWidth="1.6" />
+            <ellipse cx="92" cy="34" rx="15" ry="12" fill="#2b2b31" />
+            <ellipse cx="92" cy="30" rx="12" ry="8.5" fill="#3a3a42" />
+            <path d="M92 22q6 0 6 4" stroke="#55504a" strokeWidth="2" fill="none" />
+          </g>
+          <g>
+            <path d="M168 10L168 20" stroke="#55504a" strokeWidth="1.6" />
+            <ellipse cx="168" cy="36" rx="18" ry="14" fill="#26262c" />
+            <ellipse cx="168" cy="31" rx="14" ry="9.5" fill="#34343c" />
+            <path d="M155 24Q150 20 146 21" stroke="#3a3a42" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          </g>
+          <g>
+            <path d="M244 10L244 24" stroke="#55504a" strokeWidth="1.6" />
+            <ellipse cx="244" cy="36" rx="13" ry="10" fill="#8a5230" />
+            <ellipse cx="244" cy="32.5" rx="10" ry="6.5" fill="#a3714a" />
+          </g>
+          <g>
+            <path d="M300 10L300 26" stroke="#55504a" strokeWidth="1.6" />
+            <circle cx="300" cy="32" r="6" fill="#3a3a42" />
+            <path d="M300 26L300 14" stroke="#787882" strokeWidth="2" />
+          </g>
+          {/* tabletop */}
+          <rect x="12" y="84" width="344" height="13" rx="3" fill="#5a3c22" />
+          <rect x="18" y="97" width="332" height="7" fill="#3d2814" />
+          <rect x="30" y="104" width="9" height="44" fill="#2e1f12" />
+          <rect x="326" y="104" width="9" height="44" fill="#2e1f12" />
+          <path d="M39 140L326 112M39 112L326 140" stroke="#241a12" strokeWidth="3" />
+          {/* cutting board + chopped vegetables + knife */}
+          <rect x="34" y="72" width="86" height="12" rx="4" fill="#c8a06a" />
+          <rect x="34" y="72" width="86" height="4" rx="2" fill="#dab57e" />
+          <circle cx="52" cy="70" r="3.4" fill="#e8933d" />
+          <circle cx="61" cy="68" r="3" fill="#e8933d" />
+          <circle cx="70" cy="70.5" r="3.2" fill="#e8933d" />
+          <path d="M80 67l6 2m-4-4l6 3m-2-5l5 4" stroke="#5a8a3f" strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M128 78L166 74L166 79L128 82Z" fill="#cfd6dd" />
+          <path d="M128 78L166 74" stroke="#eef2f6" strokeWidth="1.2" />
+          <rect x="164" y="72.5" width="16" height="6" rx="2.5" fill="#3a2a1a" transform="rotate(-6 172 75.5)" />
+          {/* mixing bowls */}
+          <path d="M192 70Q192 84 206 84Q220 84 220 70Z" fill="#8a9bb0" />
+          <ellipse cx="206" cy="70" rx="14" ry="4.4" fill="#5f7189" />
+          <ellipse cx="206" cy="70.5" rx="10" ry="2.8" fill="#e8e4da" />
+          <path d="M228 74Q228 84 238 84Q248 84 248 74Z" fill="#c9524a" />
+          <ellipse cx="238" cy="74" rx="10" ry="3.4" fill="#8f3a34" />
+          {/* spice tins */}
+          <rect x="258" y="68" width="12" height="16" rx="2" fill="#b3a169" />
+          <rect x="258" y="68" width="12" height="4" rx="2" fill="#8a7a4a" />
+          <rect x="273" y="71" width="11" height="13" rx="2" fill="#8a5230" />
+          <rect x="273" y="71" width="11" height="3.5" rx="1.75" fill="#66391e" />
+          <rect x="287" y="69" width="12" height="15" rx="2" fill="#6b7a52" />
+          <rect x="287" y="69" width="12" height="4" rx="2" fill="#4c5a3a" />
+          {/* stack of plates */}
+          <g>
+            <ellipse cx="322" cy="82" rx="17" ry="4.4" fill="#e8e4da" />
+            <ellipse cx="322" cy="78.5" rx="16" ry="4.2" fill="#d8d2c4" />
+            <ellipse cx="322" cy="75" rx="16.5" ry="4.3" fill="#e8e4da" />
+            <ellipse cx="322" cy="71.5" rx="15.5" ry="4" fill="#d8d2c4" />
+            <ellipse cx="322" cy="71" rx="10" ry="2.4" fill="#f2ede2" />
+          </g>
+          {/* open produce crate beside the table */}
+          <g>
+            <rect x="296" y="112" width="76" height="36" rx="2" fill="#6b4a2a" />
+            <path d="M296 122L372 122M296 134L372 134" stroke="#4a3220" strokeWidth="3" />
+            <rect x="296" y="112" width="6" height="36" fill="#8a6a44" />
+            <rect x="366" y="112" width="6" height="36" fill="#8a6a44" />
+            <circle cx="314" cy="110" r="6.5" fill="#c94f3d" />
+            <circle cx="328" cy="107" r="7" fill="#c94f3d" />
+            <circle cx="342" cy="110" r="6.5" fill="#d95f47" />
+            <path d="M352 108q6-8 12-4q-4 8-12 4" fill="#5a8a3f" />
+            <path d="M306 106q-6-7 0-11q6 5 0 11" fill="#4c7a35" />
+          </g>
+        </svg>
+      </div>
     </div>
   );
 }

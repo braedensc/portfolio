@@ -19,7 +19,7 @@ import {
   type Station,
   type Vec,
 } from "@/content/site";
-import { paintHiker, paintChef, paintBear, type HikerFrame } from "./sprites";
+import { paintHiker, paintBear, type HikerFrame } from "./sprites";
 
 export interface EngineHooks {
   setScene: (idx: number) => void;
@@ -95,9 +95,9 @@ interface StationRec {
   gy: number;
 }
 
+/** Ambient pixel-art critters painted by the engine (currently the bear). */
 interface NpcRec {
   ctx: CanvasRenderingContext2D;
-  kind: "chef" | "bear";
   frame: 0 | 1;
   acc: number;
   period: number;
@@ -640,23 +640,15 @@ export class WorldEngine {
     itemsEl.querySelectorAll<HTMLCanvasElement>("canvas[data-npc]").forEach((cv) => {
       const ctx = cv.getContext("2d");
       if (!ctx) return;
-      const kind: "chef" | "bear" = cv.dataset.npc === "bear" ? "bear" : "chef";
-      const rec: NpcRec = {
-        ctx,
-        kind,
-        frame: 0,
-        acc: kind === "chef" ? 0.5 : 0,
-        // The bear's head-turn is a slow, occasional gesture (~3s a frame).
-        period: kind === "chef" ? 1 : 3,
-      };
+      // The bear's head-turn is a slow, occasional gesture (~3s a frame).
+      const rec: NpcRec = { ctx, frame: 0, acc: 0, period: 3 };
       this.paintNpc(rec);
       this.npcs.push(rec);
     });
   }
 
   private paintNpc(n: NpcRec): void {
-    if (n.kind === "bear") paintBear(n.ctx, n.frame);
-    else paintChef(n.ctx, n.frame);
+    paintBear(n.ctx, n.frame);
   }
 
   private setFrame(f: HikerFrame): void {
