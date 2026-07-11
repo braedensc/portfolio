@@ -24,6 +24,7 @@ import {
   bearNote,
   groveNote,
   lakeNote,
+  climbingNote,
   photographyNote,
   morePlacesNote,
   finePrint,
@@ -48,12 +49,83 @@ const CARD_TITLES: Record<CardId, string> = {
   bear: "The bear",
   grove: "Sequoia grove",
   lake: "Mountain lake",
+  climbing: "Climbing",
   skills: "Skills",
   photography: "Photography",
   todoclaw: "Todoclaw",
   chefclaw: "ChefClaw",
   contact: "Contact",
 };
+
+/** Tiny deterministic PRNG — the bees' wander paths are seeded, so server
+ *  and client render identical markup (no hydration drift). */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Yellow jackets roaming the whole meadow (round 4B: bigger, readable
+ * striped bodies, and no longer tied to the GT sign). Each bee gets a
+ * seeded lazy Lissajous wander: two nested layers animating X and Y over
+ * different periods, plus a quick wing flap. CSS-gated to the meadow;
+ * hidden entirely under reduced motion.
+ */
+function MeadowBees() {
+  const bees = Array.from({ length: 5 }, (_, i) => {
+    const rnd = mulberry32(97 + i * 41);
+    return {
+      left: 8 + rnd() * 80,
+      top: 62 + rnd() * 27,
+      rx: 90 + rnd() * 240,
+      ry: 24 + rnd() * 54,
+      dx: 26 + rnd() * 22,
+      dy: 7 + rnd() * 5,
+      delx: -rnd() * 30,
+      dely: -rnd() * 9,
+    };
+  });
+  return (
+    <div className="bees" aria-hidden="true">
+      {bees.map((b, i) => (
+        <div
+          key={i}
+          className="beeR"
+          style={{
+            left: `${b.left}%`,
+            top: `${b.top}%`,
+            ["--brx" as string]: `${b.rx}px`,
+            animationDuration: `${b.dx}s`,
+            animationDelay: `${b.delx}s`,
+          }}
+        >
+          <div
+            className="beeRy"
+            style={{
+              ["--bry" as string]: `${b.ry}px`,
+              animationDuration: `${b.dy}s`,
+              animationDelay: `${b.dely}s`,
+            }}
+          >
+            <svg width="22" height="18" viewBox="0 0 22 18">
+              <ellipse className="beeWing" cx="8" cy="4.5" rx="4.4" ry="2.8" fill="#f0eee6" opacity="0.85" />
+              <ellipse className="beeWing beeWingB" cx="13" cy="4.5" rx="4" ry="2.5" fill="#e2ddd0" opacity="0.75" />
+              <ellipse cx="10" cy="11" rx="7.5" ry="5" fill="#e8b93d" />
+              <path d="M6.6 6.8L6.6 15.4M10.2 6.2L10.2 15.8M13.8 6.8L13.8 15.4" stroke="#26201c" strokeWidth="2" />
+              <circle cx="17.8" cy="9.6" r="2.8" fill="#26201c" />
+              <path d="M2.6 11.4L0.8 12.8" stroke="#26201c" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function CardMediaImg({ id }: { id: CardId }) {
   const media = cardMedia[id];
@@ -154,6 +226,14 @@ function CardContent({
           <CardMediaImg id="lake" />
           <p>{lakeNote}</p>
           {gallery}
+        </div>
+      );
+    case "climbing":
+      return (
+        <div>
+          <div className="ct">Climbing</div>
+          <CardMediaImg id="climbing" />
+          <p>{climbingNote}</p>
         </div>
       );
     case "skills":
@@ -308,7 +388,11 @@ export default function World() {
           ref={backdropRef}
           className="plane"
           style={{ backgroundImage: `url(${scene.img})`, backgroundPosition: scene.bgPos }}
-        />
+        >
+          {/* waterfall accent drawn onto the meadow backdrop's crag side
+              (CSS-gated to sc-meadow; rides the plane's parallax) */}
+          <div className="falls" aria-hidden="true" />
+        </div>
         <div ref={skyRef} className="skyDrift" aria-hidden="true">
           <SkyDriftArt />
         </div>
@@ -443,6 +527,7 @@ export default function World() {
         <div ref={ffsRef} className="ffs" />
         <div ref={embersRef} className="embers" />
         <div ref={snowRef} className="snowfall" />
+        <MeadowBees />
         <div className="groundDark" />
         <div className="tint" />
       </div>

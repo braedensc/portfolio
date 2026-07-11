@@ -55,8 +55,40 @@ function LogArt() {
   );
 }
 
-/** Wildflower cluster — three color variants (lupine / poppy / paintbrush). */
+/**
+ * Wildflower cluster — four variants: lupine / poppy / paintbrush, plus
+ * v3 = purple statice (round 4B, from the client's photo): branched stems
+ * ending in papery clustered sprays of small purple heads.
+ */
 function FlowersArt({ v = 0 }: { v?: number }) {
+  if (v % 4 === 3) {
+    const sprays = [
+      [6, 9],
+      [14, 5],
+      [22, 8],
+      [30, 6],
+    ] as const;
+    return (
+      <svg width="38" height="28" viewBox="0 0 38 28" aria-hidden="true">
+        <path
+          d="M8 28C8 20 6 15 6 11M15 28C15 18 14 11 14 7M23 28C23 19 22 13 22 10M29 28C29 20 30 12 30 8M15 20C12 18 10 17 8 17M23 21C26 19 28 18 30 18"
+          stroke="#5a7048"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
+        {sprays.map(([x, y]) => (
+          <g key={`${x}-${y}`}>
+            <circle cx={x - 2.2} cy={y + 1} r="1.8" fill="#8a6fd0" />
+            <circle cx={x + 2.2} cy={y + 1} r="1.8" fill="#7a5fb5" />
+            <circle cx={x} cy={y - 1.6} r="1.8" fill="#a68fe0" />
+            <circle cx={x + 0.6} cy={y + 2.6} r="1.5" fill="#8a6fd0" />
+            <circle cx={x - 0.8} cy={y} r="0.7" fill="#f0eee6" opacity="0.8" />
+          </g>
+        ))}
+      </svg>
+    );
+  }
   const heads = [
     ["#8a7fd6", "#b9b1ef", "#f0eee6"], // lupine purples + white
     ["#e8a33d", "#f2c063", "#e8a33d"], // golden poppy
@@ -102,49 +134,72 @@ function MossRockArt({ v = 0 }: { v?: number }) {
 }
 
 /**
- * The running track (round 3): sized up into a proper wide oval. Every
- * boundary and lane line is generated from ONE set of ellipse parameters —
- * same center, decreasing radii, same dash pattern — so the lanes are
- * concentric with the band and can never drift off it.
+ * The running track, rebuilt round 4B: a classic red tartan STADIUM oval —
+ * two straights joined by squashed semicircle ends — with SIX lanes behind
+ * crisp solid white lines. Every boundary and lane line is generated from
+ * ONE `stadium(radius)` function (same center, same straight length, radius
+ * shrinking one lane width per lane), so the lanes are concentric with the
+ * band and can never drift off it. A white start/finish line crosses the
+ * home straight with small lane numbers beside it.
  */
 function TrackArt() {
-  const CX = 260;
-  const CY = 84;
-  const RX = 252; // outer boundary
-  const RY = 76;
-  const LANES = 3;
-  const W = 16; // lane width, constant across the band
-  const ring = (rx: number, ry: number) =>
-    `M ${CX - rx} ${CY} a ${rx} ${ry} 0 1 0 ${rx * 2} 0 a ${rx} ${ry} 0 1 0 ${-rx * 2} 0 Z`;
-  const inRx = RX - LANES * W;
-  const inRy = RY - LANES * W;
+  const CX = 330;
+  const CY = 85;
+  const L = 115; // straight half-length
+  const R0 = 195; // outer end radius
+  const W = 14; // lane width
+  const LANES = 6;
+  const F = 0.4; // vertical squash (fake ground perspective)
+  const RI = R0 - LANES * W; // inner boundary radius (111)
+  const stadium = (r: number) => {
+    const ry = r * F;
+    return [
+      `M ${CX - L} ${CY - ry}`,
+      `L ${CX + L} ${CY - ry}`,
+      `A ${r} ${ry} 0 0 1 ${CX + L} ${CY + ry}`,
+      `L ${CX - L} ${CY + ry}`,
+      `A ${r} ${ry} 0 0 1 ${CX - L} ${CY - ry}`,
+      "Z",
+    ].join(" ");
+  };
+  const white = "rgba(245, 240, 228, 0.92)";
   return (
-    <svg width="520" height="168" viewBox="0 0 520 168" aria-hidden="true">
-      {/* the band: outer ring minus inner ring, both from the same center */}
-      <path d={`${ring(RX, RY)} ${ring(inRx, inRy)}`} fill="#9c5e33" fillRule="evenodd" />
-      <path d={ring(RX, RY)} fill="none" stroke="#6e3f1f" strokeWidth="2.5" />
-      <path d={ring(inRx, inRy)} fill="none" stroke="#6e3f1f" strokeWidth="2" />
-      {/* lane separators: the same oval at decreasing radii */}
-      {[1, 2].map((i) => (
-        <path
-          key={i}
-          d={ring(RX - W * i, RY - W * i)}
-          fill="none"
-          stroke="rgba(240,230,208,0.5)"
-          strokeWidth="1.6"
-          strokeDasharray="12 8"
-        />
+    <svg width="660" height="172" viewBox="0 0 660 172" aria-hidden="true">
+      {/* the tartan band: outer stadium minus inner stadium */}
+      <path d={`${stadium(R0)} ${stadium(RI)}`} fill="#a8402e" fillRule="evenodd" />
+      {/* worn patches + water stain, inside the band */}
+      <ellipse cx={CX - 150} cy={CY + 58} rx="26" ry="6" fill="rgba(122,42,28,0.55)" />
+      <ellipse cx={CX + 140} cy={CY - 62} rx="20" ry="5" fill="rgba(122,42,28,0.5)" />
+      <ellipse cx={CX + 180} cy={CY + 52} rx="22" ry="5" fill="rgba(240,230,208,0.08)" />
+      {/* lane separators — solid white, one lane width apart */}
+      {[1, 2, 3, 4, 5].map((i) => (
+        <path key={i} d={stadium(R0 - W * i)} fill="none" stroke={white} strokeWidth="1.7" />
       ))}
-      {/* start line across the near straight */}
+      {/* outer + inner boundaries (the white curbs) */}
+      <path d={stadium(R0)} fill="none" stroke={white} strokeWidth="2.6" />
+      <path d={stadium(RI)} fill="none" stroke={white} strokeWidth="2.2" />
+      {/* start/finish line across the home straight */}
       <path
-        d={`M ${CX - 4} ${CY + inRy} L ${CX - 4} ${CY + RY}`}
-        stroke="rgba(240,230,208,0.65)"
-        strokeWidth="2.5"
+        d={`M ${CX - L} ${CY + RI * F} L ${CX - L} ${CY + R0 * F}`}
+        stroke={white}
+        strokeWidth="3.4"
       />
-      {/* worn, scuffed patches */}
-      <ellipse cx={CX - 132} cy={CY + 56} rx="20" ry="5" fill="rgba(94,60,32,0.5)" />
-      <ellipse cx={CX + 120} cy={CY - 58} rx="16" ry="4.5" fill="rgba(94,60,32,0.45)" />
-      <ellipse cx={CX + 152} cy={CY + 50} rx="18" ry="4" fill="rgba(240,230,208,0.1)" />
+      {/* subtle lane numbers beside the start line (1 = inside lane) */}
+      {[1, 2, 3, 4, 5, 6].map((n) => (
+        <text
+          key={n}
+          x={CX - L + 11}
+          y={CY + (RI + W * (n - 0.5)) * F + 1.8}
+          textAnchor="middle"
+          fontFamily="ui-monospace, Menlo, monospace"
+          fontSize="4.6"
+          fill="rgba(245,240,228,0.85)"
+        >
+          {n}
+        </text>
+      ))}
+      {/* infield: a faint mowed tint so the oval reads against the meadow */}
+      <path d={stadium(RI - 4)} fill="rgba(214,232,164,0.1)" />
     </svg>
   );
 }
@@ -737,6 +792,40 @@ function JackrabbitArt() {
   );
 }
 
+/** Dry seed heads — tall arcing stems with tan oat-like heads (meadow). */
+function SeedheadsArt() {
+  const stems = [
+    [6, 26, -4, 6],
+    [13, 26, -1, 3],
+    [20, 26, 2, 4],
+    [27, 26, 5, 7],
+    [34, 26, 7, 9],
+  ] as const;
+  return (
+    <svg width="40" height="28" viewBox="0 0 40 28" aria-hidden="true">
+      {stems.map(([x, y, dx, ty]) => (
+        <g key={x}>
+          <path
+            d={`M${x} ${y}Q${x + dx * 0.4} ${y - 12} ${x + dx} ${ty + 4}`}
+            stroke="#9a8a58"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <ellipse
+            cx={x + dx}
+            cy={ty + 2}
+            rx="1.7"
+            ry="3.2"
+            fill="#b3a169"
+            transform={`rotate(${dx * 3} ${x + dx} ${ty + 2})`}
+          />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 /**
  * The blue dome tent by the campfire (round 4B, from the client's real
  * campfire photo): dome body under a blue fly, crossed pole seams, a warm
@@ -906,6 +995,8 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <BenchArt />;
     case "poles":
       return <PolesArt />;
+    case "seedheads":
+      return <SeedheadsArt />;
   }
 }
 
@@ -1048,130 +1139,112 @@ function LakeArt() {
 }
 
 /**
- * The sequoia grove, rebuilt for round 3: trunks ~20% skinnier and ~40%
- * taller than round 2, each with a full tapered top and a layered dark-green
- * crown that lives entirely INSIDE the viewBox — nothing clips at the frame.
- * The fire-scar hollow and fibrous cinnamon bark carry over.
+ * The sequoia grove, rebuilt round 4B so it reads as Sequoia NP: FIVE trees
+ * (three foreground giants + two younger mid-ground sequoias behind them),
+ * bark a darker cinnamon-brown with dense fibrous vertical texture, and
+ * crowns built from distinct layered foliage clumps — each clump shadowed
+ * underneath and lit on top, not a generic cone. The middle giant keeps its
+ * fire-scar hollow.
  */
 function GroveArt() {
+  /** One distinct foliage clump: under-shadow, body, lit top. */
+  const clump = (x: number, y: number, rx: number, ry: number, tone: 0 | 1) => (
+    <g key={`${x}-${y}`}>
+      <ellipse cx={x} cy={y + ry * 0.55} rx={rx * 0.94} ry={ry * 0.8} fill="#0c1710" opacity="0.42" />
+      <ellipse cx={x} cy={y} rx={rx} ry={ry} fill={tone ? "#1d3322" : "#16281c"} />
+      <ellipse cx={x - rx * 0.15} cy={y - ry * 0.4} rx={rx * 0.62} ry={ry * 0.5} fill={tone ? "#28472c" : "#22402a"} />
+    </g>
+  );
+  /** Fibrous vertical bark texture between x0 and x1, top→bottom. */
+  const fibers = (cx: number, w: number, yTop: number, yBot: number, seed: number) => {
+    const lines: string[] = [];
+    const fine: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const t = (i + 0.5) / 7;
+      const x = cx - w / 2 + w * t;
+      const sway = Math.sin(seed + i * 2.1) * 3;
+      const y1 = yTop + ((seed * 7 + i * 13) % 20);
+      const y2 = yBot - ((seed * 5 + i * 17) % 26);
+      (i % 2 ? fine : lines).push(`M${x} ${y1}Q${x + sway} ${(y1 + y2) / 2} ${x + sway * 0.4} ${y2}`);
+    }
+    return (
+      <g key={`f${cx}`}>
+        <path d={lines.join("")} stroke="#451d0c" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+        <path d={fine.join("")} stroke="#8a4a24" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.8" />
+      </g>
+    );
+  };
   return (
-    <svg width="300" height="330" viewBox="0 0 300 330" aria-hidden="true">
-      {/* left giant — crown */}
-      <g fill="#16281c">
-        <ellipse cx="52" cy="30" rx="15" ry="9" />
-        <ellipse cx="44" cy="46" rx="22" ry="12" />
-        <ellipse cx="62" cy="52" rx="20" ry="11" />
-        <ellipse cx="38" cy="68" rx="24" ry="12" />
-        <ellipse cx="66" cy="74" rx="22" ry="11" />
-        <ellipse cx="52" cy="88" rx="29" ry="12" />
+    <svg width="420" height="340" viewBox="0 0 420 340" aria-hidden="true">
+      {/* two younger mid-ground sequoias, hazier and behind */}
+      <g opacity="0.88">
+        <path d="M118 120Q117 240 113 306L106 322L146 322L139 306Q135 240 134 120Q126 112 118 120Z" fill="#582813" />
+        {fibers(126, 14, 130, 310, 3)}
+        {clump(126, 78, 22, 11, 0)}
+        {clump(118, 100, 18, 9, 0)}
+        {clump(136, 104, 16, 8, 1)}
+        {clump(126, 60, 13, 7, 1)}
       </g>
-      <g fill="#1f3826">
-        <ellipse cx="46" cy="56" rx="14" ry="7" />
-        <ellipse cx="60" cy="80" rx="15" ry="7" />
-        <ellipse cx="52" cy="36" rx="9" ry="5" />
+      <g opacity="0.88">
+        <path d="M320 132Q319 244 315 308L308 324L350 324L343 308Q339 244 338 132Q330 124 320 132Z" fill="#5e2c15" />
+        {fibers(329, 14, 142, 312, 8)}
+        {clump(329, 92, 21, 10, 0)}
+        {clump(320, 112, 17, 9, 1)}
+        {clump(340, 116, 15, 8, 0)}
+        {clump(330, 74, 12, 7, 1)}
       </g>
-      {/* left giant — tapered trunk */}
-      <path d="M44 88Q42 210 34 300L22 328L84 328L72 300Q62 210 60 88Q52 78 44 88Z" fill="#7d4226" />
-      <path
-        d="M48 96Q46 210 40 310M54 94Q53 220 52 314M58 100Q59 220 64 308M51 150Q50 190 49 240"
-        stroke="#5e2f18"
-        strokeWidth="2.4"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M46 120Q45 220 39 306M57 116Q57 230 60 306"
-        stroke="#96552e"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
 
-      {/* middle giant (tallest) — crown */}
-      <g fill="#182c1e">
-        <ellipse cx="150" cy="16" rx="16" ry="9" />
-        <ellipse cx="140" cy="32" rx="24" ry="13" />
-        <ellipse cx="162" cy="38" rx="22" ry="12" />
-        <ellipse cx="134" cy="56" rx="26" ry="13" />
-        <ellipse cx="168" cy="60" rx="24" ry="12" />
-        <ellipse cx="150" cy="76" rx="32" ry="13" />
-      </g>
-      <g fill="#22402a">
-        <ellipse cx="144" cy="42" rx="15" ry="7" />
-        <ellipse cx="160" cy="68" rx="16" ry="7" />
-        <ellipse cx="150" cy="22" rx="10" ry="5" />
-      </g>
-      {/* middle giant — tapered trunk with the fire-scar hollow */}
-      <path
-        d="M136 76Q134 210 126 296L108 330L192 330L176 296Q166 210 164 76Q150 66 136 76Z"
-        fill="#8a4a2a"
-      />
-      <path
-        d="M142 84Q140 210 132 312M150 82Q149 230 147 318M157 86Q158 220 162 314M146 150Q145 200 143 250M153 130Q153 180 153 230"
-        stroke="#66341a"
-        strokeWidth="2.8"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M139 110Q138 220 130 310M155 104Q155 230 158 312"
-        stroke="#a55f36"
-        strokeWidth="1.7"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-      {/* fire scar: charred rim around a dark hollow */}
-      <path d="M134 330Q130 292 142 276Q156 268 164 286Q170 306 166 330Z" fill="#2a160c" />
-      <path d="M139 330Q137 298 146 286Q155 280 160 292Q164 310 161 330Z" fill="#120a06" />
+      {/* left giant */}
+      {clump(72, 30, 16, 9, 0)}
+      {clump(62, 48, 23, 12, 0)}
+      {clump(84, 54, 21, 11, 1)}
+      {clump(56, 70, 25, 12, 0)}
+      {clump(88, 76, 23, 11, 1)}
+      {clump(72, 90, 30, 12, 0)}
+      <path d="M64 90Q62 212 54 302L42 330L104 330L92 302Q82 212 80 90Q72 80 64 90Z" fill="#66311a" />
+      {fibers(72, 30, 100, 322, 1)}
 
-      {/* right giant — crown */}
-      <g fill="#16281c">
-        <ellipse cx="246" cy="52" rx="14" ry="8" />
-        <ellipse cx="238" cy="66" rx="21" ry="11" />
-        <ellipse cx="256" cy="72" rx="19" ry="10" />
-        <ellipse cx="234" cy="86" rx="22" ry="11" />
-        <ellipse cx="258" cy="92" rx="20" ry="10" />
-        <ellipse cx="246" cy="104" rx="27" ry="11" />
-      </g>
-      <g fill="#1f3826">
-        <ellipse cx="240" cy="74" rx="13" ry="6" />
-        <ellipse cx="254" cy="96" rx="14" ry="6" />
-      </g>
-      {/* right giant — tapered trunk */}
-      <path
-        d="M238 104Q236 220 230 302L218 330L286 330L274 302Q266 220 264 104Q251 95 238 104Z"
-        fill="#7d4226"
-      />
-      <path
-        d="M242 112Q240 220 236 314M250 110Q249 230 248 318M256 114Q256 224 260 312M252 180Q252 220 253 260"
-        stroke="#5e2f18"
-        strokeWidth="2.2"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M240 136Q239 230 233 310M258 130Q258 240 262 310"
-        stroke="#96552e"
-        strokeWidth="1.4"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
+      {/* middle giant (tallest) — keeps the fire-scar hollow */}
+      {clump(210, 16, 17, 9, 0)}
+      {clump(198, 34, 25, 13, 0)}
+      {clump(224, 40, 23, 12, 1)}
+      {clump(192, 58, 27, 13, 0)}
+      {clump(230, 62, 25, 12, 1)}
+      {clump(210, 78, 33, 13, 0)}
+      <path d="M196 78Q194 212 186 296L168 336L252 336L236 296Q226 212 224 78Q210 68 196 78Z" fill="#723c1e" />
+      {fibers(210, 36, 90, 326, 5)}
+      <path d="M194 336Q190 296 202 280Q216 272 224 290Q230 310 226 336Z" fill="#26130a" />
+      <path d="M199 336Q197 302 206 290Q215 284 220 296Q224 314 221 336Z" fill="#0f0805" />
+
+      {/* right giant */}
+      {clump(376, 54, 15, 8, 0)}
+      {clump(368, 68, 22, 11, 0)}
+      {clump(386, 74, 20, 10, 1)}
+      {clump(364, 88, 23, 11, 0)}
+      {clump(388, 94, 21, 10, 1)}
+      {clump(376, 106, 28, 11, 0)}
+      <path d="M368 106Q366 222 360 304L348 332L416 332L404 304Q396 222 394 106Q381 97 368 106Z" fill="#66311a" />
+      {fibers(382, 28, 116, 324, 11)}
 
       {/* ferns and shade plants at the feet */}
       <path
-        d="M96 326C94 318 90 314 85 311M96 326C96 317 97 313 99 308M96 326C99 319 103 316 107 314"
+        d="M136 328C134 320 130 316 125 313M136 328C136 319 137 315 139 310M136 328C139 321 143 318 147 316"
         stroke="#3d5a33"
         strokeWidth="1.8"
         fill="none"
         strokeLinecap="round"
       />
       <path
-        d="M204 328C202 321 198 317 194 315M204 328C205 320 207 316 210 312M204 328C207 322 211 319 215 318"
+        d="M284 330C282 323 278 319 274 317M284 330C285 322 287 318 290 314M284 330C287 324 291 321 295 320"
         stroke="#47663a"
         strokeWidth="1.8"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path
+        d="M52 334C50 327 46 323 42 321M52 334C53 326 55 322 58 318"
+        stroke="#3d5a33"
+        strokeWidth="1.6"
         fill="none"
         strokeLinecap="round"
       />
@@ -1198,51 +1271,92 @@ function PhotoArt() {
 }
 
 /**
- * Georgia Tech sign beside the track — navy board, gold GT, an "NCAA D1"
- * plank — with three yellow jackets buzzing looped paths around it.
+ * Georgia Tech sign at the track's edge — navy board, gold GT, an "NCAA D1"
+ * plank. (The yellow jackets left the sign round 4B: bigger now, they roam
+ * the whole meadow — see MeadowBees in World.tsx.)
  */
 function GtSignArt() {
   return (
-    <div className="gtWrap" aria-hidden="true">
-      <svg width="84" height="104" viewBox="0 0 84 104">
-        <rect x="39" y="26" width="5" height="76" fill="#6d5233" />
-        <rect x="12" y="8" width="60" height="34" rx="3" fill="#003057" stroke="#5c4426" strokeWidth="2" />
-        <text
-          x="42"
-          y="33"
-          textAnchor="middle"
-          fontFamily="Georgia, 'Times New Roman', serif"
-          fontWeight="bold"
-          fontSize="22"
-          fill="#b3a369"
-        >
-          GT
-        </text>
-        <rect x="20" y="46" width="44" height="13" rx="2" fill="#b3a369" stroke="#5c4426" strokeWidth="1.5" />
-        <text
-          x="42"
-          y="56"
-          textAnchor="middle"
-          fontFamily="ui-monospace, Menlo, monospace"
-          fontSize="8"
-          letterSpacing="1"
-          fill="#003057"
-        >
-          NCAA D1
-        </text>
-      </svg>
-      {/* three yellow jackets on looping curved paths */}
-      {[0, 1, 2].map((i) => (
-        <div key={i} className={`bee bee${i}`}>
-          <svg width="8" height="7" viewBox="0 0 8 7">
-            <ellipse cx="4" cy="4" rx="3" ry="2.2" fill="#e8b93d" />
-            <path d="M2.7 2.2L2.7 5.8M4.4 2L4.4 6" stroke="#26201c" strokeWidth="1" />
-            <circle cx="6.6" cy="3.6" r="1.1" fill="#26201c" />
-            <ellipse className="beeWing" cx="3.2" cy="1.4" rx="1.7" ry="1" fill="#f0eee6" opacity="0.85" />
-          </svg>
-        </div>
-      ))}
-    </div>
+    <svg width="96" height="118" viewBox="0 0 84 104" aria-hidden="true">
+      <rect x="39" y="26" width="5" height="76" fill="#6d5233" />
+      <rect x="12" y="8" width="60" height="34" rx="3" fill="#003057" stroke="#5c4426" strokeWidth="2" />
+      <text
+        x="42"
+        y="33"
+        textAnchor="middle"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        fontWeight="bold"
+        fontSize="22"
+        fill="#b3a369"
+      >
+        GT
+      </text>
+      <rect x="20" y="46" width="44" height="13" rx="2" fill="#b3a369" stroke="#5c4426" strokeWidth="1.5" />
+      <text
+        x="42"
+        y="56"
+        textAnchor="middle"
+        fontFamily="ui-monospace, Menlo, monospace"
+        fontSize="8"
+        letterSpacing="1"
+        fill="#003057"
+      >
+        NCAA D1
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * The climbing boulder (round 4B, meadow west wall): a Yosemite-toned
+ * granite cluster with a rope over the lip, chalk marks at the holds, a
+ * crash pad at the base, and the Taft Point crow perched on top (an
+ * occasional wing ruffle, CSS .crowWing).
+ */
+function BoulderArt() {
+  return (
+    <svg width="190" height="168" viewBox="0 0 190 168" aria-hidden="true">
+      {/* the crow, perched on the highline of the main boulder */}
+      <g className="crowWing" transform="translate(96 10)">
+        <ellipse cx="10" cy="12" rx="8" ry="5.2" fill="#17171d" />
+        <path d="M16 10Q22 12 20 16L12 16Z" fill="#101014" />
+        <circle cx="3.5" cy="6.5" r="3.6" fill="#17171d" />
+        <path d="M0.2 6.5L-4.5 8L0.5 8.6Z" fill="#494950" />
+        <circle cx="2.4" cy="5.6" r="0.7" fill="#8d8d96" />
+        <path d="M6 14Q13 10 17 14Q13 18 8 17Z" fill="#26262e" />
+      </g>
+      {/* smaller companion boulder, left */}
+      <path d="M8 152L4 118Q10 96 40 98Q58 100 60 122L56 152Z" fill="#6e6960" />
+      <path d="M12 112Q28 102 48 108" stroke="#8a857a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+      {/* main granite boulder */}
+      <path d="M42 152L36 66Q44 28 96 24Q152 26 160 70Q166 116 152 152Z" fill="#8f897b" />
+      {/* lit top face + shadow flank */}
+      <path d="M44 60Q54 32 96 28Q142 30 152 58Q120 46 88 48Q60 50 44 60Z" fill="#a7a191" />
+      <path d="M148 62Q158 100 148 152L118 152Q136 110 132 64Z" fill="#6e6960" opacity="0.85" />
+      {/* crack lines */}
+      <path d="M78 50Q74 90 80 128M112 46Q118 84 112 126Q110 140 114 152" stroke="#5f5a50" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M60 76Q70 80 78 78M112 92Q124 96 136 92" stroke="#5f5a50" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.8" />
+      {/* the rope: anchored over the lip, hanging down the face */}
+      <path d="M100 24Q98 40 103 62Q108 88 101 112Q97 134 102 152" stroke="#d1543e" strokeWidth="2.6" fill="none" />
+      <path d="M100 24Q98 40 103 62Q108 88 101 112" stroke="#e8734f" strokeWidth="0.9" fill="none" strokeDasharray="3 4" />
+      {/* chalk marks at the holds */}
+      <g fill="#eceada">
+        <ellipse cx="86" cy="72" rx="5" ry="2.6" opacity="0.55" />
+        <ellipse cx="118" cy="96" rx="4.4" ry="2.2" opacity="0.5" />
+        <ellipse cx="74" cy="110" rx="4.8" ry="2.4" opacity="0.5" />
+        <ellipse cx="98" cy="130" rx="4" ry="2" opacity="0.45" />
+      </g>
+      {/* crash pad at the base */}
+      <g>
+        <path d="M58 168L58 156Q58 150 66 150L138 150Q146 150 146 156L146 168Z" fill="#2c3e5f" />
+        <path d="M58 158L146 158" stroke="#1e2c46" strokeWidth="2" />
+        <path d="M74 150L74 168M126 150L126 168" stroke="#1e2c46" strokeWidth="2.4" />
+        <path d="M60 152Q102 146 144 152" stroke="#40598a" strokeWidth="2" fill="none" />
+      </g>
+      {/* chalk bag dropped beside the pad */}
+      <path d="M154 152L164 152Q165 162 159 164Q152 162 154 152Z" fill="#c97a4a" />
+      <ellipse cx="159" cy="153" rx="3.6" ry="1.4" fill="#e8e4da" />
+    </svg>
   );
 }
 
@@ -1459,6 +1573,8 @@ export function SetPieceArt({ kind }: { kind: SetPieceKind }) {
       return <TrailSignsArt />;
     case "gearcache":
       return <GearCacheArt />;
+    case "boulder":
+      return <BoulderArt />;
   }
 }
 

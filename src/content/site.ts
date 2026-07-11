@@ -12,6 +12,7 @@ export type CardId =
   | "bear"
   | "grove"
   | "lake"
+  | "climbing"
   | "skills"
   | "photography"
   | "todoclaw"
@@ -25,7 +26,8 @@ export type SetPieceKind =
   | "bear"
   | "kiosk"
   | "trailsigns"
-  | "gearcache";
+  | "gearcache"
+  | "boulder";
 export type StationKind = "desk" | "fire" | "pot";
 export type DecorKind =
   | "grass"
@@ -68,7 +70,8 @@ export type DecorKind =
   | "jackrabbit"
   | "tent"
   | "bench"
-  | "poles";
+  | "poles"
+  | "seedheads";
 export type StationAnim = "opening" | "popping";
 
 export interface Vec {
@@ -255,6 +258,8 @@ export const groveNote =
   "Giant sequoias in Sequoia National Park — some of the largest living trees on Earth.";
 export const lakeNote =
   "A mirror-still mountain lake at dusk. The camp's vignette is drawn from this photograph.";
+export const climbingNote =
+  "Climbing days between trail days. The crow on top is from Taft Point, Yosemite.";
 
 export const photographyNote =
   "Every image here is one of my photographs, restyled by the same pipeline that draws this site.";
@@ -294,6 +299,10 @@ export const cardMedia: Partial<
   photography: {
     src: "/world/tunnel-original.jpg",
     alt: "Original Tunnel View photograph",
+  },
+  climbing: {
+    src: "/gallery/photography/taft-point-crow.jpg",
+    alt: "A crow perched at Taft Point above Yosemite Valley",
   },
 };
 
@@ -368,16 +377,18 @@ export const galleries: Partial<Record<CardId, string[]>> = {
    Each scene draws its trodden trail along these waypoints, and auto/attract
    travel walks node-to-node along them instead of cutting straight lines. */
 
+/** Round 4B: the trail skirts BELOW the relocated track oval (right side). */
 const MEADOW_PATH: Vec[] = [
-  { gx: -560, gy: 72 },
-  { gx: -420, gy: 66 },
-  { gx: -300, gy: 58 },
-  { gx: -180, gy: 50 },
-  { gx: -60, gy: 70 },
-  { gx: 100, gy: 72 },
-  { gx: 330, gy: 70 },
-  { gx: 505, gy: 78 },
-  { gx: 560, gy: 76 },
+  { gx: -560, gy: 74 },
+  { gx: -440, gy: 68 },
+  { gx: -330, gy: 60 },
+  { gx: -200, gy: 50 },
+  { gx: -90, gy: 64 },
+  { gx: 30, gy: 76 },
+  { gx: 180, gy: 88 },
+  { gx: 360, gy: 94 },
+  { gx: 505, gy: 92 },
+  { gx: 560, gy: 86 },
 ];
 
 const SLOT_PATH: Vec[] = [
@@ -470,63 +481,89 @@ export const scenes: Scene[] = [
     img: "/world/meadow.jpg",
     // Valley + cliffs centered, treeline meeting the ground seam.
     bgPos: "center 67%",
-    aria: "Stylized Yosemite meadow with a trailhead information kiosk, giant sequoias, a running track with a Georgia Tech sign, a bear on a rock, and a walkable hiker character",
+    aria: "Stylized Yosemite meadow with a trailhead information kiosk, a giant sequoia grove, a granite climbing boulder with a rope and a perched crow, a six-lane running track with a Georgia Tech sign, a bear resting by the far treeline, a thin waterfall on the cliffs, roaming yellow jackets, and a walkable hiker character",
     gxClamp: 560,
     camClamp: 311,
     exits: { right: 1 },
     path: MEADOW_PATH,
+    // Round 4B layout: climbing boulder against the west wall, kiosk beside
+    // it, grove behind, the bear tucked into the far back-left treeline, and
+    // the six-lane track owning the right side (a side attraction — its
+    // infield stays walkable, so the oval needs no blocker).
     blockers: [
-      { shape: "ellipse", gx: -420, gy: 52, hw: 28, hh: 4 }, // kiosk posts
-      { shape: "ellipse", gx: -180, gy: 34, hw: 125, hh: 5 }, // sequoia trunks
-      { shape: "ellipse", gx: -100, gy: 78, hw: 38, hh: 4 }, // bear boulder
-      { shape: "ellipse", gx: 330, gy: 54, hw: 16, hh: 3 }, // GT sign post
+      { shape: "ellipse", gx: -545, gy: 68, hw: 85, hh: 5 }, // climbing boulder
+      { shape: "ellipse", gx: -500, gy: 14, hw: 30, hh: 3 }, // bear boulder
+      { shape: "ellipse", gx: -400, gy: 52, hw: 28, hh: 4 }, // kiosk posts
+      { shape: "ellipse", gx: -180, gy: 34, hw: 150, hh: 5 }, // sequoia trunks
+      { shape: "ellipse", gx: -100, gy: 70, hw: 16, hh: 3 }, // GT sign post
     ],
-    // Layout audited round 3 (round 4: About kiosk joins on the left; the
-    // grove stays as a flavor anchor). The right half is the track oval
-    // (footprint ~gx 70..590 / gy 24..82 with a small infield) — every
-    // anchor was checked against it.
     decor: [
       ...pathStamps(MEADOW_PATH, 0),
-      { kind: "track", gx: 330, gy: 82, flat: true },
-      { kind: "grass", gx: -520, gy: 30 },
-      { kind: "grass", gx: -420, gy: 58 },
+      { kind: "track", gx: 300, gy: 84, flat: true },
+      // back treeline
+      { kind: "pine", gx: -545, gy: 16 },
+      { kind: "pine", gx: -420, gy: 10 },
+      { kind: "pine", gx: 60, gy: 10 },
+      { kind: "pine", gx: 300, gy: 14 },
+      { kind: "pine", gx: 530, gy: 20 },
+      // grass tufts — dense ground cover (client asked three times)
+      { kind: "grass", gx: -520, gy: 34 },
+      { kind: "grass", gx: -440, gy: 84 },
       { kind: "grass", gx: -300, gy: 80 },
       { kind: "grass", gx: -260, gy: 20 },
       { kind: "grass", gx: 10, gy: 58 },
       { kind: "grass", gx: -130, gy: 90 },
       { kind: "grass", gx: 120, gy: 78 },
-      { kind: "grass", gx: 445, gy: 48 },
-      { kind: "grass", gx: 555, gy: 86 },
+      { kind: "grass", gx: 450, gy: 20 },
+      { kind: "grass", gx: 555, gy: 90 },
+      { kind: "grass", gx: -350, gy: 46 },
+      { kind: "grass", gx: 250, gy: 96 },
+      { kind: "grass", gx: 60, gy: 92 },
+      // rocks + logs
       { kind: "rock", gx: -160, gy: 48 },
       { kind: "rock", gx: 160, gy: 18 },
-      { kind: "pine", gx: -545, gy: 16 },
-      { kind: "pine", gx: -480, gy: 12 },
-      { kind: "pine", gx: 300, gy: 14 },
-      { kind: "pine", gx: 530, gy: 20 },
       { kind: "log", gx: -180, gy: 86 },
-      { kind: "mossRock", gx: -535, gy: 44 },
-      { kind: "mossRock", gx: 30, gy: 76, v: 1 },
+      { kind: "mossRock", gx: -520, gy: 40 },
+      { kind: "mossRock", gx: -30, gy: 90, v: 1 },
+      // wildflowers — lupine/poppy/paintbrush + purple statice (v3)
       { kind: "flowers", gx: -410, gy: 96, v: 0 },
       { kind: "flowers", gx: -130, gy: 46, v: 1 },
-      { kind: "flowers", gx: 55, gy: 84, v: 2 },
+      { kind: "flowers", gx: 55, gy: 88, v: 2 },
       { kind: "flowers", gx: 195, gy: 14, v: 0 },
-      // hand-dressing: daisy + clover ground cover, desire-line wear
+      { kind: "flowers", gx: -350, gy: 88, v: 3 },
+      { kind: "flowers", gx: -60, gy: 94, v: 3 },
+      { kind: "flowers", gx: 150, gy: 20, v: 3 },
+      { kind: "flowers", gx: 520, gy: 94, v: 3 },
+      // ground cover: daisies, clover, seed heads, desire-line wear
       { kind: "daisies", gx: 20, gy: 66, flat: true },
       { kind: "daisies", gx: -250, gy: 88, flat: true },
       { kind: "daisies", gx: -420, gy: 78, flat: true },
       { kind: "daisies", gx: 480, gy: 90, flat: true },
+      { kind: "daisies", gx: 120, gy: 94, flat: true },
       { kind: "clover", gx: -320, gy: 92, flat: true },
       { kind: "clover", gx: -360, gy: 70, flat: true },
+      { kind: "clover", gx: 220, gy: 90, flat: true },
+      { kind: "seedheads", gx: -490, gy: 58 },
+      { kind: "seedheads", gx: -240, gy: 72 },
+      { kind: "seedheads", gx: 90, gy: 64 },
+      { kind: "seedheads", gx: 400, gy: 92 },
+      { kind: "seedheads", gx: -30, gy: 80 },
+      { kind: "seedheads", gx: 540, gy: 52 },
       { kind: "worn", gx: 0, gy: 62, flat: true },
       { kind: "worn", gx: -150, gy: 56, v: 1, flat: true },
       { kind: "worn", gx: -380, gy: 86, v: 2, flat: true },
       { kind: "worn", gx: -60, gy: 88, v: 2, flat: true },
-      { kind: "bird", gx: 350, gy: 50, v: 0 },
-      { kind: "bird", gx: 415, gy: 44, v: 1 },
+      { kind: "stones", gx: -300, gy: 74 },
+      { kind: "stones", gx: 140, gy: 88 },
+      { kind: "needles", gx: -200, gy: 56, flat: true },
+      // critters (the yellow jackets roam the whole meadow — see World.tsx)
+      { kind: "bird", gx: -70, gy: 86, v: 0 },
+      { kind: "bird", gx: 200, gy: 96, v: 1 },
       { kind: "butterfly", gx: -190, gy: 62, v: 0 },
-      { kind: "butterfly", gx: 250, gy: 28, v: 1 },
+      { kind: "butterfly", gx: -260, gy: 86, v: 1 },
+      { kind: "butterfly", gx: 100, gy: 70, v: 0 },
     ],
-    signs: [{ text: "THE SLOT →", gx: 505, gy: 90 }],
+    signs: [{ text: "THE SLOT →", gx: 505, gy: 96 }],
     setPieces: [
       // Round 4: the site starts here — the About anchor is a trailhead
       // information kiosk on the meadow's west side.
@@ -534,12 +571,22 @@ export const scenes: Scene[] = [
         id: "about",
         kind: "kiosk",
         label: "ABOUT",
-        gx: -420,
+        gx: -400,
         gy: 52,
-        approach: { gx: -420, gy: 66 },
+        approach: { gx: -400, gy: 66 },
       },
-      // The grove stays as scenery (Experience moved to the snow) — a short
-      // flavor card for now; 4B dresses it further.
+      // The climbing boulder against the meadow's west wall (round 4B):
+      // granite cluster, rope over the lip, crash pad, the Taft Point crow.
+      {
+        id: "climbing",
+        kind: "boulder",
+        label: "CLIMBING",
+        gx: -545,
+        gy: 68,
+        approach: { gx: -545, gy: 82 },
+        discovery: true,
+      },
+      // The grove stays as scenery (Experience moved to the snow).
       {
         id: "grove",
         kind: "grove",
@@ -549,22 +596,24 @@ export const scenes: Scene[] = [
         approach: { gx: -180, gy: 48 },
         discovery: true,
       },
+      // The bear moved to the far back-left treeline (round 4B client note:
+      // off to the side, not on the path, still discoverable).
       {
         id: "bear",
         kind: "bear",
         label: "THE BEAR",
-        gx: -100,
-        gy: 78,
-        approach: { gx: -55, gy: 84 },
+        gx: -500,
+        gy: 14,
+        approach: { gx: -455, gy: 22 },
         discovery: true,
       },
       {
         id: "athletics",
         kind: "gtsign",
         label: "RECORDS",
-        gx: 330,
-        gy: 54,
-        approach: { gx: 330, gy: 68 },
+        gx: -100,
+        gy: 70,
+        approach: { gx: -100, gy: 84 },
       },
     ],
     stations: [],

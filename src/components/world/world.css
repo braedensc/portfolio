@@ -1031,32 +1031,86 @@
   image-rendering: pixelated;
 }
 
-/* ---------- meadow: GT sign + yellow jackets ---------- */
-.gtWrap {
-  position: relative;
-  width: 84px;
-  height: 104px;
-}
-.bee {
+/* ---------- meadow: roaming yellow jackets (round 4B) ----------
+   Bigger, readable bees wandering the WHOLE meadow: each .beeR animates X
+   and its .beeRy child animates Y over different seeded periods (a lazy
+   Lissajous drift that never visibly repeats). Meadow-only; reduced motion
+   hides the layer entirely (see the rm block at the bottom). */
+.bees {
   position: absolute;
-  left: 38px;
-  top: 16px;
-  animation: beeOrbitA 5.5s linear infinite;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.9s;
+  pointer-events: none;
 }
-.bee1 {
-  left: 24px;
-  top: 36px;
-  animation: beeOrbitB 6.8s linear infinite;
+.world.sc-meadow .bees {
+  opacity: 1;
 }
-.bee2 {
-  left: 54px;
-  top: 46px;
-  animation: beeOrbitC 4.7s linear infinite;
+.beeR {
+  position: absolute;
+  animation: beeRoamX linear infinite alternate;
+  will-change: transform;
+}
+.beeRy {
+  animation: beeRoamY ease-in-out infinite alternate;
 }
 .beeWing {
   transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: beeFlap 0.16s ease-in-out infinite alternate;
+}
+.beeWingB {
+  animation-delay: 0.08s;
+}
+/* ---------- meadow: waterfall accent on the backdrop crags ----------
+   A thin white fall line + drifting mist puff, drawn over the photo plane
+   (so it parallaxes with it). Meadow-only. */
+.falls {
+  display: none;
+  position: absolute;
+  left: 63%;
+  top: 17%;
+  width: 30px;
+  height: 24%;
+  pointer-events: none;
+}
+.world.sc-meadow .falls {
+  display: block;
+}
+.falls::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(240, 246, 252, 0),
+    rgba(240, 246, 252, 0.5) 12%,
+    rgba(240, 246, 252, 0.62) 55%,
+    rgba(240, 246, 252, 0.4)
+  );
+  filter: blur(0.6px);
+}
+.falls::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  width: 27px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(240, 246, 252, 0.4), rgba(240, 246, 252, 0) 70%);
+  filter: blur(2px);
+  animation: mistK 5.5s ease-in-out infinite;
+}
+/* the crow on the climbing boulder — an occasional wing ruffle */
+.crowWing {
+  transform-box: fill-box;
+  transform-origin: 30% 80%;
+  animation: ravWingK 11s infinite;
 }
 
 /* ---------- ambient critters + camp dressing ---------- */
@@ -2196,49 +2250,31 @@
     transform: scaleY(0.08);
   }
 }
-@keyframes beeOrbitA {
-  0%,
-  100% {
-    transform: translate(0, 0);
+@keyframes beeRoamX {
+  from {
+    transform: translateX(calc(var(--brx, 160px) * -1));
   }
-  25% {
-    transform: translate(16px, -10px);
-  }
-  50% {
-    transform: translate(30px, 2px);
-  }
-  75% {
-    transform: translate(10px, 12px);
+  to {
+    transform: translateX(var(--brx, 160px));
   }
 }
-@keyframes beeOrbitB {
-  0%,
-  100% {
-    transform: translate(0, 0);
+@keyframes beeRoamY {
+  from {
+    transform: translateY(calc(var(--bry, 40px) * -1));
   }
-  30% {
-    transform: translate(-12px, -14px);
-  }
-  55% {
-    transform: translate(8px, -22px);
-  }
-  80% {
-    transform: translate(16px, -6px);
+  to {
+    transform: translateY(var(--bry, 40px));
   }
 }
-@keyframes beeOrbitC {
+@keyframes mistK {
   0%,
   100% {
-    transform: translate(0, 0);
-  }
-  20% {
-    transform: translate(10px, -14px);
+    opacity: 0.55;
+    transform: scale(1);
   }
   50% {
-    transform: translate(-14px, -20px);
-  }
-  75% {
-    transform: translate(-18px, -4px);
+    opacity: 0.95;
+    transform: scale(1.25);
   }
 }
 @keyframes beeFlap {
@@ -2521,5 +2557,9 @@
   .world *::after {
     animation: none !important;
     transition-duration: 0.01s !important;
+  }
+  /* ambience that would read as frozen mid-air: remove it entirely */
+  .bees {
+    display: none !important;
   }
 }
