@@ -26,6 +26,8 @@ import {
   groveNote,
   lakeNote,
   climbingNote,
+  fallsNote,
+  castleNote,
   photographyNote,
   morePlacesNote,
   finePrint,
@@ -59,6 +61,8 @@ const CARD_TITLES: Record<CardId, string> = {
   grove: "Sequoia grove",
   lake: "Mountain lake",
   climbing: "Climbing",
+  falls: "Yosemite Falls",
+  castle: "Matsumoto Castle",
   skills: "Skills",
   photography: "Photography",
   todoclaw: "Todoclaw",
@@ -218,6 +222,7 @@ function CardContent({
           <div className="ct">The bear</div>
           <CardMediaImg id="bear" />
           <p>{bearNote}</p>
+          {gallery}
         </div>
       );
     case "grove":
@@ -226,6 +231,7 @@ function CardContent({
           <div className="ct">Sequoia grove</div>
           <CardMediaImg id="grove" />
           <p>{groveNote}</p>
+          {gallery}
         </div>
       );
     case "lake":
@@ -243,6 +249,24 @@ function CardContent({
           <div className="ct">Climbing</div>
           <CardMediaImg id="climbing" />
           <p>{climbingNote}</p>
+          {gallery}
+        </div>
+      );
+    case "falls":
+      return (
+        <div>
+          <div className="ct">Yosemite Falls</div>
+          <CardMediaImg id="falls" />
+          <p>{fallsNote}</p>
+        </div>
+      );
+    case "castle":
+      return (
+        <div>
+          <div className="ct">Matsumoto Castle</div>
+          <CardMediaImg id="castle" />
+          <p>{castleNote}</p>
+          {gallery}
         </div>
       );
     case "skills":
@@ -390,11 +414,9 @@ export default function World() {
         <div
           className="plane"
           style={{ backgroundImage: `url(${scene.img})`, backgroundPosition: scene.bgPos }}
-        >
-          {/* waterfall accent drawn onto the meadow backdrop's crag side
-              (CSS-gated to sc-meadow) */}
-          <div className="falls" aria-hidden="true" />
-        </div>
+        />
+        {/* (The old CSS waterfall accent retired round 5B — Yosemite Falls
+            is a drawn set-piece in the meadow itself.) */}
         <div className="skyDrift" aria-hidden="true">
           <SkyDriftArt />
         </div>
