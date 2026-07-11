@@ -9,24 +9,34 @@ Guidance for Claude Code sessions in this repository.
 ## What This Is
 
 Braeden Collins' personal portfolio — **an explorable HD-2D world built from his own photographs**.
-The visitor walks a pixel-art hiker through five stylized scenes (Yosemite meadow → Antelope
-slot canyon → Banff snow → Monument Valley desert → night campsite; more to come: El Capitan…),
-each rendered from a real photo via the posterization pipeline. Content lives at themed points
-of interest (a trailhead kiosk, carved trail signs, a gear cache, a planner desk); the projects
-are in-world stations with single-click launches. A **plain view** presents the same content in
-a normal recruiter-readable layout, same art style.
+The visitor walks a pixel-art hiker through five stylized scenes named for the real places
+photographed (Yosemite meadow → Antelope Canyon slot → Banff snow → Monument Valley desert →
+Eastern Sierra night camp; more to come: El Capitan…), each rendered from a real photo via the
+posterization pipeline. Content lives at themed points of interest (a trailhead kiosk, carved
+trail signs, a gear cache, a planner desk); the projects are in-world stations with single-click
+launches. A **plain view** presents the same content in a normal recruiter-readable layout,
+same art style.
 
 Design direction was locked 2026-07-10 after a 12-mock workshop (mocks live outside this repo).
-Key decisions (start scene revised round 4):
+Key decisions (start scene revised round 4; camera/panels revised round 5):
 
 - **Start scene: the meadow** (About & Athletics); **the camp is the finale** (always night,
   campfire, both project stations).
+- **Static camera, fixed-width stages (round 5):** each scene is one ±600-unit stage scaled to
+  fit the viewport width — the camera never pans; signposts mark both stage edges and paths
+  connect edge-to-edge at gy 72.
+- **Info panels are a left drawer (round 5):** near-full-height paper panel with a thin accent
+  connector line to its POI; mobile = bottom sheet. Standing in a POI's dashed stand-here zone
+  opens it without clicking; walking away closes it.
+- **Light chrome (round 5):** panels/HUD/waypoint widget use the cream/ink/orange palette — no
+  dark panels. Area headers show the content category big with the real place name beneath.
 - **Stations:** Todoclaw = planner desk (the app's own mascot art), ChefClaw = camp kitchen
   (neon recipe screen + ingredient prep table — no chef NPC since round 4B; the small cook pot
   keeps the lid-pop reveal), Contact = the campfire. Single-click opens — no hold-to-open
   interactions.
 - **Waypoints are furnished set-pieces** (lake, grove, signposts), never bare markers in empty ground.
-- **Auto mode:** a play button walks the expedition through every stop on its own.
+- **Auto mode:** a play button (embedded in the waypoint widget's top border) walks the
+  expedition through every stop on its own.
 - **Day/night** relighting; movement modestly brisk; reduced-motion = teleport + no ambient animation.
 - **Copy is plain text.** No puns, no outdoors metaphors in prose. Sections: About, Projects,
   Experience, Photography, Contact.

@@ -15,6 +15,7 @@ import Link from "next/link";
 import {
   scenes,
   chips,
+  poiLocations,
   identity,
   aboutText,
   experienceRows,
@@ -38,7 +39,15 @@ import {
   type CardId,
 } from "@/content/site";
 import { WorldEngine } from "./engine";
-import { DecorArt, HawkArt, SignArt, SetPieceArt, SkyDriftArt, StationArt } from "./scenes";
+import {
+  DecorArt,
+  HawkArt,
+  SignArt,
+  SetPieceArt,
+  SkyDriftArt,
+  StationArt,
+  ZonePadArt,
+} from "./scenes";
 import { Lightbox } from "./Lightbox";
 import { HIKER } from "./sprites";
 import "./world.css";
@@ -340,9 +349,6 @@ export default function World() {
 
   const engineRef = useRef<WorldEngine | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const skyRef = useRef<HTMLDivElement>(null);
-  const groundRef = useRef<HTMLDivElement>(null);
   const faderRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const linkRef = useRef<HTMLDivElement>(null);
@@ -366,9 +372,6 @@ export default function World() {
     engineRef.current = engine;
     engine.attach({
       root: rootRef.current!,
-      backdrop: backdropRef.current!,
-      sky: skyRef.current!,
-      ground: groundRef.current!,
       fader: faderRef.current!,
       card: cardRef.current!,
       link: linkRef.current!,
@@ -409,13 +412,12 @@ export default function World() {
     <div ref={rootRef} className={`world ${scene.cls}${night ? " night" : ""}`}>
       <div className="world-scene" role="img" aria-label={scene.aria}>
         <div
-          ref={backdropRef}
           className="plane"
           style={{ backgroundImage: `url(${scene.img})`, backgroundPosition: scene.bgPos }}
         />
         {/* (The old CSS waterfall accent retired round 5B — Yosemite Falls
-            is now a drawn set-piece in the meadow itself.) */}
-        <div ref={skyRef} className="skyDrift" aria-hidden="true">
+            is a drawn set-piece in the meadow itself.) */}
+        <div className="skyDrift" aria-hidden="true">
           <SkyDriftArt />
         </div>
         <div ref={starsRef} className="stars" />
@@ -440,7 +442,7 @@ export default function World() {
             <HawkArt />
           </div>
         </div>
-        <div ref={groundRef} className="ground">
+        <div className="ground">
           <div className="mottle m1" />
           <div className="mottle m2" />
           <div className="groundTex" />
@@ -449,6 +451,10 @@ export default function World() {
           <div className="fglow" />
         </div>
         <div className="seam" />
+        {/* stage-edge biome hints: a soft wash of the neighboring scene's
+            palette creeping over each connecting edge (CSS per scene) */}
+        <div className="edgeHint eL" aria-hidden="true" />
+        <div className="edgeHint eR" aria-hidden="true" />
         <div className="cw cwL" />
         <div className="cw cwR" />
         <div className="items">
@@ -468,13 +474,34 @@ export default function World() {
                 </div>
               </div>
             ))}
-            {scene.signs.map((s) => (
-              <div key={s.text} className="item spost" data-gx={s.gx} data-gy={s.gy}>
-                <div className="in">
-                  <div className="mlabel" aria-hidden="true">
-                    {s.text}
+            {scene.signs.map((s) => {
+              // Round 5: big arrow-plank signs — the plank points the way,
+              // so the arrow characters come out of the painted text.
+              const dir = s.text.includes("→") ? "r" : s.text.includes("←") ? "l" : "n";
+              return (
+                <div key={s.text} className="item spost" data-gx={s.gx} data-gy={s.gy}>
+                  <div className="in">
+                    <SignArt dir={dir} />
+                    <div className="signLabel" aria-hidden="true">
+                      {s.text.replace(/[←→]/g, "").trim()}
+                    </div>
                   </div>
-                  <SignArt />
+                </div>
+              );
+            })}
+            {/* stand-here zone pads: proximity opens the drawer inside these */}
+            {[...scene.setPieces.filter((p) => !p.discovery), ...scene.stations].map((p) => (
+              <div
+                key={`z-${p.id}`}
+                className="item zonepad"
+                data-flat="1"
+                data-gx={p.approach.gx}
+                data-gy={p.approach.gy}
+                data-zone={p.id}
+                aria-hidden="true"
+              >
+                <div className="in">
+                  <ZonePadArt />
                 </div>
               </div>
             ))}
@@ -593,23 +620,19 @@ export default function World() {
         <h1>{identity.name}</h1>
         <p>{identity.role}</p>
       </header>
-      <div className="scind">
-        {scene.name} — {scene.theme} · {sceneIdx + 1}/{scenes.length}
+      {/* Round 5: big area header — the content category with the real place
+          the scene's photograph was taken beneath it. */}
+      <div className="areaHead" aria-live="polite">
+        <div className="areaCat">{scene.theme}</div>
+        <div className="areaPlace">
+          {scene.place} · {sceneIdx + 1}/{scenes.length}
+        </div>
       </div>
       {attractOn && (
         <div className="watchHint" aria-hidden="true">
           WATCHING — PRESS ANY KEY TO EXPLORE
         </div>
       )}
-      <button
-        className="autoBtn"
-        data-auto-btn="true"
-        aria-pressed={autoOn}
-        aria-label={autoOn ? "Pause the route" : "Play the route"}
-        onClick={() => engineRef.current?.toggleAuto()}
-      >
-        <span aria-hidden="true">{autoOn ? "⏸" : "▶"}</span> PLAY THE ROUTE
-      </button>
       <div className="tr">
         <Link href="/plain" className="simple">
           SIMPLE VIEW
@@ -626,16 +649,41 @@ export default function World() {
         )}
         <div className={`hint${hintOn ? "" : " off"}`}>WASD / CLICK — WALK</div>
       </div>
-      <nav className="chips" aria-label="Sections">
-        {chips.map((c) => (
-          <button
-            key={c.poi}
-            aria-label={`Travel to ${c.label}`}
-            onClick={() => engineRef.current?.travelTo(c.poi)}
-          >
-            {c.label}
-          </button>
-        ))}
+      {/* Round 5: the travel chips became one connected waypoint widget — a
+          route line through blocky nodes, the current area marked, with the
+          tour button riding the widget's top border. */}
+      <nav className="wpw" aria-label="Sections">
+        <button
+          className="wpTour"
+          data-auto-btn="true"
+          aria-pressed={autoOn}
+          aria-label={autoOn ? "Pause the route" : "Play the route"}
+          onClick={() => engineRef.current?.toggleAuto()}
+        >
+          <span aria-hidden="true">{autoOn ? "⏸" : "▶"}</span>
+          {autoOn ? "PAUSE THE ROUTE" : "PLAY THE ROUTE"}
+        </button>
+        {/* .wpTrack scrolls on narrow screens; .wpRow carries the route line
+            so the embedded tour button above is never clipped */}
+        <div className="wpTrack">
+          <div className="wpRow">
+            {chips.map((c) => {
+              const here = poiLocations[c.poi].scene === sceneIdx;
+              return (
+                <button
+                  key={c.poi}
+                  className={`wpNode${here ? " here" : ""}`}
+                  aria-label={`Travel to ${c.label}`}
+                  aria-current={here ? "location" : undefined}
+                  onClick={() => engineRef.current?.travelTo(c.poi)}
+                >
+                  <span className="wpDot" aria-hidden="true" />
+                  <span className="wpLab">{c.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </nav>
       <div className="fine">{finePrint}</div>
     </div>

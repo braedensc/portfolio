@@ -143,14 +143,16 @@ function MossRockArt({ v = 0 }: { v?: number }) {
  * home straight with small lane numbers beside it.
  */
 function TrackArt() {
-  const CX = 330;
-  const CY = 85;
-  const L = 115; // straight half-length
-  const R0 = 195; // outer end radius
-  const W = 14; // lane width
+  // Round 5: shrunk a notch (R0 195→160, L 115→95) so the whole oval fits
+  // inside the static stage with clear ground before the right-edge exit.
+  const CX = 265;
+  const CY = 78;
+  const L = 95; // straight half-length
+  const R0 = 160; // outer end radius
+  const W = 12; // lane width
   const LANES = 6;
   const F = 0.4; // vertical squash (fake ground perspective)
-  const RI = R0 - LANES * W; // inner boundary radius (111)
+  const RI = R0 - LANES * W; // inner boundary radius (88)
   const stadium = (r: number) => {
     const ry = r * F;
     return [
@@ -164,13 +166,13 @@ function TrackArt() {
   };
   const white = "rgba(245, 240, 228, 0.92)";
   return (
-    <svg width="660" height="172" viewBox="0 0 660 172" aria-hidden="true">
+    <svg width="530" height="150" viewBox="0 0 530 150" aria-hidden="true">
       {/* the tartan band: outer stadium minus inner stadium */}
       <path d={`${stadium(R0)} ${stadium(RI)}`} fill="#a8402e" fillRule="evenodd" />
       {/* worn patches + water stain, inside the band */}
-      <ellipse cx={CX - 150} cy={CY + 58} rx="26" ry="6" fill="rgba(122,42,28,0.55)" />
-      <ellipse cx={CX + 140} cy={CY - 62} rx="20" ry="5" fill="rgba(122,42,28,0.5)" />
-      <ellipse cx={CX + 180} cy={CY + 52} rx="22" ry="5" fill="rgba(240,230,208,0.08)" />
+      <ellipse cx={CX - 120} cy={CY + 48} rx="24" ry="5.5" fill="rgba(122,42,28,0.55)" />
+      <ellipse cx={CX + 112} cy={CY - 50} rx="18" ry="4.5" fill="rgba(122,42,28,0.5)" />
+      <ellipse cx={CX + 145} cy={CY + 42} rx="20" ry="4.5" fill="rgba(240,230,208,0.08)" />
       {/* lane separators — solid white, one lane width apart */}
       {[1, 2, 3, 4, 5].map((i) => (
         <path key={i} d={stadium(R0 - W * i)} fill="none" stroke={white} strokeWidth="1.7" />
@@ -544,28 +546,45 @@ function RavenArt() {
 /**
  * One trodden stamp of a scene's drawn path (flat). Stamps are interpolated
  * along the scene's waypoint polyline (site.ts pathStamps) so the visible
- * trail is exactly the line auto/attract travel walks. `v` picks the ground
- * tone: 0 meadow dirt, 1 slot sand, 2 trodden snow, 3 desert dust, 4 camp earth.
+ * trail is exactly the line auto/attract travel walks.
+ *
+ * Round 5: ONE textured dirt style everywhere — the same warm packed-earth
+ * band with pebble flecks in every biome, so the trail visibly continues
+ * from stage to stage. `v` keeps only a whisper of per-scene grading (a
+ * slightly cooler edge on snow, redder in the canyons); the body tone is
+ * shared. v=2 still scatters trodden-snow specks on top.
  */
-const PATH_TONES: ReadonlyArray<readonly [string, string]> = [
-  ["rgba(140, 118, 74, 0.4)", "rgba(158, 134, 86, 0.34)"],
-  ["rgba(112, 52, 20, 0.4)", "rgba(146, 76, 36, 0.32)"],
-  ["rgba(168, 186, 210, 0.6)", "rgba(140, 162, 194, 0.42)"],
-  ["rgba(120, 54, 24, 0.38)", "rgba(154, 86, 44, 0.3)"],
-  ["rgba(88, 62, 36, 0.5)", "rgba(114, 82, 48, 0.38)"],
+const PATH_EDGE: ReadonlyArray<string> = [
+  "rgba(126, 100, 62, 0.42)", // meadow
+  "rgba(128, 88, 52, 0.44)", // slot
+  "rgba(122, 106, 84, 0.5)", // snow (reads darker against snowpack)
+  "rgba(128, 92, 54, 0.44)", // desert
+  "rgba(112, 88, 56, 0.46)", // camp
 ];
 function PathStampArt({ v = 0 }: { v?: number }) {
-  const [outer, inner] = PATH_TONES[v % PATH_TONES.length];
+  const edge = PATH_EDGE[v % PATH_EDGE.length];
   return (
-    <svg width="56" height="15" viewBox="0 0 56 15" aria-hidden="true">
-      <ellipse cx="28" cy="7.5" rx="26" ry="5.6" fill={outer} />
-      <ellipse cx="28" cy="7.5" rx="17" ry="3.6" fill={inner} />
+    <svg width="58" height="16" viewBox="0 0 58 16" aria-hidden="true">
+      <ellipse cx="29" cy="8" rx="27" ry="6" fill={edge} />
+      <ellipse cx="29" cy="8" rx="19" ry="4.2" fill="rgba(150, 122, 78, 0.44)" />
+      <ellipse cx="29" cy="8" rx="11" ry="2.6" fill="rgba(168, 140, 92, 0.4)" />
+      {/* pebble flecks — the shared trail texture */}
+      <g fill="rgba(96, 74, 46, 0.55)">
+        <circle cx="14" cy="7" r="1.1" />
+        <circle cx="24" cy="10.5" r="0.9" />
+        <circle cx="36" cy="6" r="1.1" />
+        <circle cx="45" cy="9.5" r="0.9" />
+      </g>
+      <g fill="rgba(214, 192, 152, 0.5)">
+        <circle cx="19" cy="9.5" r="0.8" />
+        <circle cx="31" cy="11" r="0.8" />
+        <circle cx="41" cy="7.5" r="0.8" />
+      </g>
       {v === 2 && (
-        <g fill="rgba(96, 122, 158, 0.55)">
+        <g fill="rgba(226, 236, 246, 0.6)">
           <ellipse cx="18" cy="6" rx="2" ry="1.2" />
-          <ellipse cx="24" cy="9" rx="2" ry="1.2" />
-          <ellipse cx="31" cy="6.5" rx="2" ry="1.2" />
-          <ellipse cx="37" cy="9.5" rx="2" ry="1.2" />
+          <ellipse cx="27" cy="10" rx="2" ry="1.2" />
+          <ellipse cx="38" cy="6.5" rx="2" ry="1.2" />
         </g>
       )}
     </svg>
@@ -965,36 +984,41 @@ function PolesArt() {
  */
 function StreamArt() {
   return (
-    <svg width="520" height="54" viewBox="0 0 520 54" aria-hidden="true">
+    // 1030 wide: spans the round-5 ±600 stage at the stream's depth, so the
+    // water reads as entering and leaving the canyon at both edges.
+    <svg width="1030" height="54" viewBox="0 0 1030 54" aria-hidden="true">
       {/* wet sand banks */}
       <path
-        d="M6 30Q40 12 100 16Q160 20 220 14Q280 8 340 16Q400 24 460 18Q500 15 514 26Q516 34 490 40Q430 48 370 42Q310 36 250 42Q190 48 130 42Q70 36 30 42Q8 40 6 30Z"
+        d="M4 30Q60 12 140 16Q230 21 320 14Q410 8 500 16Q590 24 680 17Q770 11 860 18Q950 24 1014 22Q1026 24 1026 29Q1024 35 990 40Q910 47 830 41Q740 35 650 42Q560 48 470 42Q380 36 290 43Q200 48 110 42Q40 38 8 38Q2 34 4 30Z"
         fill="#4f2f18"
       />
       {/* the water: dark jade channel with a lighter mid-band */}
       <path
-        d="M18 29Q50 17 104 20Q162 24 222 18Q280 13 338 20Q398 27 458 22Q494 20 504 27Q504 32 484 36Q428 43 368 38Q310 32 252 38Q192 43 134 38Q76 32 36 38Q18 36 18 29Z"
+        d="M18 29Q70 17 148 20Q234 25 322 18Q410 13 498 20Q588 28 678 21Q768 15 856 22Q944 28 1006 25Q1014 27 1012 30Q1006 34 972 36Q902 42 826 37Q740 31 652 38Q564 44 474 38Q386 32 294 39Q206 44 118 38Q52 34 26 34Q16 32 18 29Z"
         fill="#2c4f3e"
       />
       <path
-        d="M30 28Q60 20 106 23Q164 27 224 21Q280 17 336 23Q396 30 456 25Q486 23 494 28Q486 32 464 34Q426 39 370 35Q310 29 254 35Q194 39 138 35Q80 30 42 34Q30 32 30 28Z"
+        d="M32 28Q80 20 152 23Q238 28 324 21Q410 17 496 23Q586 31 676 24Q766 18 854 25Q938 31 996 27Q1000 29 996 31Q972 34 940 34Q890 38 824 33Q740 27 654 34Q566 40 476 34Q388 28 298 35Q208 40 122 34Q60 30 40 32Q30 31 32 28Z"
         fill="#3f6b52"
       />
-      <path d="M52 30Q120 24 200 27Q300 22 380 29Q430 31 470 28" stroke="#5a8a6a" strokeWidth="1.6" fill="none" opacity="0.8" />
+      <path d="M70 30Q200 23 340 28Q520 21 700 29Q830 32 960 27" stroke="#5a8a6a" strokeWidth="1.6" fill="none" opacity="0.8" />
       {/* midstream stones + white riffles curling downstream of them */}
-      <ellipse cx="150" cy="30" rx="7" ry="3.4" fill="#6b5a44" />
-      <path d="M144 27Q150 24 156 27" stroke="#8a7a60" strokeWidth="1.2" fill="none" />
-      <path d="M158 32Q166 34 174 32" stroke="#dfe8e2" strokeWidth="1.3" fill="none" opacity="0.85" />
-      <ellipse cx="332" cy="26" rx="6" ry="3" fill="#55504a" />
-      <path d="M339 29Q347 31 355 29" stroke="#dfe8e2" strokeWidth="1.2" fill="none" opacity="0.8" />
-      <ellipse cx="428" cy="30" rx="5" ry="2.6" fill="#6b5a44" />
-      <path d="M434 32Q441 34 448 32" stroke="#dfe8e2" strokeWidth="1.1" fill="none" opacity="0.8" />
+      <ellipse cx="230" cy="30" rx="7" ry="3.4" fill="#6b5a44" />
+      <path d="M224 27Q230 24 236 27" stroke="#8a7a60" strokeWidth="1.2" fill="none" />
+      <path d="M238 32Q246 34 254 32" stroke="#dfe8e2" strokeWidth="1.3" fill="none" opacity="0.85" />
+      <ellipse cx="560" cy="26" rx="6" ry="3" fill="#55504a" />
+      <path d="M567 29Q575 31 583 29" stroke="#dfe8e2" strokeWidth="1.2" fill="none" opacity="0.8" />
+      <ellipse cx="812" cy="30" rx="5" ry="2.6" fill="#6b5a44" />
+      <path d="M818 32Q825 34 832 32" stroke="#dfe8e2" strokeWidth="1.1" fill="none" opacity="0.8" />
+      <ellipse cx="86" cy="32" rx="5.5" ry="2.8" fill="#55504a" />
+      <path d="M93 34Q100 36 107 34" stroke="#dfe8e2" strokeWidth="1.1" fill="none" opacity="0.8" />
       {/* drifting glints */}
-      <path className="streamGlint" d="M80 30L128 29" stroke="#bfe0c8" strokeWidth="1.3" fill="none" strokeLinecap="round" />
-      <path className="streamGlint sg2" d="M250 30L300 29" stroke="#bfe0c8" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      <path className="streamGlint" d="M140 30L188 29" stroke="#bfe0c8" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+      <path className="streamGlint sg2" d="M450 30L500 29" stroke="#bfe0c8" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      <path className="streamGlint sg3" d="M740 28L790 27" stroke="#bfe0c8" strokeWidth="1.2" fill="none" strokeLinecap="round" />
       {/* an occasional fish rise mid-pool */}
-      <path className="fishFin" d="M208 26q3 -5 6 0q-3 2.4 -6 0" fill="#1c3328" />
-      <ellipse className="fishRing" cx="211" cy="29" rx="6" ry="2" fill="none" stroke="#bfe0c8" strokeWidth="1.1" />
+      <path className="fishFin" d="M388 26q3 -5 6 0q-3 2.4 -6 0" fill="#1c3328" />
+      <ellipse className="fishRing" cx="391" cy="29" rx="6" ry="2" fill="none" stroke="#bfe0c8" strokeWidth="1.1" />
     </svg>
   );
 }
@@ -1725,11 +1749,70 @@ export function SkyDriftArt() {
   );
 }
 
-export function SignArt() {
+/**
+ * Round 5: big, well-marked trail signs at every stage edge. A stout post
+ * carries an arrow-shaped plank that points toward the neighboring scene
+ * (`dir` "l"/"r"); "n" is a plain routed plank for non-exit markers
+ * (TRAILHEAD, TRAIL ENDS). The destination text is HTML (.signLabel),
+ * positioned over the plank by world.css.
+ */
+export function SignArt({ dir = "n" }: { dir?: "l" | "r" | "n" }) {
+  const plank =
+    dir === "r"
+      ? "M8 14L104 14L126 30L104 46L8 46Z"
+      : dir === "l"
+        ? "M124 14L28 14L6 30L28 46L124 46Z"
+        : "M12 14L120 14L120 46L12 46Z";
   return (
-    <svg width="36" height="46" viewBox="0 0 36 46" aria-hidden="true">
-      <rect x="16" y="10" width="4" height="34" fill="#6d5233" />
-      <rect x="4" y="6" width="28" height="13" rx="2" fill="#8a6a42" stroke="#5c4426" strokeWidth="1.5" />
+    <svg width="132" height="104" viewBox="0 0 132 104" aria-hidden="true">
+      {/* post + foot wedge */}
+      <rect x="60" y="34" width="12" height="66" rx="2" fill="#6d5233" />
+      <rect x="60" y="34" width="4" height="66" fill="#7e6140" />
+      <path d="M52 100L80 100L74 92L58 92Z" fill="#53381e" />
+      {/* the arrow plank */}
+      <path d={plank} fill="#a97e4f" stroke="#53381e" strokeWidth="3" strokeLinejoin="round" />
+      <path d={plank} fill="none" stroke="rgba(255,238,200,0.25)" strokeWidth="1" />
+      {/* wood grain + fixing bolts */}
+      <path
+        d="M20 22L96 22M24 38L100 38"
+        stroke="rgba(83,56,30,0.45)"
+        strokeWidth="1.4"
+        fill="none"
+      />
+      <circle cx="66" cy="19" r="2.2" fill="#53381e" />
+      <circle cx="66" cy="41" r="2.2" fill="#53381e" />
+    </svg>
+  );
+}
+
+/**
+ * Stand-here zone pad (round 5): a dashed ellipse stamped at each POI's
+ * approach point so the proximity trigger reads as a spot on the ground.
+ * The engine adds `.on` to the wrapper while the hiker is inside the zone.
+ */
+export function ZonePadArt() {
+  return (
+    <svg width="172" height="46" viewBox="0 0 172 46" aria-hidden="true">
+      <ellipse
+        cx="86"
+        cy="23"
+        rx="80"
+        ry="18"
+        fill="rgba(255,243,214,0.08)"
+        stroke="rgba(255,243,214,0.6)"
+        strokeWidth="2"
+        strokeDasharray="8 7"
+      />
+      <ellipse
+        cx="86"
+        cy="23"
+        rx="56"
+        ry="12"
+        fill="none"
+        stroke="rgba(255,243,214,0.25)"
+        strokeWidth="1.5"
+        strokeDasharray="4 8"
+      />
     </svg>
   );
 }

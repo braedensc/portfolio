@@ -32,20 +32,19 @@
   overflow: hidden;
 }
 /* Crispness-first backdrop (round 3): ONE photo plane at scale(1), no mask —
-   the engine only ever translates it a few px, so the image is sampled 1:1
-   with background-size: cover and there is no masked copy to ghost against.
-   The plane is a sky band down to just past the ground seam; the drawn ground
-   carries everything below it. Side bleed covers the parallax shift. */
+   sampled 1:1 with background-size: cover, nothing to ghost against. The
+   plane is a sky band down to just past the ground seam; the drawn ground
+   carries everything below it. Round 5: the camera is static, so the plane
+   never moves at all. */
 .plane {
   position: absolute;
-  left: -44px;
-  right: -44px;
+  left: 0;
+  right: 0;
   top: -20px;
   height: calc(68% + 20px);
   background-size: cover;
   background-position: center;
   transition: filter 0.9s;
-  will-change: transform;
 }
 .world.night .plane {
   filter: brightness(0.55) saturate(0.8) hue-rotate(-12deg);
@@ -72,12 +71,11 @@
    backdrop layer: pure vector, so it cannot ghost or double-expose. */
 .skyDrift {
   position: absolute;
-  left: -48px;
-  right: -48px;
+  left: 0;
+  right: 0;
   top: 0;
   height: 32%;
   pointer-events: none;
-  will-change: transform;
 }
 .skyDrift svg {
   display: block;
@@ -230,6 +228,8 @@
   width: 160%;
   height: 120%;
   transform-origin: top center;
+  /* Round 5: the camera is static — the tilt lives here, not in the engine. */
+  transform: rotateX(64deg);
   /* Fresh alpine-meadow greens (round 3: lightened from forest-floor darks). */
   background: linear-gradient(
     to bottom,
@@ -240,7 +240,6 @@
     #6f8c50 82%,
     #7a9757 100%
   );
-  will-change: transform;
 }
 .world.sc-slot .ground {
   background: linear-gradient(
@@ -253,10 +252,6 @@
   );
 }
 .world.sc-camp .ground {
-  /* Round 4B: the camp widened (camClamp 391) for the billboard-scale
-     stations — extra side bleed so the panning ground never shows an edge. */
-  left: -40%;
-  width: 180%;
   background: radial-gradient(
     ellipse 58% 52% at 50% 26%,
     #54381c 0%,
@@ -466,6 +461,49 @@
   );
 }
 
+/* ---------- stage-edge biome hints (round 5) ----------
+   Each connecting edge wears a soft wash of the NEXT scene's ground palette
+   (snow creeping into the desert's west edge, sandstone at the meadow's
+   east…), so the stages read as one continuous trail. */
+.edgeHint {
+  position: absolute;
+  top: 54%;
+  bottom: 0;
+  width: 9%;
+  pointer-events: none;
+  filter: blur(10px);
+}
+.eL {
+  left: -2%;
+}
+.eR {
+  right: -2%;
+}
+.world.sc-meadow .eR {
+  background: linear-gradient(to left, rgba(146, 58, 24, 0.5), transparent 88%);
+}
+.world.sc-slot .eL {
+  background: linear-gradient(to right, rgba(72, 112, 58, 0.45), transparent 88%);
+}
+.world.sc-slot .eR {
+  background: linear-gradient(to left, rgba(224, 236, 248, 0.55), transparent 88%);
+}
+.world.sc-snow .eL {
+  background: linear-gradient(to right, rgba(146, 58, 24, 0.42), transparent 88%);
+}
+.world.sc-snow .eR {
+  background: linear-gradient(to left, rgba(196, 108, 46, 0.45), transparent 88%);
+}
+.world.sc-desert .eL {
+  background: linear-gradient(to right, rgba(232, 240, 248, 0.5), transparent 88%);
+}
+.world.sc-desert .eR {
+  background: linear-gradient(to left, rgba(14, 22, 44, 0.55), transparent 88%);
+}
+.world.sc-camp .eL {
+  background: linear-gradient(to right, rgba(196, 108, 46, 0.38), transparent 88%);
+}
+
 /* ---------- ground items (screen-space billboards) ---------- */
 .items {
   position: absolute;
@@ -563,6 +601,35 @@
   color: rgba(255, 248, 228, 0.95);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
   white-space: nowrap;
+}
+/* Round 5: signpost text painted ON the arrow plank (SignArt is 132×104;
+   the plank band runs y 14–46; .item .in is already positioned, so the
+   label anchors to it directly). */
+.signLabel {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  width: 132px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #2b1c0e;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* Stand-here zone pad: dashed ellipse at a POI's approach point; brightens
+   and breathes while the hiker is inside the proximity zone. */
+.zonepad .in {
+  transform: translate(-50%, -58%);
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+.zonepad.on .in {
+  opacity: 1;
+  filter: drop-shadow(0 0 9px rgba(255, 224, 150, 0.55));
+  animation: padPulse 2s ease-in-out infinite;
 }
 .hikerCv {
   width: 45px;
@@ -1109,6 +1176,10 @@
   animation-delay: 3.2s;
   animation-duration: 8s;
 }
+.sg3 {
+  animation-delay: 5.4s;
+  animation-duration: 7.5s;
+}
 .rg2 {
   animation-delay: 3.5s;
 }
@@ -1622,32 +1693,35 @@
   pointer-events: auto;
 }
 
-/* ---------- card (round 3: compact field-note, docked bottom-left) ----------
-   The dock keeps it off the hiker (center), the chips (bottom-center) and
-   the scene pill (top-center); the body scrolls internally. The engine draws
-   a thin accent line (.cardLink) from the card toward its source POI.
-   Engine constants CARD_LEFT/CARD_BOTTOM mirror the left/bottom values. */
+/* ---------- info drawer (round 5) ----------
+   The field note grew into a full-height LEFT DRAWER on a warm paper
+   palette (client: no black panels — light, calm, readable). It keeps the
+   popup-with-connector character: the engine draws a thin accent line
+   (.cardLink) from the drawer's right edge toward the source POI. Only the
+   body scrolls; ✕ and Escape close; on phones it becomes a bottom sheet. */
 .card {
   position: absolute;
-  left: 12px;
-  bottom: 44px;
-  width: min(300px, calc(100% - 24px));
-  max-height: 40vh;
+  left: 0;
+  top: 0;
+  /* stop just above the waypoint widget strip so travel stays reachable
+     while a panel is open */
+  bottom: 104px;
+  width: min(440px, 38vw);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: rgba(10, 16, 14, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
-  transform: translateY(10px);
+  background: linear-gradient(180deg, rgba(249, 245, 235, 0.97), rgba(241, 234, 219, 0.97));
+  border-right: 2px solid rgba(26, 32, 39, 0.28);
+  border-radius: 0 16px 16px 0;
+  box-shadow: 10px 0 34px rgba(6, 8, 6, 0.32);
+  transform: translateX(-28px);
   opacity: 0;
   pointer-events: none;
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
-  z-index: 500;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  z-index: 620;
+  color: #2a3138;
   user-select: text;
   -webkit-user-select: text;
 }
@@ -1660,37 +1734,37 @@
 .cardBody {
   overflow-y: auto;
   min-height: 0;
-  padding: 12px 14px;
+  padding: 26px 28px 30px;
 }
 .card .ct {
-  padding-right: 24px;
+  padding-right: 34px;
 }
 .cardClose {
   position: absolute;
-  top: 7px;
-  right: 8px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #e8e4da;
-  font-size: 13px;
+  background: rgba(26, 32, 39, 0.06);
+  border: 1.5px solid rgba(26, 32, 39, 0.35);
+  color: #1a2027;
+  font-size: 17px;
   line-height: 1;
 }
 .cardClose:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(26, 32, 39, 0.14);
 }
 .cardLink {
   position: absolute;
-  height: 1px;
+  height: 2px;
   transform-origin: 0 0;
-  background: linear-gradient(to right, rgba(255, 217, 160, 0.75), rgba(255, 217, 160, 0));
+  background: linear-gradient(to right, rgba(226, 112, 74, 0.9), rgba(226, 112, 74, 0));
   opacity: 0;
   transition: opacity 0.25s ease;
-  z-index: 490;
+  z-index: 610;
   pointer-events: none;
 }
 .cardLink.on {
@@ -1698,91 +1772,95 @@
 }
 .ct {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2.2px;
+  font-size: 13px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  color: #ffd9a0;
-  margin-bottom: 8px;
+  color: #b4522c;
+  margin-bottom: 12px;
+  padding-bottom: 9px;
+  border-bottom: 2px solid rgba(26, 32, 39, 0.14);
 }
 .card p {
-  margin: 0 0 9px;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #e8e4da;
+  margin: 0 0 12px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #2a3138;
 }
 .card p:last-child {
   margin-bottom: 0;
 }
 .card strong {
-  color: #fff;
-  font-weight: 600;
+  color: #14181d;
+  font-weight: 650;
 }
 .card a {
-  color: #ffd9a0;
+  color: #b4522c;
 }
 .inert {
   opacity: 0.45;
 }
 .note {
   font-family: var(--mono);
-  font-size: 10px;
-  color: rgba(232, 228, 218, 0.75);
+  font-size: 11.5px;
+  color: rgba(42, 49, 56, 0.7);
 }
 .cardImg {
   display: block;
   width: auto;
   max-width: 100%;
-  max-height: 180px;
-  margin: 2px auto 5px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 5px;
+  max-height: 230px;
+  margin: 2px auto 6px;
+  border: 1px solid rgba(26, 32, 39, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(26, 32, 39, 0.14);
 }
 .cap {
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: 9.5px;
   letter-spacing: 1px;
-  color: rgba(232, 228, 218, 0.65);
+  color: rgba(42, 49, 56, 0.6);
   text-align: center;
-  margin: 0 0 9px;
+  margin: 0 0 11px;
 }
 .go {
   display: block;
   width: 100%;
-  margin: 2px 0 4px;
-  padding: 10px;
-  background: linear-gradient(180deg, rgba(255, 190, 110, 0.3), rgba(255, 160, 80, 0.2));
-  border: 1px solid rgba(255, 217, 160, 0.7);
-  border-radius: 7px;
-  color: #ffe6c2;
+  margin: 4px 0 6px;
+  padding: 13px;
+  background: var(--accent);
+  border: 2px solid #b4522c;
+  border-radius: 8px;
+  color: #fdf8ec;
   font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 1.4px;
+  font-size: 12px;
+  letter-spacing: 1.6px;
 }
 .go:hover {
-  background: rgba(255, 190, 110, 0.42);
+  background: #c95f3d;
 }
 .mailto {
   display: block;
   text-align: center;
-  margin: 2px 0 10px;
-  padding: 10px;
-  background: rgba(255, 190, 110, 0.16);
-  border: 1px solid rgba(255, 217, 160, 0.6);
-  border-radius: 7px;
-  color: #ffe6c2 !important;
+  margin: 4px 0 12px;
+  padding: 13px;
+  background: rgba(226, 112, 74, 0.1);
+  border: 2px solid rgba(180, 82, 44, 0.55);
+  border-radius: 8px;
+  color: #b4522c !important;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 1px;
   text-decoration: none;
 }
 .mailto:hover {
-  background: rgba(255, 190, 110, 0.28);
+  background: rgba(226, 112, 74, 0.2);
 }
 .recs {
   font-family: var(--mono);
-  font-size: 11.5px !important;
+  font-size: 14px !important;
   letter-spacing: 0.6px;
-  color: #ffe9c0 !important;
+  color: #14181d !important;
+  font-weight: 650;
 }
 .skills {
   list-style: none;
@@ -1791,12 +1869,12 @@
 }
 .skills li {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12.5px;
   letter-spacing: 0.6px;
-  line-height: 1.6;
-  color: #e8e4da;
-  padding: 4px 0;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.14);
+  line-height: 1.7;
+  color: #2a3138;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(26, 32, 39, 0.25);
 }
 .skills li:last-child {
   border-bottom: none;
@@ -1804,27 +1882,27 @@
 
 /* ---------- per-section photo galleries ---------- */
 .gal {
-  margin-top: 6px;
+  margin-top: 12px;
 }
 .galLabel {
   font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 1.8px;
-  color: rgba(255, 217, 160, 0.85);
-  margin-bottom: 5px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #b4522c;
+  margin-bottom: 7px;
 }
 .galRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 .galThumb {
-  width: 64px;
-  height: 42px;
+  width: 88px;
+  height: 58px;
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 4px;
+  border: 1px solid rgba(26, 32, 39, 0.35);
+  border-radius: 5px;
   background: none;
 }
 .galThumb img {
@@ -1834,7 +1912,8 @@
   object-fit: cover;
 }
 .galThumb:hover {
-  border-color: rgba(255, 217, 160, 0.85);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(226, 112, 74, 0.35);
 }
 
 /* ---------- fullscreen lightbox ---------- */
@@ -1863,15 +1942,15 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(20, 26, 22, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #f2eee2;
+  background: rgba(242, 238, 226, 0.92);
+  border: 1.5px solid rgba(26, 32, 39, 0.6);
+  color: #1a2027;
   font-size: 15px;
   line-height: 1;
 }
 .lbClose:hover,
 .lbArrow:hover {
-  background: rgba(44, 54, 46, 0.9);
+  background: #fff;
 }
 .lbArrow {
   position: absolute;
@@ -1881,9 +1960,9 @@
   height: 64px;
   font-size: 32px;
   line-height: 1;
-  color: #f2eee2;
-  background: rgba(20, 26, 22, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #1a2027;
+  background: rgba(242, 238, 226, 0.85);
+  border: 1.5px solid rgba(26, 32, 39, 0.55);
   border-radius: 8px;
 }
 .lbPrev {
@@ -1900,8 +1979,9 @@
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 1.2px;
-  color: rgba(242, 238, 226, 0.88);
-  background: rgba(8, 14, 12, 0.6);
+  color: #1a2027;
+  background: rgba(242, 238, 226, 0.92);
+  border: 1px solid rgba(26, 32, 39, 0.35);
   padding: 6px 12px;
   border-radius: 6px;
   white-space: nowrap;
@@ -1932,44 +2012,37 @@
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
-.scind {
+/* Round 5: big area header — category as the headline, the real place the
+   photo was taken beneath it. Paper chip so it reads over every backdrop. */
+.areaHead {
   position: absolute;
-  top: 14px;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 600;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 2px;
-  color: rgba(255, 252, 240, 0.92);
-  background: rgba(8, 14, 12, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 5px 10px;
-  border-radius: 6px;
+  text-align: center;
+  background: rgba(247, 242, 230, 0.94);
+  border: 2px solid rgba(26, 32, 39, 0.75);
+  border-radius: 10px;
+  padding: 9px 26px 8px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.24);
   pointer-events: none;
   white-space: nowrap;
 }
-.autoBtn {
-  position: absolute;
-  top: 46px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 600;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 1.8px;
-  color: #ffe9c0;
-  background: rgba(8, 14, 12, 0.6);
-  border: 1px solid rgba(255, 217, 160, 0.55);
-  padding: 7px 12px;
-  border-radius: 999px;
-  white-space: nowrap;
+.areaCat {
+  font-family: var(--disp);
+  font-size: clamp(19px, 2.4vw, 28px);
+  font-weight: 700;
+  letter-spacing: 4px;
+  line-height: 1.05;
+  color: #1a2027;
 }
-.autoBtn:hover {
-  background: rgba(30, 40, 32, 0.85);
+.areaPlace {
+  margin-top: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2.4px;
+  color: #b4522c;
 }
 .tr {
   position: absolute;
@@ -2001,19 +2074,23 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(8, 14, 12, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: #ffe9b0;
+  background: #f2eee2;
+  border: 1.5px solid rgba(26, 32, 39, 0.5);
+  color: #1a2027;
   font-size: 15px;
   line-height: 1;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+.dayNight:hover {
+  background: #fff;
 }
 .hint {
   font-family: var(--mono);
   font-size: 9.5px;
   letter-spacing: 1.3px;
-  color: rgba(255, 252, 240, 0.9);
-  background: rgba(8, 14, 12, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #1a2027;
+  background: rgba(247, 242, 230, 0.92);
+  border: 1px solid rgba(26, 32, 39, 0.4);
   padding: 5px 8px;
   border-radius: 6px;
   transition: opacity 1s;
@@ -2021,44 +2098,119 @@
 .hint.off {
   opacity: 0;
 }
-.chips {
+/* ---------- waypoint travel widget (round 5) ----------
+   The travel chips became one map-style widget: blocky square nodes strung
+   on a dashed route line, the current area filled in accent, and the tour
+   button riding the widget's top border. */
+.wpw {
   position: absolute;
-  bottom: 12px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 600;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  max-width: 94%;
+  background: rgba(247, 242, 230, 0.95);
+  border: 2px solid rgba(26, 32, 39, 0.8);
+  border-radius: 9px;
+  padding: 21px 18px 9px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  max-width: 94vw;
 }
-.chips button {
+.wpTour {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -54%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  color: #1a2027;
+  background: #f2eee2;
+  border: 2px solid rgba(26, 32, 39, 0.8);
+  padding: 7px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+.wpTour:hover {
+  background: #fff;
+}
+.wpTour span {
+  color: #b4522c;
+}
+.wpTrack {
+  max-width: 100%;
+}
+.wpRow {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  min-width: max-content;
+}
+/* the route line the nodes are strung on */
+.wpRow::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 22px;
+  right: 22px;
+  border-top: 3px dashed rgba(26, 32, 39, 0.45);
+}
+.wpNode {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: none;
+  border: none;
+}
+.wpDot {
+  width: 13px;
+  height: 13px;
+  background: #f2eee2;
+  border: 3px solid #1a2027;
+  border-radius: 3px;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+}
+.wpNode:hover .wpDot {
+  background: #ffd9a0;
+}
+.wpNode.here .wpDot {
+  background: var(--accent);
+  border-color: #7e3a20;
+  box-shadow: 0 0 0 3px rgba(226, 112, 74, 0.3);
+}
+.wpLab {
   font-family: var(--mono);
   font-size: 9.5px;
-  letter-spacing: 1.3px;
-  padding: 7px 11px;
-  border-radius: 999px;
-  background: rgba(8, 14, 12, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  color: #f0ead9;
+  letter-spacing: 1.1px;
+  color: rgba(26, 32, 39, 0.82);
+  white-space: nowrap;
 }
-.chips button:hover {
-  background: rgba(30, 40, 32, 0.8);
+.wpNode.here .wpLab {
+  color: #1a2027;
+  font-weight: 700;
 }
-/* subtle bottom-center hint while attract mode is driving */
+/* subtle hint above the widget while attract mode is driving */
 .watchHint {
   position: absolute;
-  bottom: 52px;
+  bottom: 104px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 600;
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 2px;
-  color: rgba(255, 252, 240, 0.75);
-  background: rgba(8, 14, 12, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #1a2027;
+  background: rgba(247, 242, 230, 0.9);
+  border: 1px solid rgba(26, 32, 39, 0.4);
   padding: 5px 10px;
   border-radius: 6px;
   pointer-events: none;
@@ -2072,35 +2224,53 @@
   font-family: var(--mono);
   font-size: 8.5px;
   letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   pointer-events: none;
-  max-width: 34%;
+  max-width: 26%;
 }
 @media (max-width: 900px) {
-  .scind {
-    top: 58px;
+  .areaHead {
+    top: 54px;
+    padding: 7px 16px 6px;
   }
-  .autoBtn {
-    top: 90px;
+  .card {
+    width: min(400px, 46vw);
+  }
+}
+@media (max-width: 700px) {
+  .wpw {
+    padding: 19px 12px 8px;
+  }
+  .wpTrack {
+    overflow-x: auto;
   }
 }
 @media (max-width: 560px) {
-  .chips {
-    bottom: 34px;
-  }
   .fine {
     display: none;
   }
-  /* Mobile: the field note becomes a slim bottom sheet (≤45vh). It rides
-     above the chips while open; the ✕ (or walking away) dismisses it. */
+  /* Mobile: the drawer becomes a bottom sheet (≤58vh). It rides above the
+     waypoint widget while open; the ✕ (or walking away) dismisses it. */
   .card {
-    left: 8px;
-    right: 8px;
+    left: 0;
+    right: 0;
+    top: auto;
     bottom: 0;
     width: auto;
-    max-height: 45vh;
-    border-radius: 12px 12px 0 0;
+    max-height: 58vh;
+    border-right: none;
+    border-top: 2px solid rgba(26, 32, 39, 0.28);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 30px rgba(6, 8, 6, 0.35);
+    transform: translateY(24px);
     z-index: 650;
+  }
+  .card.on {
+    transform: none;
+  }
+  .cardBody {
+    padding: 20px 18px 24px;
   }
 }
 
@@ -2129,6 +2299,15 @@
   }
   50% {
     transform: rotate(45deg) scale(1.22);
+  }
+}
+@keyframes padPulse {
+  0%,
+  100% {
+    transform: translate(-50%, -58%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -58%) scale(1.045);
   }
 }
 @keyframes rip {
