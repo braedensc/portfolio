@@ -19,7 +19,7 @@ import {
   type Station,
   type Vec,
 } from "@/content/site";
-import { paintHiker, paintBear, type HikerFrame } from "./sprites";
+import { paintHiker, paintBear, paintDeer, type HikerFrame } from "./sprites";
 
 export interface EngineHooks {
   setScene: (idx: number) => void;
@@ -62,6 +62,8 @@ const CARD_LEFT = 12;
 const CARD_BOTTOM = 44;
 const ATTRACT_FIRST_DELAY = 4; // s after load before attract mode starts on its own
 const ATTRACT_IDLE_DELAY = 30; // s of no input before attract mode resumes
+/** First-load spawn: the meadow trailhead, beside the About kiosk. */
+const SPAWN: Vec = { gx: -440, gy: 80 };
 
 const KEYMAP: Record<string, Dir> = {
   arrowleft: "l",
@@ -95,8 +97,10 @@ interface StationRec {
   gy: number;
 }
 
-/** Ambient pixel-art critters painted by the engine (currently the bear). */
+/** Ambient pixel-art critters painted by the engine (bear, deer). */
+type NpcKind = "bear" | "deer";
 interface NpcRec {
+  kind: NpcKind;
   ctx: CanvasRenderingContext2D;
   frame: 0 | 1;
   acc: number;
@@ -119,9 +123,10 @@ export class WorldEngine {
   private attached = false;
   private rm = false;
 
-  private gx = 0;
-  // Spawn on the meadow trail (round 4: the world starts at the meadow).
-  private gy = 72;
+  // Spawn at the meadow trailhead beside the about-this-site kiosk
+  // (round 5B: the journey starts at the very west end of the trail).
+  private gx = SPAWN.gx;
+  private gy = SPAWN.gy;
   private camX = 0;
   private facing = 1;
   private target: Vec | null = null;
@@ -237,7 +242,7 @@ export class WorldEngine {
     const side = pending ? pending.side : null;
     if (side === "left") this.gx = -(this.gxcl - 90);
     else if (side === "right") this.gx = this.gxcl - 90;
-    else if (!pending) this.gx = 0;
+    else if (!pending) this.gx = SPAWN.gx;
     this.gy = Math.max(20, Math.min(92, this.gy));
     if (this.blockedAt(this.gx, this.gy)) this.unstick();
     this.camX = Math.max(-this.camcl, Math.min(this.camcl, this.gx));
@@ -667,18 +672,28 @@ export class WorldEngine {
     });
     this.pieces = sc.setPieces.map((p) => ({ id: p.id, gx: p.gx, gy: p.gy, d: 1e9 }));
     this.npcs = [];
-    itemsEl.querySelectorAll<HTMLCanvasElement>("canvas[data-npc]").forEach((cv) => {
+    itemsEl.querySelectorAll<HTMLCanvasElement>("canvas[data-npc]").forEach((cv, i) => {
       const ctx = cv.getContext("2d");
       if (!ctx) return;
-      // The bear's head-turn is a slow, occasional gesture (~3s a frame).
-      const rec: NpcRec = { ctx, frame: 0, acc: 0, period: 3 };
+      const kind: NpcKind = cv.dataset.npc === "deer" ? "deer" : "bear";
+      // Slow, occasional gestures — the bear turns its head (~3s a frame),
+      // a deer holds its grazing pose longer. Stagger by index so two
+      // animals in one scene never move in lockstep.
+      const rec: NpcRec = {
+        kind,
+        ctx,
+        frame: 0,
+        acc: (i * 1.7) % 3,
+        period: kind === "deer" ? 4.2 : 3,
+      };
       this.paintNpc(rec);
       this.npcs.push(rec);
     });
   }
 
   private paintNpc(n: NpcRec): void {
-    paintBear(n.ctx, n.frame);
+    if (n.kind === "deer") paintDeer(n.ctx, n.frame);
+    else paintBear(n.ctx, n.frame);
   }
 
   private setFrame(f: HikerFrame): void {
