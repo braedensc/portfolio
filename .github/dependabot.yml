@@ -18,6 +18,15 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # Hold back majors that need a deliberate, hands-on migration — Dependabot
+    # keeps proposing minor/patch bumps for these, just not the major jump.
+    ignore:
+      # TypeScript 7 is the native-compiler rewrite; stay on 5.x until we migrate.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # ESLint 10 needs a flat-config/rule migration; stay on 9.x for now.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
 
   # Keep GitHub Actions (checkout, setup-node, …) pinned and current.
   - package-ecosystem: "github-actions"
