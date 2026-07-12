@@ -6,7 +6,7 @@
  */
 
 import type { DecorKind, SetPieceKind, StationKind } from "@/content/site";
-import { BEAR } from "./sprites";
+import { BEAR, DEER } from "./sprites";
 import { TodoClawIcon, TodoClawPeek, SleepingPuppy, PawPrint } from "./todoclaw-art";
 
 /* ---------- decor ---------- */
@@ -143,14 +143,16 @@ function MossRockArt({ v = 0 }: { v?: number }) {
  * home straight with small lane numbers beside it.
  */
 function TrackArt() {
-  const CX = 330;
-  const CY = 85;
-  const L = 115; // straight half-length
-  const R0 = 195; // outer end radius
-  const W = 14; // lane width
+  // Round 5: shrunk a notch (R0 195→160, L 115→95) so the whole oval fits
+  // inside the static stage with clear ground before the right-edge exit.
+  const CX = 265;
+  const CY = 78;
+  const L = 95; // straight half-length
+  const R0 = 160; // outer end radius
+  const W = 12; // lane width
   const LANES = 6;
   const F = 0.4; // vertical squash (fake ground perspective)
-  const RI = R0 - LANES * W; // inner boundary radius (111)
+  const RI = R0 - LANES * W; // inner boundary radius (88)
   const stadium = (r: number) => {
     const ry = r * F;
     return [
@@ -164,13 +166,13 @@ function TrackArt() {
   };
   const white = "rgba(245, 240, 228, 0.92)";
   return (
-    <svg width="660" height="172" viewBox="0 0 660 172" aria-hidden="true">
+    <svg width="530" height="150" viewBox="0 0 530 150" aria-hidden="true">
       {/* the tartan band: outer stadium minus inner stadium */}
       <path d={`${stadium(R0)} ${stadium(RI)}`} fill="#a8402e" fillRule="evenodd" />
       {/* worn patches + water stain, inside the band */}
-      <ellipse cx={CX - 150} cy={CY + 58} rx="26" ry="6" fill="rgba(122,42,28,0.55)" />
-      <ellipse cx={CX + 140} cy={CY - 62} rx="20" ry="5" fill="rgba(122,42,28,0.5)" />
-      <ellipse cx={CX + 180} cy={CY + 52} rx="22" ry="5" fill="rgba(240,230,208,0.08)" />
+      <ellipse cx={CX - 120} cy={CY + 48} rx="24" ry="5.5" fill="rgba(122,42,28,0.55)" />
+      <ellipse cx={CX + 112} cy={CY - 50} rx="18" ry="4.5" fill="rgba(122,42,28,0.5)" />
+      <ellipse cx={CX + 145} cy={CY + 42} rx="20" ry="4.5" fill="rgba(240,230,208,0.08)" />
       {/* lane separators — solid white, one lane width apart */}
       {[1, 2, 3, 4, 5].map((i) => (
         <path key={i} d={stadium(R0 - W * i)} fill="none" stroke={white} strokeWidth="1.7" />
@@ -544,49 +546,79 @@ function RavenArt() {
 /**
  * One trodden stamp of a scene's drawn path (flat). Stamps are interpolated
  * along the scene's waypoint polyline (site.ts pathStamps) so the visible
- * trail is exactly the line auto/attract travel walks. `v` picks the ground
- * tone: 0 meadow dirt, 1 slot sand, 2 trodden snow, 3 desert dust, 4 camp earth.
+ * trail is exactly the line auto/attract travel walks.
+ *
+ * Round 5: ONE textured dirt style everywhere — the same warm packed-earth
+ * band with pebble flecks in every biome, so the trail visibly continues
+ * from stage to stage. `v` keeps only a whisper of per-scene grading (a
+ * slightly cooler edge on snow, redder in the canyons); the body tone is
+ * shared. v=2 still scatters trodden-snow specks on top.
  */
-const PATH_TONES: ReadonlyArray<readonly [string, string]> = [
-  ["rgba(140, 118, 74, 0.4)", "rgba(158, 134, 86, 0.34)"],
-  ["rgba(112, 52, 20, 0.4)", "rgba(146, 76, 36, 0.32)"],
-  ["rgba(168, 186, 210, 0.6)", "rgba(140, 162, 194, 0.42)"],
-  ["rgba(120, 54, 24, 0.38)", "rgba(154, 86, 44, 0.3)"],
-  ["rgba(88, 62, 36, 0.5)", "rgba(114, 82, 48, 0.38)"],
+const PATH_EDGE: ReadonlyArray<string> = [
+  "rgba(126, 100, 62, 0.42)", // meadow
+  "rgba(128, 88, 52, 0.44)", // slot
+  "rgba(122, 106, 84, 0.5)", // snow (reads darker against snowpack)
+  "rgba(128, 92, 54, 0.44)", // desert
+  "rgba(112, 88, 56, 0.46)", // camp
 ];
 function PathStampArt({ v = 0 }: { v?: number }) {
-  const [outer, inner] = PATH_TONES[v % PATH_TONES.length];
+  const edge = PATH_EDGE[v % PATH_EDGE.length];
   return (
-    <svg width="56" height="15" viewBox="0 0 56 15" aria-hidden="true">
-      <ellipse cx="28" cy="7.5" rx="26" ry="5.6" fill={outer} />
-      <ellipse cx="28" cy="7.5" rx="17" ry="3.6" fill={inner} />
+    <svg width="58" height="16" viewBox="0 0 58 16" aria-hidden="true">
+      <ellipse cx="29" cy="8" rx="27" ry="6" fill={edge} />
+      <ellipse cx="29" cy="8" rx="19" ry="4.2" fill="rgba(150, 122, 78, 0.44)" />
+      <ellipse cx="29" cy="8" rx="11" ry="2.6" fill="rgba(168, 140, 92, 0.4)" />
+      {/* pebble flecks — the shared trail texture */}
+      <g fill="rgba(96, 74, 46, 0.55)">
+        <circle cx="14" cy="7" r="1.1" />
+        <circle cx="24" cy="10.5" r="0.9" />
+        <circle cx="36" cy="6" r="1.1" />
+        <circle cx="45" cy="9.5" r="0.9" />
+      </g>
+      <g fill="rgba(214, 192, 152, 0.5)">
+        <circle cx="19" cy="9.5" r="0.8" />
+        <circle cx="31" cy="11" r="0.8" />
+        <circle cx="41" cy="7.5" r="0.8" />
+      </g>
       {v === 2 && (
-        <g fill="rgba(96, 122, 158, 0.55)">
+        <g fill="rgba(226, 236, 246, 0.6)">
           <ellipse cx="18" cy="6" rx="2" ry="1.2" />
-          <ellipse cx="24" cy="9" rx="2" ry="1.2" />
-          <ellipse cx="31" cy="6.5" rx="2" ry="1.2" />
-          <ellipse cx="37" cy="9.5" rx="2" ry="1.2" />
+          <ellipse cx="27" cy="10" rx="2" ry="1.2" />
+          <ellipse cx="38" cy="6.5" rx="2" ry="1.2" />
         </g>
       )}
     </svg>
   );
 }
 
-/** Spruce wearing snow: dark tiers with white ledges, snow at the foot. */
+/**
+ * Spruce wearing snow, rescaled round 5B (client: the old trees were far
+ * too small) — now clearly taller than the hiker: five tiers of drooping
+ * boughs, each carrying a snow ledge, snowpack drifted at the foot.
+ */
 function SnowPineArt() {
   return (
-    <svg width="36" height="54" viewBox="0 0 36 54" aria-hidden="true">
+    <svg width="92" height="152" viewBox="0 0 92 152" aria-hidden="true">
       <path
-        d="M18 1L29 19L23 18L32 34L25 33L34 49L2 49L11 33L4 34L13 18L7 19Z"
-        fill="#1c2f26"
+        d="M46 2L64 32L55 30L74 60L63 58L84 92L71 90L92 126L76 122L88 142L4 142L16 122L0 126L21 90L8 92L29 58L18 60L37 30L28 32Z"
+        fill="#16281e"
       />
-      <path d="M13 18L7 19L12 12Z" fill="#dbe6f2" opacity="0.9" />
-      <path d="M18 1L24 11L18 9L12 11Z" fill="#e8f0f8" />
-      <path d="M4 34L13 33L20 34L11 30Z" fill="#dbe6f2" opacity="0.85" />
-      <path d="M25 33L32 34L27 28Z" fill="#cdd9e8" opacity="0.8" />
-      <path d="M2 49L12 47L24 48L34 49L28 45L8 45Z" fill="#e8f0f8" opacity="0.9" />
-      <path d="M16 48L20 48L20 53L16 53Z" fill="#3a2f22" />
-      <ellipse cx="18" cy="51" rx="10" ry="2.4" fill="#e8f0f8" opacity="0.7" />
+      {/* inner shade so the boughs read as depth, not a flat cone */}
+      <path d="M46 12L58 32L46 28L34 32Z" fill="#0f1d16" opacity="0.7" />
+      <path d="M46 40L66 60L46 54L26 60Z" fill="#0f1d16" opacity="0.6" />
+      <path d="M46 70L74 92L46 84L18 92Z" fill="#0f1d16" opacity="0.55" />
+      {/* snow ledges riding each tier */}
+      <path d="M46 2L57 20L46 16L35 20Z" fill="#e8f0f8" />
+      <path d="M29 58L18 60L28 46L38 54Z" fill="#dbe6f2" opacity="0.9" />
+      <path d="M55 30L64 32L58 42L48 34Z" fill="#e8f0f8" opacity="0.9" />
+      <path d="M8 92L21 90L34 92L20 82Z" fill="#dbe6f2" opacity="0.85" />
+      <path d="M71 90L84 92L74 78Z" fill="#cdd9e8" opacity="0.85" />
+      <path d="M0 126L16 122L30 126L14 114Z" fill="#dbe6f2" opacity="0.85" />
+      <path d="M76 122L92 126L80 112Z" fill="#cdd9e8" opacity="0.8" />
+      <path d="M4 142L26 137L52 139L88 142L74 133L20 133Z" fill="#e8f0f8" opacity="0.9" />
+      {/* trunk + drifted foot */}
+      <path d="M41 141L51 141L51 150L41 150Z" fill="#3a2f22" />
+      <ellipse cx="46" cy="147" rx="26" ry="5" fill="#e8f0f8" opacity="0.75" />
     </svg>
   );
 }
@@ -657,41 +689,84 @@ function FootprintsArt({ v = 0 }: { v?: number }) {
 }
 
 /**
- * One reach of the frozen teal river (flat): open water down the middle,
- * white ice shelves creeping in from both banks. Segments stack along gy to
- * form the band; the plank crossing bridges the walkable gap.
+ * The frozen teal river, rebuilt round 5B from the client's photo as TWO
+ * drawn-perspective pieces (the old stacked oval segments read as nothing).
+ * The BACK reach recedes toward the ranges — a winding open-water lead
+ * narrowing with distance, white ice shelves fingering in from snowy
+ * banks, a snow-capped midstream boulder. It ends flat at the footbridge
+ * lane; the FRONT reach picks up below the bridge and widens off the
+ * bottom of the scene.
  */
-function RiverArt({ v = 0 }: { v?: number }) {
+function FrozenRiverBackArt() {
   return (
-    <svg
-      width="132"
-      height="42"
-      viewBox="0 0 132 42"
-      aria-hidden="true"
-      style={v ? { transform: "scaleX(-1)" } : undefined}
-    >
-      <ellipse cx="66" cy="21" rx="63" ry="19" fill="#14515c" />
-      <ellipse cx="66" cy="21" rx="46" ry="13" fill="#1d6b74" />
-      <path className="riverGlint" d="M40 18Q66 14 94 19" stroke="#8fd4d4" strokeWidth="1.4" fill="none" />
-      {/* ice shelves along both edges */}
-      <path d="M3 21Q10 8 30 6Q40 12 30 18Q18 24 14 32Q5 30 3 21Z" fill="#e8f0f8" />
-      <path d="M129 21Q124 10 104 7Q94 13 105 19Q118 24 120 33Q126 30 129 21Z" fill="#dbe6f2" />
-      <path d="M52 34Q66 30 82 34Q74 39 60 38Z" fill="#e8f0f8" opacity="0.85" />
-      <ellipse cx="58" cy="12" rx="7" ry="2.6" fill="#e8f0f8" opacity="0.75" />
+    <svg width="170" height="132" viewBox="0 0 170 132" aria-hidden="true">
+      {/* snowy banks, blue-shadowed at the waterline */}
+      <path d="M52 132L60 96Q66 62 58 34Q54 16 62 4L108 4Q100 22 106 44Q114 74 108 100L116 132Z" fill="#dbe6f2" />
+      {/* the open lead, narrowing upstream */}
+      <path d="M58 132L66 98Q72 64 64 36Q60 18 68 6L98 6Q92 24 98 46Q106 76 100 102L106 132Z" fill="#14515c" />
+      <path d="M66 132L72 100Q78 66 70 38Q66 20 73 8L91 8Q86 26 92 48Q99 76 93 102L98 132Z" fill="#1d6b74" />
+      {/* ice shelves creeping in from both banks */}
+      <path d="M58 118Q70 112 80 118Q74 126 62 126Z" fill="#e8f0f8" />
+      <path d="M100 96Q90 90 82 96Q88 104 100 104Z" fill="#dbe6f2" />
+      <path d="M62 72Q72 66 80 72Q74 78 64 80Z" fill="#e8f0f8" opacity="0.9" />
+      <path d="M96 52Q88 47 82 52Q87 58 96 58Z" fill="#dbe6f2" opacity="0.9" />
+      <path d="M66 24Q74 20 80 24Q75 29 68 30Z" fill="#e8f0f8" opacity="0.85" />
+      {/* the snow-capped midstream boulder */}
+      <path d="M76 90Q74 82 82 80Q90 79 92 87Q92 93 84 94Q77 94 76 90Z" fill="#4c5561" />
+      <path d="M75 84Q82 77 92 84Q86 81 81 82Z" fill="#e8f0f8" />
+      {/* drifting open-water glint */}
+      <path className="riverGlint" d="M74 110Q84 106 94 110" stroke="#8fd4d4" strokeWidth="1.4" fill="none" />
+      <path className="riverGlint rg2" d="M70 56Q78 52 88 56" stroke="#8fd4d4" strokeWidth="1.2" fill="none" />
     </svg>
   );
 }
 
-/** The plank crossing: two weathered boards over the ice (flat). */
-function PlankArt() {
+/** The river's front reach: below the bridge, widening toward the viewer. */
+function FrozenRiverFrontArt() {
   return (
-    <svg width="118" height="24" viewBox="0 0 118 24" aria-hidden="true">
-      <path d="M4 8L114 6L115 12L5 15Z" fill="#6b4a2a" />
-      <path d="M5 15L115 12L114 18L6 21Z" fill="#553a20" />
-      <path d="M24 7.6L25 20M52 6.9L53 19.4M82 6.4L83 18.6M102 6.2L103 18" stroke="#3d2a16" strokeWidth="1.1" />
-      <path d="M4 8L114 6" stroke="#8a6a44" strokeWidth="1.3" />
-      <ellipse cx="30" cy="8" rx="8" ry="1.6" fill="#e8f0f8" opacity="0.7" />
-      <ellipse cx="88" cy="7.5" rx="6" ry="1.4" fill="#e8f0f8" opacity="0.6" />
+    <svg width="232" height="92" viewBox="0 0 232 92" aria-hidden="true">
+      <path d="M22 92L48 54Q58 30 52 4L172 4Q168 32 180 58L206 92Z" fill="#dbe6f2" />
+      <path d="M34 92L58 56Q68 32 62 6L162 6Q158 34 170 60L194 92Z" fill="#14515c" />
+      <path d="M48 92L70 58Q80 34 74 8L150 8Q146 36 158 62L178 92Z" fill="#1d6b74" />
+      {/* shelves + refrozen pans */}
+      <path d="M62 78Q80 70 96 78Q84 88 66 88Z" fill="#e8f0f8" />
+      <path d="M168 70Q152 62 138 70Q148 80 166 82Z" fill="#dbe6f2" />
+      <path d="M74 36Q88 30 100 36Q90 44 76 44Z" fill="#e8f0f8" opacity="0.9" />
+      <path d="M150 28Q138 23 128 28Q136 36 150 36Z" fill="#dbe6f2" opacity="0.9" />
+      <ellipse cx="116" cy="56" rx="16" ry="5" fill="#e8f0f8" opacity="0.7" />
+      <path className="riverGlint" d="M92 62Q114 56 138 62" stroke="#8fd4d4" strokeWidth="1.6" fill="none" />
+    </svg>
+  );
+}
+
+/**
+ * The wooden footbridge over the river. The art rides at the TOP of a
+ * taller transparent canvas: the item anchors at the river-front's own
+ * gy (same flat z, listed after it in the decor, so the deck always draws
+ * over the water) while the transparent skirt drops the visible deck
+ * exactly onto the walkable lane (gy ≈ 58–68). Plank deck on stringers, a
+ * far-side railing, snow dusting the boards; the hiker draws over it.
+ */
+function BridgeArt() {
+  return (
+    <svg width="190" height="113" viewBox="0 0 190 113" aria-hidden="true">
+      {/* far-side railing: posts + top rail */}
+      <path d="M18 30L18 8M60 28L60 6M112 28L112 6M158 30L158 8" stroke="#4a3220" strokeWidth="4" strokeLinecap="round" />
+      <path d="M12 12L170 10" stroke="#5c4426" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M12 12L170 10" stroke="#e8f0f8" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M14 21L166 19" stroke="#553a20" strokeWidth="2.5" strokeLinecap="round" />
+      {/* deck: planks spanning bank to bank, deep enough to walk on */}
+      <path d="M4 32L184 28L188 44L8 50Z" fill="#6b4a2a" />
+      <path d="M8 50L188 44L186 52L10 58Z" fill="#553a20" />
+      <path d="M28 31L30 55M56 30L58 54M88 29.5L90 53M120 29L122 52M150 28.5L152 51" stroke="#3d2a16" strokeWidth="1.2" />
+      <path d="M4 32L184 28" stroke="#8a6a44" strokeWidth="1.4" />
+      {/* snow on the boards + rail caps */}
+      <ellipse cx="44" cy="34" rx="13" ry="2.2" fill="#e8f0f8" opacity="0.8" />
+      <ellipse cx="128" cy="32" rx="11" ry="2" fill="#e8f0f8" opacity="0.75" />
+      <ellipse cx="90" cy="46" rx="12" ry="2" fill="#e8f0f8" opacity="0.6" />
+      <ellipse cx="18" cy="7" rx="3" ry="1.4" fill="#e8f0f8" />
+      <ellipse cx="112" cy="5" rx="3" ry="1.4" fill="#e8f0f8" />
+      {/* (transparent skirt below — keeps the deck up at the lane) */}
     </svg>
   );
 }
@@ -901,6 +976,595 @@ function PolesArt() {
   );
 }
 
+/**
+ * The Narrows-style stream (round 5B, flat): a shallow jade channel winding
+ * the length of the slot floor between wet-sand banks — midstream stones
+ * with white riffles, drifting glints, and an occasional fish rise. Never
+ * walkable (the scene blocks the whole band).
+ */
+function StreamArt() {
+  return (
+    // 1030 wide: spans the round-5 ±600 stage at the stream's depth, so the
+    // water reads as entering and leaving the canyon at both edges.
+    <svg width="1030" height="54" viewBox="0 0 1030 54" aria-hidden="true">
+      {/* wet sand banks */}
+      <path
+        d="M4 30Q60 12 140 16Q230 21 320 14Q410 8 500 16Q590 24 680 17Q770 11 860 18Q950 24 1014 22Q1026 24 1026 29Q1024 35 990 40Q910 47 830 41Q740 35 650 42Q560 48 470 42Q380 36 290 43Q200 48 110 42Q40 38 8 38Q2 34 4 30Z"
+        fill="#4f2f18"
+      />
+      {/* the water: dark jade channel with a lighter mid-band */}
+      <path
+        d="M18 29Q70 17 148 20Q234 25 322 18Q410 13 498 20Q588 28 678 21Q768 15 856 22Q944 28 1006 25Q1014 27 1012 30Q1006 34 972 36Q902 42 826 37Q740 31 652 38Q564 44 474 38Q386 32 294 39Q206 44 118 38Q52 34 26 34Q16 32 18 29Z"
+        fill="#2c4f3e"
+      />
+      <path
+        d="M32 28Q80 20 152 23Q238 28 324 21Q410 17 496 23Q586 31 676 24Q766 18 854 25Q938 31 996 27Q1000 29 996 31Q972 34 940 34Q890 38 824 33Q740 27 654 34Q566 40 476 34Q388 28 298 35Q208 40 122 34Q60 30 40 32Q30 31 32 28Z"
+        fill="#3f6b52"
+      />
+      <path d="M70 30Q200 23 340 28Q520 21 700 29Q830 32 960 27" stroke="#5a8a6a" strokeWidth="1.6" fill="none" opacity="0.8" />
+      {/* midstream stones + white riffles curling downstream of them */}
+      <ellipse cx="230" cy="30" rx="7" ry="3.4" fill="#6b5a44" />
+      <path d="M224 27Q230 24 236 27" stroke="#8a7a60" strokeWidth="1.2" fill="none" />
+      <path d="M238 32Q246 34 254 32" stroke="#dfe8e2" strokeWidth="1.3" fill="none" opacity="0.85" />
+      <ellipse cx="560" cy="26" rx="6" ry="3" fill="#55504a" />
+      <path d="M567 29Q575 31 583 29" stroke="#dfe8e2" strokeWidth="1.2" fill="none" opacity="0.8" />
+      <ellipse cx="812" cy="30" rx="5" ry="2.6" fill="#6b5a44" />
+      <path d="M818 32Q825 34 832 32" stroke="#dfe8e2" strokeWidth="1.1" fill="none" opacity="0.8" />
+      <ellipse cx="86" cy="32" rx="5.5" ry="2.8" fill="#55504a" />
+      <path d="M93 34Q100 36 107 34" stroke="#dfe8e2" strokeWidth="1.1" fill="none" opacity="0.8" />
+      {/* drifting glints */}
+      <path className="streamGlint" d="M140 30L188 29" stroke="#bfe0c8" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+      <path className="streamGlint sg2" d="M450 30L500 29" stroke="#bfe0c8" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      <path className="streamGlint sg3" d="M740 28L790 27" stroke="#bfe0c8" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      {/* an occasional fish rise mid-pool */}
+      <path className="fishFin" d="M388 26q3 -5 6 0q-3 2.4 -6 0" fill="#1c3328" />
+      <ellipse className="fishRing" cx="391" cy="29" rx="6" ry="2" fill="none" stroke="#bfe0c8" strokeWidth="1.1" />
+    </svg>
+  );
+}
+
+/** Bleached flash-flood driftwood wedged on the slot floor. */
+function DriftwoodArt({ v = 0 }: { v?: number }) {
+  return (
+    <svg
+      width="66"
+      height="22"
+      viewBox="0 0 66 22"
+      aria-hidden="true"
+      style={v ? { transform: "scaleX(-1)" } : undefined}
+    >
+      <path d="M4 16Q22 8 36 12Q50 16 62 9" stroke="#c9b89a" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <path d="M30 13Q40 4 50 4" stroke="#b3a284" strokeWidth="3.4" fill="none" strokeLinecap="round" />
+      <path d="M8 15Q22 9 34 12M40 13Q50 15 58 10" stroke="#8a7a60" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+      <ellipse cx="5" cy="16" rx="2.4" ry="2.8" fill="#a8977a" />
+      <ellipse cx="5" cy="16" rx="1.1" ry="1.4" fill="#7d6e54" />
+    </svg>
+  );
+}
+
+/** Lizard basking on the slot floor — head push-ups, a slow tail sway. */
+function LizardArt() {
+  return (
+    <div className="lizBob" aria-hidden="true">
+      <svg width="30" height="14" viewBox="0 0 30 14">
+        <g className="lizTail">
+          <path d="M9 9Q2 9 3 3" stroke="#8a7a52" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        </g>
+        <ellipse cx="15" cy="9" rx="7" ry="3.2" fill="#8a7a52" />
+        <path d="M9 9Q15 6.5 21 9" stroke="#6b5c3c" strokeWidth="1.4" fill="none" />
+        <circle cx="24" cy="8" r="2.6" fill="#8a7a52" />
+        <circle cx="25" cy="7.2" r="0.8" fill="#26201c" />
+        <path d="M11 11.5L9 13.5M18 11.5L20 13.5M12 6.5L10.5 5M18 6.5L20 5" stroke="#6b5c3c" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
+
+/** A pair of worn leather hiking boots by the kiosk (interests vignette). */
+function BootsArt() {
+  return (
+    <svg width="36" height="26" viewBox="0 0 36 26" aria-hidden="true">
+      <path d="M3 22Q3 10 7 8L13 8Q15 12 19 14Q22 15 22 19L22 22Q13 24 3 22Z" fill="#8a5a34" />
+      <path d="M3 21L22 21L22 24Q12 26 3 23Z" fill="#3a2f22" />
+      <path d="M7 12L12 11M7 15L13 14" stroke="#d8cfc0" strokeWidth="1.1" strokeLinecap="round" />
+      <path d="M7 8L13 8L12 5L8 5Z" fill="#6b4a2a" />
+      <g transform="rotate(8 28 16)">
+        <path d="M20 22Q20 12 24 10L29 10Q31 14 34 15.5Q36 16.5 36 20L36 22Q28 24 20 22Z" fill="#7d5230" />
+        <path d="M20 21L36 21L36 24Q27 25 20 23Z" fill="#332a1e" />
+        <path d="M24 13L28 12.5M24 16L29 15.5" stroke="#d8cfc0" strokeWidth="1" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * Giant cedar flanking the snow gate (round 5B, from the Togakushi photo):
+ * a straight fibrous cinnamon trunk with feathery dark sprays high up,
+ * snow dusting the pads.
+ */
+function CedarArt({ v = 0 }: { v?: number }) {
+  return (
+    <svg
+      width="80"
+      height="210"
+      viewBox="0 0 80 210"
+      aria-hidden="true"
+      style={v ? { transform: "scaleX(-1)" } : undefined}
+    >
+      {/* feathery sprays */}
+      <ellipse cx="40" cy="22" rx="20" ry="14" fill="#1c2f22" />
+      <ellipse cx="22" cy="44" rx="18" ry="11" fill="#16281e" />
+      <ellipse cx="56" cy="50" rx="19" ry="12" fill="#1c2f22" />
+      <ellipse cx="30" cy="74" rx="21" ry="12" fill="#16281e" />
+      <ellipse cx="54" cy="92" rx="18" ry="11" fill="#1c2f22" />
+      <ellipse cx="34" cy="16" rx="10" ry="6" fill="#26452a" />
+      <ellipse cx="26" cy="40" rx="9" ry="5" fill="#22402a" />
+      <ellipse cx="52" cy="46" rx="9" ry="5" fill="#26452a" />
+      {/* snow dust on the pads */}
+      <path d="M24 12Q40 4 56 12Q40 10 24 12Z" fill="#dbe6f2" opacity="0.9" />
+      <path d="M8 40Q22 34 36 40Q22 38 8 40Z" fill="#dbe6f2" opacity="0.8" />
+      <path d="M40 46Q56 40 72 46Q56 44 40 46Z" fill="#cdd9e8" opacity="0.8" />
+      <path d="M14 70Q30 64 48 70Q30 68 14 70Z" fill="#dbe6f2" opacity="0.75" />
+      {/* the trunk: straight, tapered, fibrous */}
+      <path d="M32 60Q31 130 28 196L24 208L58 208L54 196Q51 130 50 60Q41 52 32 60Z" fill="#7a4526" />
+      <path d="M36 70Q35 140 32 200M46 72Q46 142 48 200M41 66Q40 140 40 202" stroke="#5c3018" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M38 90Q37 150 35 196M44 96Q44 152 45 198" stroke="#9a5c34" strokeWidth="1.1" fill="none" strokeLinecap="round" opacity="0.8" />
+      <ellipse cx="41" cy="206" rx="20" ry="4" fill="#e8f0f8" opacity="0.8" />
+    </svg>
+  );
+}
+
+/**
+ * The red timber gate over the snow trail (round 5B, from the Togakushi
+ * photo): vermilion posts and side walls under a massive snow-loaded
+ * thatch roof — the trail passes through the opening.
+ */
+function GateArt() {
+  return (
+    <svg width="180" height="150" viewBox="0 0 180 150" aria-hidden="true">
+      {/* posts + side walls */}
+      <rect x="30" y="62" width="12" height="84" fill="#7d2f1f" />
+      <rect x="138" y="62" width="12" height="84" fill="#7d2f1f" />
+      <rect x="33" y="62" width="3" height="84" fill="#a03a28" />
+      <rect x="141" y="62" width="3" height="84" fill="#a03a28" />
+      <path d="M8 84L30 84L30 146L8 146Z" fill="#8f3225" />
+      <path d="M150 84L172 84L172 146L150 146Z" fill="#8f3225" />
+      <path d="M8 84L30 84M8 104L30 104M8 124L30 124M150 84L172 84M150 104L172 104M150 124L172 124" stroke="#6b2416" strokeWidth="2" />
+      {/* beams over the opening */}
+      <rect x="24" y="62" width="132" height="9" fill="#6b2416" />
+      <rect x="24" y="62" width="132" height="3.5" fill="#a03a28" />
+      <rect x="36" y="78" width="108" height="6" fill="#7d2f1f" />
+      {/* the thatch roof, deep eaves */}
+      <path d="M2 62L28 26L152 26L178 62L146 56L90 52L34 56Z" fill="#6b5a3c" />
+      <path d="M10 58L32 32L148 32L170 58" stroke="#57482c" strokeWidth="2" fill="none" />
+      <path d="M22 52L40 34M50 50L60 33M158 52L140 34M130 50L120 33" stroke="#57482c" strokeWidth="1.4" opacity="0.8" />
+      {/* the snow slab riding the whole roof */}
+      <path d="M4 58Q10 40 30 24Q44 12 90 12Q136 12 150 24Q170 40 176 58Q150 46 90 44Q30 46 4 58Z" fill="#eef3f8" />
+      <path d="M14 50Q40 30 90 28Q140 30 166 50" stroke="#dbe6f2" strokeWidth="3" fill="none" opacity="0.9" />
+      <path d="M40 24Q90 16 140 24" stroke="#ffffff" strokeWidth="2.4" fill="none" opacity="0.85" />
+      {/* snow at the feet */}
+      <ellipse cx="36" cy="146" rx="18" ry="4" fill="#e8f0f8" opacity="0.85" />
+      <ellipse cx="144" cy="146" rx="18" ry="4" fill="#e8f0f8" opacity="0.85" />
+    </svg>
+  );
+}
+
+/** Pruned Japanese pine on the castle grounds — layered cloud pads. */
+function JPineArt() {
+  return (
+    <svg width="66" height="92" viewBox="0 0 66 92" aria-hidden="true">
+      <path d="M30 88Q32 62 28 44Q26 30 34 20" stroke="#3d2a16" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <path d="M29 58Q18 52 14 42M30 44Q42 40 48 32" stroke="#3d2a16" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+      <ellipse cx="36" cy="16" rx="17" ry="9" fill="#1d3322" />
+      <ellipse cx="12" cy="38" rx="12" ry="7" fill="#16281e" />
+      <ellipse cx="50" cy="28" rx="13" ry="7.5" fill="#1d3322" />
+      <ellipse cx="32" cy="12" rx="9" ry="4.5" fill="#28472c" />
+      <ellipse cx="47" cy="24" rx="7" ry="3.5" fill="#26452a" />
+      <path d="M22 12Q36 6 50 12Q36 10 22 12Z" fill="#dbe6f2" opacity="0.85" />
+      <path d="M2 36Q12 31 22 36Q12 34 2 36Z" fill="#dbe6f2" opacity="0.75" />
+      <path d="M40 24Q50 20 60 25Q50 23 40 24Z" fill="#cdd9e8" opacity="0.75" />
+      <ellipse cx="31" cy="89" rx="12" ry="2.6" fill="#e8f0f8" opacity="0.7" />
+    </svg>
+  );
+}
+
+/** Skis crossed in a snowbank with both poles planted beside them. */
+function SkisArt() {
+  return (
+    <svg width="52" height="82" viewBox="0 0 52 82" aria-hidden="true">
+      <g transform="rotate(-13 20 44)">
+        <rect x="16" y="6" width="7" height="68" rx="3.5" fill="#b3402e" />
+        <rect x="16" y="6" width="7" height="10" rx="3.5" fill="#e8e4da" />
+        <path d="M19.5 20L19.5 66" stroke="#8f3225" strokeWidth="1.6" />
+        <rect x="16.5" y="40" width="6" height="7" rx="1.5" fill="#26262c" />
+      </g>
+      <g transform="rotate(13 32 44)">
+        <rect x="29" y="6" width="7" height="68" rx="3.5" fill="#3f7a8a" />
+        <rect x="29" y="6" width="7" height="10" rx="3.5" fill="#e8e4da" />
+        <path d="M32.5 20L32.5 66" stroke="#2c5a66" strokeWidth="1.6" />
+        <rect x="29.5" y="40" width="6" height="7" rx="1.5" fill="#26262c" />
+      </g>
+      <path d="M8 22L11 74" stroke="#9aa1a9" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M44 22L41 74" stroke="#9aa1a9" strokeWidth="2.2" strokeLinecap="round" />
+      <circle cx="8" cy="21" r="2.2" fill="#3a3a40" />
+      <circle cx="44" cy="21" r="2.2" fill="#3a3a40" />
+      <path d="M7 68L15 68M37 68L45 68" stroke="#3a3a40" strokeWidth="2" strokeLinecap="round" />
+      <path d="M2 78Q14 70 28 74Q42 70 50 78Q38 82 26 80Q12 82 2 78Z" fill="#eef3f8" />
+    </svg>
+  );
+}
+
+/** Small wooden ski rack holding three pairs. */
+function SkiRackArt() {
+  return (
+    <svg width="100" height="72" viewBox="0 0 100 72" aria-hidden="true">
+      <rect x="10" y="26" width="6" height="44" fill="#5c4426" />
+      <rect x="84" y="26" width="6" height="44" fill="#5c4426" />
+      <rect x="6" y="24" width="88" height="6" rx="3" fill="#6b4a2a" />
+      <path d="M6 24L94 24" stroke="#e8f0f8" strokeWidth="2" strokeLinecap="round" />
+      {[
+        [26, "#b3402e", "#8f3225"],
+        [48, "#c9971f", "#a3791a"],
+        [68, "#3f7a8a", "#2c5a66"],
+      ].map(([x, c, d]) => (
+        <g key={String(x)} transform={`rotate(-6 ${Number(x) + 4} 46)`}>
+          <rect x={Number(x)} y={8} width="5.5" height="58" rx="2.75" fill={String(c)} />
+          <rect x={Number(x)} y={8} width="5.5" height="8" rx="2.75" fill="#e8e4da" />
+          <rect x={Number(x) + 7} y={12} width="5.5" height="58" rx="2.75" fill={String(d)} />
+          <rect x={Number(x) + 7} y={12} width="5.5" height="8" rx="2.75" fill="#d8d2c4" />
+        </g>
+      ))}
+      <ellipse cx="50" cy="69" rx="42" ry="3.5" fill="#e8f0f8" opacity="0.75" />
+    </svg>
+  );
+}
+
+/**
+ * Hogan-shaped earthen structure (round 5B, Navajo-inspired and kept
+ * generic/respectful): a low earth-covered dome with visible log courses,
+ * its doorway facing east, a faint wisp at the smoke hole.
+ */
+function HoganArt() {
+  return (
+    <svg width="134" height="96" viewBox="0 0 134 96" aria-hidden="true">
+      <path className="hoganSmoke" d="M62 22Q58 14 64 8Q70 3 68 -2" stroke="#c9b89a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      {/* the earthen dome */}
+      <path d="M6 92Q4 46 36 28Q66 12 98 28Q130 46 128 92Z" fill="#8a5a34" />
+      <path d="M14 92Q14 52 42 34Q56 26 67 25Q50 44 46 92Z" fill="#a3714a" opacity="0.75" />
+      <path d="M120 92Q120 54 96 36Q108 56 110 92Z" fill="#6b4426" opacity="0.85" />
+      {/* log courses wrapping the dome */}
+      <g stroke="#5c4126" strokeWidth="1.8" fill="none" opacity="0.8">
+        <path d="M10 78Q66 62 124 78M16 62Q66 46 118 62M28 46Q66 32 106 46M44 33Q66 24 90 33" />
+      </g>
+      {/* smoke hole */}
+      <ellipse cx="64" cy="24" rx="7" ry="3" fill="#4a3220" />
+      {/* east-facing doorway with a striped hanging */}
+      <path d="M96 92L96 56Q106 48 116 56L116 92Z" fill="#3a2414" />
+      <path d="M96 56Q106 48 116 56L118 62Q106 54 94 62Z" fill="#5c4126" />
+      <path d="M100 92L100 62Q106 58 112 62L112 92Z" fill="#8f3225" />
+      <path d="M100 70L112 70M100 78L112 78" stroke="#e8ddc4" strokeWidth="2" />
+      <path d="M100 74L112 74M100 82L112 82" stroke="#26201c" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+/**
+ * Woven rug airing on a wooden rack (generic geometric bands — terracotta,
+ * black and cream; no sacred figures).
+ */
+function BlanketRackArt() {
+  return (
+    <svg width="80" height="68" viewBox="0 0 80 68" aria-hidden="true">
+      {/* A-frame ends + rail */}
+      <path d="M8 66L18 12M28 66L18 12" stroke="#5c4426" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M52 66L62 12M72 66L62 12" stroke="#5c4426" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M14 14L66 14" stroke="#6b4a2a" strokeWidth="4" strokeLinecap="round" />
+      {/* the rug over the rail */}
+      <path d="M22 14L58 14L58 52L22 52Z" fill="#e8ddc4" />
+      <path d="M22 18L58 18M22 48L58 48" stroke="#b3502e" strokeWidth="4" />
+      <path d="M22 24L58 24M22 42L58 42" stroke="#26201c" strokeWidth="2.2" />
+      {[28, 36, 44, 52].map((x) => (
+        <path key={x} d={`M${x} 30L${x + 3.5} 33.5L${x} 37L${x - 3.5} 33.5Z`} fill="#8f3225" />
+      ))}
+      <path d="M22 52L58 52" stroke="#c9b89a" strokeWidth="1.6" />
+      <path d="M24 52L24 56M30 52L30 56M36 52L36 56M42 52L42 56M48 52L48 56M54 52L54 56" stroke="#c9b89a" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+/** Striped hoodoo spire (Zion/Bryce-inspired). v1 is shorter. */
+function HoodooArt({ v = 0 }: { v?: number }) {
+  const h = v ? 118 : 160;
+  const s = v ? 0.78 : 1;
+  return (
+    <svg width={78 * s + 2} height={h} viewBox={`0 0 ${78 * s + 2} ${h}`} aria-hidden="true">
+      <g transform={`scale(${s})`}>
+        {/* stacked strata, waisted like a totem */}
+        <path d="M14 158Q8 140 16 126Q24 114 18 100Q12 86 22 74Q30 62 24 48Q20 36 30 26L52 26Q60 36 56 48Q50 62 58 74Q66 86 62 100Q56 114 64 126Q70 140 66 158Z" fill="#a55d30" />
+        <path d="M18 152Q14 138 20 126Q26 114 21 100Q16 88 25 74Q32 62 27 48Q24 38 32 30L40 30Q40 90 40 156Z" fill="#c97a42" opacity="0.85" />
+        <g stroke="#7c3f1e" strokeWidth="2" fill="none" opacity="0.8">
+          <path d="M15 140Q40 132 65 140M19 112Q40 104 61 112M20 88Q40 80 60 88M24 60Q40 54 56 60M28 38Q40 33 54 38" />
+        </g>
+        <g stroke="#e0b276" strokeWidth="1.2" fill="none" opacity="0.7">
+          <path d="M16 134Q40 126 64 134M20 106Q40 98 60 106M22 82Q40 74 58 82M26 54Q40 48 55 54" />
+        </g>
+        {/* the caprock */}
+        <path d="M22 28Q20 14 40 12Q60 14 58 28Q48 32 40 32Q32 32 22 28Z" fill="#8a5230" />
+        <path d="M24 22Q40 14 56 22" stroke="#b3714a" strokeWidth="2" fill="none" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * The rounded granite arch over the desert path (round 5B, drawn from the
+ * client's Mobius Arch photograph) — the trail passes under its window.
+ */
+function ArchArt() {
+  return (
+    <svg width="310" height="150" viewBox="0 0 310 150" aria-hidden="true">
+      {/* left shoulder mass */}
+      <path d="M2 148L0 108Q4 78 30 70Q52 66 62 84L64 148Z" fill="#8a7560" />
+      <path d="M8 96Q22 78 44 80" stroke="#b39b7d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      {/* the sweeping arch band */}
+      <path d="M30 92Q34 44 96 24Q170 4 236 30Q284 48 288 96L288 148L236 148L238 106Q232 70 178 58Q120 48 84 74Q64 88 66 118L64 148L12 148L14 118Q18 100 30 92Z" fill="#a08a70" />
+      {/* lit crown + under-shadow of the window */}
+      <path d="M40 74Q66 34 128 22Q196 12 248 40Q222 26 168 28Q104 32 68 60Q50 70 40 74Z" fill="#c4ac8a" />
+      <path d="M84 74Q140 46 200 62Q240 74 238 106Q226 76 178 66Q124 58 84 74Z" fill="#5f5040" />
+      {/* right foot boulder */}
+      <path d="M242 148L240 116Q246 92 274 94Q300 94 306 118L304 148Z" fill="#8a7560" />
+      <path d="M250 106Q266 96 288 102" stroke="#b39b7d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      {/* granite speckle + cracks */}
+      <g fill="#7d6a54" opacity="0.7">
+        <circle cx="110" cy="44" r="1.6" />
+        <circle cx="160" cy="36" r="1.4" />
+        <circle cx="210" cy="48" r="1.7" />
+        <circle cx="70" cy="96" r="1.4" />
+        <circle cx="252" cy="116" r="1.5" />
+      </g>
+      <path d="M132 30Q136 44 130 56M196 32Q200 44 208 56" stroke="#7d6a54" strokeWidth="1.4" fill="none" opacity="0.7" />
+    </svg>
+  );
+}
+
+/**
+ * Roadrunner on the shared 3px logical-pixel grid — sprints across the open
+ * flat in quick dashes (CSS .roadRun), crest up, tail long.
+ */
+function RoadrunnerArt() {
+  const P = 3;
+  const px: ReadonlyArray<readonly [number, number, string]> = [
+    [9, 0, "#4a3a2c"], // crest
+    [0, 1, "#4a3a2c"], // tail tip, angled up
+    [1, 1, "#4a3a2c"],
+    [9, 1, "#6b5a44"], // head
+    [10, 1, "#26201c"], // eye
+    [11, 1, "#4a3a2c"], // beak
+    [12, 1, "#4a3a2c"], // beak tip
+    [1, 2, "#6b5a44"], // tail base
+    [2, 2, "#6b5a44"],
+    [8, 2, "#8a7660"], // neck
+    [9, 2, "#8a7660"],
+    [3, 3, "#6b5a44"], // back, streaked
+    [4, 3, "#8a7660"],
+    [5, 3, "#6b5a44"],
+    [6, 3, "#8a7660"],
+    [7, 3, "#8a7660"],
+    [3, 4, "#8a7660"], // body
+    [4, 4, "#d8d2c4"], // pale belly
+    [5, 4, "#8a7660"],
+    [6, 4, "#d8d2c4"],
+    [7, 4, "#8a7660"],
+    [4, 5, "#6b5236"], // legs
+    [6, 5, "#6b5236"],
+    [3, 6, "#6b5236"], // feet mid-stride
+    [7, 6, "#6b5236"],
+  ];
+  return (
+    <div className="roadRun" aria-hidden="true">
+      <svg width={13 * P} height={7 * P} viewBox={`0 0 ${13 * P} ${7 * P}`} shapeRendering="crispEdges">
+        {px.map(([x, y, c]) => (
+          <rect key={`${x}-${y}`} x={x * P} y={y * P} width={P} height={P} fill={c} />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Coyote on the pixel grid — patrols the back line at a slow trot, pausing
+ * to look around (CSS .coyoteTrot).
+ */
+function CoyoteArt() {
+  const P = 3;
+  const px: ReadonlyArray<readonly [number, number, string]> = [
+    [11, 0, "#6e5c48"], // ears
+    [13, 0, "#6e5c48"],
+    [11, 1, "#9a8a70"], // head
+    [12, 1, "#9a8a70"],
+    [13, 1, "#9a8a70"],
+    [12, 2, "#26201c"], // eye row + muzzle
+    [11, 2, "#9a8a70"],
+    [13, 2, "#8a7a60"],
+    [14, 2, "#6e5c48"], // muzzle tip
+    [10, 3, "#9a8a70"], // neck
+    [3, 3, "#6e5c48"], // back line
+    [4, 3, "#6e5c48"],
+    [5, 3, "#6e5c48"],
+    [6, 3, "#6e5c48"],
+    [7, 3, "#6e5c48"],
+    [8, 3, "#6e5c48"],
+    [9, 3, "#6e5c48"],
+    [0, 4, "#8a7a60"], // tail, drooping
+    [1, 4, "#8a7a60"],
+    [2, 4, "#8a7a60"],
+    [3, 4, "#9a8a70"], // body
+    [4, 4, "#9a8a70"],
+    [5, 4, "#9a8a70"],
+    [6, 4, "#9a8a70"],
+    [7, 4, "#9a8a70"],
+    [8, 4, "#9a8a70"],
+    [9, 4, "#9a8a70"],
+    [10, 4, "#9a8a70"],
+    [0, 5, "#4a3a2c"], // dark tail tip
+    [3, 5, "#9a8a70"],
+    [4, 5, "#d8ccb4"], // pale chest/belly
+    [5, 5, "#d8ccb4"],
+    [6, 5, "#9a8a70"],
+    [7, 5, "#d8ccb4"],
+    [8, 5, "#9a8a70"],
+    [9, 5, "#d8ccb4"],
+    [10, 5, "#9a8a70"],
+    [3, 6, "#6e5c48"], // legs
+    [5, 6, "#6e5c48"],
+    [8, 6, "#6e5c48"],
+    [10, 6, "#6e5c48"],
+    [3, 7, "#6e5c48"],
+    [5, 7, "#6e5c48"],
+    [8, 7, "#6e5c48"],
+    [10, 7, "#6e5c48"],
+  ];
+  return (
+    <div className="coyoteTrot" aria-hidden="true">
+      <svg width={15 * P} height={8 * P} viewBox={`0 0 ${15 * P} ${8 * P}`} shapeRendering="crispEdges">
+        {px.map(([x, y, c]) => (
+          <rect key={`${x}-${y}`} x={x * P} y={y * P} width={P} height={P} fill={c} />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Snake that slips between the bushes now and then — hidden most of its
+ * loop, then a brief slither (CSS .snakeSlither; base opacity 0 so reduced
+ * motion never shows it frozen mid-air).
+ */
+function SnakeArt() {
+  return (
+    <div className="snakeSlither" aria-hidden="true">
+      <svg width="52" height="14" viewBox="0 0 52 14">
+        <path
+          d="M4 10Q11 3 19 8Q27 13 35 8Q41 4 46 8"
+          stroke="#8a6a3a"
+          strokeWidth="3.4"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path d="M9 6.5L11 8.5M19 7L21 9M29 9.5L31 7.5M38 6L40 8" stroke="#5c4426" strokeWidth="1.6" strokeLinecap="round" />
+        <circle cx="47" cy="8" r="2.6" fill="#8a6a3a" />
+        <circle cx="48" cy="7.2" r="0.7" fill="#26201c" />
+        <path d="M49.5 8.5L52 10" stroke="#b3402e" strokeWidth="1" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Ground squirrel on the pixel grid — quick dashes between cover with a
+ * tail flick at each pause (CSS .sqDash).
+ */
+function SquirrelArt() {
+  const P = 3;
+  const px: ReadonlyArray<readonly [number, number, string]> = [
+    [1, 0, "#a3714a"], // tail curl
+    [2, 0, "#a3714a"],
+    [0, 1, "#a3714a"],
+    [1, 1, "#c9955e"],
+    [2, 1, "#a3714a"],
+    [0, 2, "#a3714a"],
+    [1, 2, "#c9955e"],
+    [6, 2, "#8a5230"], // ear
+    [0, 3, "#a3714a"],
+    [1, 3, "#a3714a"],
+    [5, 3, "#8a5230"], // head
+    [6, 3, "#8a5230"],
+    [7, 3, "#26201c"], // eye
+    [2, 4, "#8a5230"], // body
+    [3, 4, "#8a5230"],
+    [4, 4, "#8a5230"],
+    [5, 4, "#8a5230"],
+    [6, 4, "#8a5230"],
+    [2, 5, "#8a5230"],
+    [3, 5, "#c9955e"], // belly
+    [4, 5, "#c9955e"],
+    [5, 5, "#8a5230"],
+    [3, 6, "#5c3a1e"], // paws
+    [5, 6, "#5c3a1e"],
+  ];
+  return (
+    <div className="sqDash" aria-hidden="true">
+      <svg width={8 * P} height={7 * P} viewBox={`0 0 ${8 * P} ${7 * P}`} shapeRendering="crispEdges">
+        {px.map(([x, y, c]) => (
+          <rect key={`${x}-${y}`} x={x * P} y={y * P} width={P} height={P} fill={c} />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Snowshoe hare on the pixel grid — white winter coat, black ear tips,
+ * short hops between the drifts (CSS .hareHop).
+ */
+function HareArt() {
+  const P = 3;
+  const px: ReadonlyArray<readonly [number, number, string]> = [
+    [6, 0, "#eef2f6"], // ears
+    [7, 0, "#26201c"], // black ear tip
+    [6, 1, "#cfd9e2"],
+    [7, 1, "#eef2f6"],
+    [6, 2, "#eef2f6"], // head
+    [7, 2, "#eef2f6"],
+    [8, 2, "#26201c"], // eye
+    [1, 3, "#eef2f6"], // back
+    [2, 3, "#eef2f6"],
+    [3, 3, "#eef2f6"],
+    [4, 3, "#eef2f6"],
+    [5, 3, "#eef2f6"],
+    [6, 3, "#eef2f6"],
+    [7, 3, "#eef2f6"],
+    [0, 4, "#ffffff"], // tail puff
+    [1, 4, "#cfd9e2"],
+    [2, 4, "#eef2f6"],
+    [3, 4, "#eef2f6"],
+    [4, 4, "#eef2f6"],
+    [5, 4, "#eef2f6"],
+    [6, 4, "#cfd9e2"],
+    [1, 5, "#cfd9e2"], // haunch + legs
+    [2, 5, "#cfd9e2"],
+    [5, 5, "#cfd9e2"],
+    [2, 6, "#b8c8d4"],
+    [5, 6, "#b8c8d4"],
+  ];
+  return (
+    <div className="hareHop" aria-hidden="true">
+      <svg width={9 * P} height={7 * P} viewBox={`0 0 ${9 * P} ${7 * P}`} shapeRendering="crispEdges">
+        {px.map(([x, y, c]) => (
+          <rect key={`${x}-${y}`} x={x * P} y={y * P} width={P} height={P} fill={c} />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Doe at the meadow treeline — pixel-art canvas painted by the engine
+ * (data-npc="deer": grazes head-down, lifts its head to check the meadow
+ * every few seconds). v1 mirrors the second animal.
+ */
+function DeerArt({ v = 0 }: { v?: number }) {
+  return (
+    <div
+      className="deerWrap"
+      style={v ? { transform: "scaleX(-1)" } : undefined}
+      aria-hidden="true"
+    >
+      <canvas data-npc="deer" width={DEER.w} height={DEER.h} className="deerCv" />
+    </div>
+  );
+}
+
 /** Circling hawk silhouette for the desert sky (positioned by world.css). */
 export function HawkArt() {
   return (
@@ -970,6 +1634,8 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <WornArt v={v} />;
     case "waveledge":
       return <WaveLedgeArt v={v} />;
+    case "slotfin":
+      return <SlotFinArt />;
     case "sandfall":
       return <SandfallArt />;
     case "puddle":
@@ -984,10 +1650,12 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <BurRockArt v={v} />;
     case "footprints":
       return <FootprintsArt v={v} />;
-    case "river":
-      return <RiverArt v={v} />;
-    case "plank":
-      return <PlankArt />;
+    case "riverback":
+      return <FrozenRiverBackArt />;
+    case "riverfront":
+      return <FrozenRiverFrontArt />;
+    case "bridge":
+      return <BridgeArt />;
     case "scrub":
       return <ScrubArt v={v} />;
     case "cracked":
@@ -1004,6 +1672,44 @@ export function DecorArt({ kind, v }: { kind: DecorKind; v?: number }) {
       return <PolesArt />;
     case "seedheads":
       return <SeedheadsArt />;
+    case "boots":
+      return <BootsArt />;
+    case "stream":
+      return <StreamArt />;
+    case "driftwood":
+      return <DriftwoodArt v={v} />;
+    case "lizard":
+      return <LizardArt />;
+    case "cedar":
+      return <CedarArt v={v} />;
+    case "gate":
+      return <GateArt />;
+    case "jpine":
+      return <JPineArt />;
+    case "skis":
+      return <SkisArt />;
+    case "skirack":
+      return <SkiRackArt />;
+    case "hogan":
+      return <HoganArt />;
+    case "blanketrack":
+      return <BlanketRackArt />;
+    case "hoodoo":
+      return <HoodooArt v={v} />;
+    case "arch":
+      return <ArchArt />;
+    case "roadrunner":
+      return <RoadrunnerArt />;
+    case "coyote":
+      return <CoyoteArt />;
+    case "snake":
+      return <SnakeArt />;
+    case "squirrel":
+      return <SquirrelArt />;
+    case "hare":
+      return <HareArt />;
+    case "deer":
+      return <DeerArt v={v} />;
   }
 }
 
@@ -1043,11 +1749,70 @@ export function SkyDriftArt() {
   );
 }
 
-export function SignArt() {
+/**
+ * Round 5: big, well-marked trail signs at every stage edge. A stout post
+ * carries an arrow-shaped plank that points toward the neighboring scene
+ * (`dir` "l"/"r"); "n" is a plain routed plank for non-exit markers
+ * (TRAILHEAD, TRAIL ENDS). The destination text is HTML (.signLabel),
+ * positioned over the plank by world.css.
+ */
+export function SignArt({ dir = "n" }: { dir?: "l" | "r" | "n" }) {
+  const plank =
+    dir === "r"
+      ? "M8 14L104 14L126 30L104 46L8 46Z"
+      : dir === "l"
+        ? "M124 14L28 14L6 30L28 46L124 46Z"
+        : "M12 14L120 14L120 46L12 46Z";
   return (
-    <svg width="36" height="46" viewBox="0 0 36 46" aria-hidden="true">
-      <rect x="16" y="10" width="4" height="34" fill="#6d5233" />
-      <rect x="4" y="6" width="28" height="13" rx="2" fill="#8a6a42" stroke="#5c4426" strokeWidth="1.5" />
+    <svg width="132" height="104" viewBox="0 0 132 104" aria-hidden="true">
+      {/* post + foot wedge */}
+      <rect x="60" y="34" width="12" height="66" rx="2" fill="#6d5233" />
+      <rect x="60" y="34" width="4" height="66" fill="#7e6140" />
+      <path d="M52 100L80 100L74 92L58 92Z" fill="#53381e" />
+      {/* the arrow plank */}
+      <path d={plank} fill="#a97e4f" stroke="#53381e" strokeWidth="3" strokeLinejoin="round" />
+      <path d={plank} fill="none" stroke="rgba(255,238,200,0.25)" strokeWidth="1" />
+      {/* wood grain + fixing bolts */}
+      <path
+        d="M20 22L96 22M24 38L100 38"
+        stroke="rgba(83,56,30,0.45)"
+        strokeWidth="1.4"
+        fill="none"
+      />
+      <circle cx="66" cy="19" r="2.2" fill="#53381e" />
+      <circle cx="66" cy="41" r="2.2" fill="#53381e" />
+    </svg>
+  );
+}
+
+/**
+ * Stand-here zone pad (round 5): a dashed ellipse stamped at each POI's
+ * approach point so the proximity trigger reads as a spot on the ground.
+ * The engine adds `.on` to the wrapper while the hiker is inside the zone.
+ */
+export function ZonePadArt() {
+  return (
+    <svg width="172" height="46" viewBox="0 0 172 46" aria-hidden="true">
+      <ellipse
+        cx="86"
+        cy="23"
+        rx="80"
+        ry="18"
+        fill="rgba(255,243,214,0.08)"
+        stroke="rgba(255,243,214,0.6)"
+        strokeWidth="2"
+        strokeDasharray="8 7"
+      />
+      <ellipse
+        cx="86"
+        cy="23"
+        rx="56"
+        ry="12"
+        fill="none"
+        stroke="rgba(255,243,214,0.25)"
+        strokeWidth="1.5"
+        strokeDasharray="4 8"
+      />
     </svg>
   );
 }
@@ -1141,117 +1906,136 @@ function LakeArt() {
         stroke="#cfe2e4"
         strokeWidth="1"
       />
+      {/* fish rising off the far shore (round 5B): a fin breaks, a ring
+          spreads — both rest at opacity 0 so reduced motion hides them */}
+      <path className="fishFin" d="M60 121q3.5 -5.5 7 0q-3.5 2.6 -7 0" fill="#0a1420" />
+      <ellipse className="fishRing" cx="63" cy="124" rx="6" ry="2.1" fill="none" stroke="#a9c4d4" strokeWidth="1" />
+      <path className="fishFin ffB" d="M148 133q3.5 -5.5 7 0q-3.5 2.6 -7 0" fill="#0a1420" />
+      <ellipse className="fishRing frB" cx="151" cy="136" rx="6" ry="2.1" fill="none" stroke="#a9c4d4" strokeWidth="1" />
     </svg>
   );
 }
 
 /**
- * The sequoia grove, rebuilt round 4B so it reads as Sequoia NP: FIVE trees
- * (three foreground giants + two younger mid-ground sequoias behind them),
- * bark a darker cinnamon-brown with dense fibrous vertical texture, and
- * crowns built from distinct layered foliage clumps — each clump shadowed
- * underneath and lit on top, not a generic cone. The middle giant keeps its
- * fire-scar hollow.
+ * The sequoia grove, regrown round 5B per the client's photo: taller,
+ * bigger, DARKER cinnamon-red trunks, and denser — three foreground giants
+ * plus three mid-ground sequoias packed behind them. Crowns are layered
+ * foliage clumps starting high up the trunk (the photo's bare-columned
+ * look); the middle giant keeps its black fire-scar hollow.
  */
 function GroveArt() {
   /** One distinct foliage clump: under-shadow, body, lit top. */
   const clump = (x: number, y: number, rx: number, ry: number, tone: 0 | 1) => (
     <g key={`${x}-${y}`}>
-      <ellipse cx={x} cy={y + ry * 0.55} rx={rx * 0.94} ry={ry * 0.8} fill="#0c1710" opacity="0.42" />
-      <ellipse cx={x} cy={y} rx={rx} ry={ry} fill={tone ? "#1d3322" : "#16281c"} />
-      <ellipse cx={x - rx * 0.15} cy={y - ry * 0.4} rx={rx * 0.62} ry={ry * 0.5} fill={tone ? "#28472c" : "#22402a"} />
+      <ellipse cx={x} cy={y + ry * 0.55} rx={rx * 0.94} ry={ry * 0.8} fill="#0a130d" opacity="0.45" />
+      <ellipse cx={x} cy={y} rx={rx} ry={ry} fill={tone ? "#1b3121" : "#122117"} />
+      <ellipse cx={x - rx * 0.15} cy={y - ry * 0.4} rx={rx * 0.62} ry={ry * 0.5} fill={tone ? "#26452a" : "#1e3a25"} />
     </g>
   );
-  /** Fibrous vertical bark texture between x0 and x1, top→bottom. */
+  /** Fibrous vertical bark texture, top→bottom, darker + redder (5B). */
   const fibers = (cx: number, w: number, yTop: number, yBot: number, seed: number) => {
     const lines: string[] = [];
     const fine: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      const t = (i + 0.5) / 7;
+    for (let i = 0; i < 8; i++) {
+      const t = (i + 0.5) / 8;
       const x = cx - w / 2 + w * t;
-      const sway = Math.sin(seed + i * 2.1) * 3;
-      const y1 = yTop + ((seed * 7 + i * 13) % 20);
-      const y2 = yBot - ((seed * 5 + i * 17) % 26);
+      const sway = Math.sin(seed + i * 2.1) * 3.5;
+      const y1 = yTop + ((seed * 7 + i * 13) % 26);
+      const y2 = yBot - ((seed * 5 + i * 17) % 34);
       (i % 2 ? fine : lines).push(`M${x} ${y1}Q${x + sway} ${(y1 + y2) / 2} ${x + sway * 0.4} ${y2}`);
     }
     return (
-      <g key={`f${cx}`}>
-        <path d={lines.join("")} stroke="#451d0c" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-        <path d={fine.join("")} stroke="#8a4a24" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.8" />
+      <g key={`f${cx}-${yTop}`}>
+        <path d={lines.join("")} stroke="#38130a" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <path d={fine.join("")} stroke="#7d3a18" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.8" />
       </g>
     );
   };
   return (
-    <svg width="420" height="340" viewBox="0 0 420 340" aria-hidden="true">
-      {/* two younger mid-ground sequoias, hazier and behind */}
-      <g opacity="0.88">
-        <path d="M118 120Q117 240 113 306L106 322L146 322L139 306Q135 240 134 120Q126 112 118 120Z" fill="#582813" />
-        {fibers(126, 14, 130, 310, 3)}
-        {clump(126, 78, 22, 11, 0)}
-        {clump(118, 100, 18, 9, 0)}
-        {clump(136, 104, 16, 8, 1)}
-        {clump(126, 60, 13, 7, 1)}
+    <svg width="500" height="560" viewBox="0 0 500 560" aria-hidden="true">
+      {/* three mid-ground sequoias, hazier, packed between the giants */}
+      <g opacity="0.86">
+        <path d="M146 190Q145 340 141 512L134 530L176 530L169 512Q165 340 164 190Q156 181 146 190Z" fill="#4c1f0e" />
+        {fibers(155, 16, 200, 516, 3)}
+        {clump(155, 142, 24, 12, 0)}
+        {clump(146, 166, 19, 10, 0)}
+        {clump(166, 170, 17, 9, 1)}
+        {clump(155, 120, 14, 8, 1)}
       </g>
-      <g opacity="0.88">
-        <path d="M320 132Q319 244 315 308L308 324L350 324L343 308Q339 244 338 132Q330 124 320 132Z" fill="#5e2c15" />
-        {fibers(329, 14, 142, 312, 8)}
-        {clump(329, 92, 21, 10, 0)}
-        {clump(320, 112, 17, 9, 1)}
-        {clump(340, 116, 15, 8, 0)}
-        {clump(330, 74, 12, 7, 1)}
+      <g opacity="0.86">
+        <path d="M338 206Q337 352 333 514L326 532L370 532L363 514Q359 352 358 206Q349 197 338 206Z" fill="#511f0d" />
+        {fibers(348, 16, 216, 518, 8)}
+        {clump(348, 158, 23, 11, 0)}
+        {clump(339, 180, 18, 10, 1)}
+        {clump(360, 184, 16, 9, 0)}
+        {clump(349, 136, 13, 8, 1)}
+      </g>
+      <g opacity="0.8">
+        <path d="M18 226Q17 366 14 516L8 532L48 532L42 516Q38 366 37 226Q28 218 18 226Z" fill="#48200f" />
+        {fibers(27, 14, 236, 520, 12)}
+        {clump(27, 180, 21, 11, 0)}
+        {clump(18, 202, 16, 9, 1)}
+        {clump(38, 206, 14, 8, 0)}
       </g>
 
-      {/* left giant */}
-      {clump(72, 30, 16, 9, 0)}
-      {clump(62, 48, 23, 12, 0)}
-      {clump(84, 54, 21, 11, 1)}
-      {clump(56, 70, 25, 12, 0)}
-      {clump(88, 76, 23, 11, 1)}
-      {clump(72, 90, 30, 12, 0)}
-      <path d="M64 90Q62 212 54 302L42 330L104 330L92 302Q82 212 80 90Q72 80 64 90Z" fill="#66311a" />
-      {fibers(72, 30, 100, 322, 1)}
+      {/* left giant — crown high, long bare column */}
+      {clump(92, 42, 18, 10, 0)}
+      {clump(80, 62, 26, 13, 0)}
+      {clump(106, 68, 24, 12, 1)}
+      {clump(74, 88, 28, 13, 0)}
+      {clump(110, 94, 26, 12, 1)}
+      {clump(92, 112, 34, 13, 0)}
+      <path d="M82 112Q79 300 68 462L52 544L134 544L119 462Q108 300 104 112Q93 100 82 112Z" fill="#5e2410" />
+      {fibers(93, 36, 124, 534, 1)}
 
-      {/* middle giant (tallest) — keeps the fire-scar hollow */}
-      {clump(210, 16, 17, 9, 0)}
-      {clump(198, 34, 25, 13, 0)}
-      {clump(224, 40, 23, 12, 1)}
-      {clump(192, 58, 27, 13, 0)}
-      {clump(230, 62, 25, 12, 1)}
-      {clump(210, 78, 33, 13, 0)}
-      <path d="M196 78Q194 212 186 296L168 336L252 336L236 296Q226 212 224 78Q210 68 196 78Z" fill="#723c1e" />
-      {fibers(210, 36, 90, 326, 5)}
-      <path d="M194 336Q190 296 202 280Q216 272 224 290Q230 310 226 336Z" fill="#26130a" />
-      <path d="M199 336Q197 302 206 290Q215 284 220 296Q224 314 221 336Z" fill="#0f0805" />
+      {/* middle giant (tallest) — keeps the black fire-scar hollow */}
+      {clump(252, 20, 19, 10, 0)}
+      {clump(238, 42, 28, 14, 0)}
+      {clump(268, 48, 26, 13, 1)}
+      {clump(230, 70, 30, 14, 0)}
+      {clump(274, 76, 28, 13, 1)}
+      {clump(252, 96, 38, 15, 0)}
+      <path d="M238 96Q235 300 224 452L202 552L302 552L282 452Q270 300 266 96Q252 84 238 96Z" fill="#6b2d13" />
+      {fibers(252, 42, 110, 542, 5)}
+      <path d="M232 552Q227 494 242 470Q259 460 269 482Q277 516 272 552Z" fill="#20100a" />
+      <path d="M238 552Q235 506 246 488Q257 481 263 496Q268 526 264 552Z" fill="#0c0604" />
 
       {/* right giant */}
-      {clump(376, 54, 15, 8, 0)}
-      {clump(368, 68, 22, 11, 0)}
-      {clump(386, 74, 20, 10, 1)}
-      {clump(364, 88, 23, 11, 0)}
-      {clump(388, 94, 21, 10, 1)}
-      {clump(376, 106, 28, 11, 0)}
-      <path d="M368 106Q366 222 360 304L348 332L416 332L404 304Q396 222 394 106Q381 97 368 106Z" fill="#66311a" />
-      {fibers(382, 28, 116, 324, 11)}
+      {clump(442, 66, 17, 9, 0)}
+      {clump(432, 86, 25, 12, 0)}
+      {clump(454, 92, 23, 11, 1)}
+      {clump(426, 112, 26, 13, 0)}
+      {clump(456, 118, 24, 11, 1)}
+      {clump(442, 136, 32, 13, 0)}
+      <path d="M432 136Q429 312 420 470L406 548L482 548L468 470Q458 312 454 136Q444 125 432 136Z" fill="#5e2410" />
+      {fibers(443, 34, 148, 538, 11)}
 
       {/* ferns and shade plants at the feet */}
       <path
-        d="M136 328C134 320 130 316 125 313M136 328C136 319 137 315 139 310M136 328C139 321 143 318 147 316"
+        d="M180 540C178 530 173 525 167 521M180 540C180 529 181 524 184 518M180 540C184 531 189 528 194 525"
         stroke="#3d5a33"
-        strokeWidth="1.8"
+        strokeWidth="2"
         fill="none"
         strokeLinecap="round"
       />
       <path
-        d="M284 330C282 323 278 319 274 317M284 330C285 322 287 318 290 314M284 330C287 324 291 321 295 320"
+        d="M330 544C328 535 323 530 318 527M330 544C331 534 334 529 338 524M330 544C334 537 339 533 344 532"
         stroke="#47663a"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <path
+        d="M66 550C64 541 59 536 54 533M66 550C67 540 70 535 74 530"
+        stroke="#3d5a33"
         strokeWidth="1.8"
         fill="none"
         strokeLinecap="round"
       />
       <path
-        d="M52 334C50 327 46 323 42 321M52 334C53 326 55 322 58 318"
+        d="M414 548C412 540 408 536 403 533M414 548C415 539 417 535 420 530"
         stroke="#3d5a33"
-        strokeWidth="1.6"
+        strokeWidth="1.8"
         fill="none"
         strokeLinecap="round"
       />
@@ -1334,16 +2118,48 @@ function GtSignArt() {
 }
 
 /**
- * The climbing boulder (round 4B, meadow west wall): a Yosemite-toned
- * granite cluster with a rope over the lip, chalk marks at the holds, a
- * crash pad at the base, and the Taft Point crow perched on top (an
- * occasional wing ruffle, CSS .crowWing).
+ * The climbing wall, rebuilt round 5B from the client's El Capitan photo:
+ * a towering pale-granite monolith with a rounded crown, sheer lit face,
+ * shadowed prow, long vertical crack systems and the dark "heart" patch.
+ * A fixed rope runs the face past clipped quickdraws and chalked holds;
+ * climbing gear is staged at the base (crash pad, coiled rope, shoes,
+ * harness, draw rack, chalk bag). The Taft Point crow keeps the summit.
  */
-function BoulderArt() {
+function ElCapWallArt() {
   return (
-    <svg width="190" height="168" viewBox="0 0 190 168" aria-hidden="true">
-      {/* the crow, perched on the highline of the main boulder */}
-      <g className="crowWing" transform="translate(96 10)">
+    <svg width="480" height="470" viewBox="0 0 480 470" aria-hidden="true">
+      {/* the wall: runs off the west edge like the valley side itself — a
+          long, near-level summit line climbing to the Nose, then the prow
+          dropping sheer to the talus */}
+      <path d="M0 470L0 96Q70 82 150 62Q250 38 330 34Q372 32 398 58Q432 92 438 168L442 470Z" fill="#a29a8a" />
+      {/* sunlit southwest face */}
+      <path d="M0 470L0 104Q80 88 164 66Q252 44 314 42Q292 140 296 260Q300 380 308 470Z" fill="#bcb29e" />
+      {/* shadowed east prow */}
+      <path d="M344 38Q382 42 404 66Q430 96 436 172L438 470L348 470Q362 320 356 200Q352 100 344 38Z" fill="#7c7466" />
+      <path d="M344 38Q382 42 404 66Q430 96 436 172L438 470" stroke="#68604f" strokeWidth="2.4" fill="none" />
+      {/* summit slope catching the sun */}
+      <path d="M0 96Q70 82 150 62Q250 38 330 34L344 38Q250 50 156 72Q70 90 0 106Z" fill="#cfc5ae" />
+      {/* the "heart" — the big shadowed recess on the lit face */}
+      <path d="M124 158Q148 138 168 156Q184 172 174 210Q166 246 146 260Q128 248 120 214Q112 180 124 158Z" fill="#8a8172" opacity="0.9" />
+      <path d="M134 172Q150 158 162 172Q170 186 164 212Q158 236 146 242Q136 230 130 204Q126 186 134 172Z" fill="#736a5b" opacity="0.75" />
+      <path d="M144 166Q141 202 148 240" stroke="#68604f" strokeWidth="1.6" fill="none" opacity="0.7" />
+      {/* long vertical crack systems + water streaks */}
+      <g stroke="#6e675a" strokeWidth="2.2" fill="none" strokeLinecap="round">
+        <path d="M212 52Q206 170 212 310Q215 400 210 470" />
+        <path d="M262 44Q270 180 262 330Q258 410 264 470" />
+        <path d="M366 60Q376 190 370 344" />
+        <path d="M84 82Q78 210 84 360Q86 420 82 470" />
+      </g>
+      <g stroke="#8a8273" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.8">
+        <path d="M156 68Q152 190 158 340M238 46Q234 160 240 310Q242 390 238 470M318 44Q324 170 318 320" />
+        <path d="M36 100Q32 250 38 420M404 96Q414 240 408 420" />
+      </g>
+      {/* ledges catching light */}
+      <g stroke="#cfc5ae" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85">
+        <path d="M108 240Q140 232 170 238M204 330Q236 322 268 328M140 400Q170 394 198 398M296 180Q322 174 348 180" />
+      </g>
+      {/* the crow on the summit (occasional wing ruffle, CSS .crowWing) */}
+      <g className="crowWing" transform="translate(318 12)">
         <ellipse cx="10" cy="12" rx="8" ry="5.2" fill="#17171d" />
         <path d="M16 10Q22 12 20 16L12 16Z" fill="#101014" />
         <circle cx="3.5" cy="6.5" r="3.6" fill="#17171d" />
@@ -1351,37 +2167,72 @@ function BoulderArt() {
         <circle cx="2.4" cy="5.6" r="0.7" fill="#8d8d96" />
         <path d="M6 14Q13 10 17 14Q13 18 8 17Z" fill="#26262e" />
       </g>
-      {/* smaller companion boulder, left */}
-      <path d="M8 152L4 118Q10 96 40 98Q58 100 60 122L56 152Z" fill="#6e6960" />
-      <path d="M12 112Q28 102 48 108" stroke="#8a857a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-      {/* main granite boulder */}
-      <path d="M42 152L36 66Q44 28 96 24Q152 26 160 70Q166 116 152 152Z" fill="#8f897b" />
-      {/* lit top face + shadow flank */}
-      <path d="M44 60Q54 32 96 28Q142 30 152 58Q120 46 88 48Q60 50 44 60Z" fill="#a7a191" />
-      <path d="M148 62Q158 100 148 152L118 152Q136 110 132 64Z" fill="#6e6960" opacity="0.85" />
-      {/* crack lines */}
-      <path d="M78 50Q74 90 80 128M112 46Q118 84 112 126Q110 140 114 152" stroke="#5f5a50" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M60 76Q70 80 78 78M112 92Q124 96 136 92" stroke="#5f5a50" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.8" />
-      {/* the rope: anchored over the lip, hanging down the face */}
-      <path d="M100 24Q98 40 103 62Q108 88 101 112Q97 134 102 152" stroke="#d1543e" strokeWidth="2.6" fill="none" />
-      <path d="M100 24Q98 40 103 62Q108 88 101 112" stroke="#e8734f" strokeWidth="0.9" fill="none" strokeDasharray="3 4" />
-      {/* chalk marks at the holds */}
-      <g fill="#eceada">
-        <ellipse cx="86" cy="72" rx="5" ry="2.6" opacity="0.55" />
-        <ellipse cx="118" cy="96" rx="4.4" ry="2.2" opacity="0.5" />
-        <ellipse cx="74" cy="110" rx="4.8" ry="2.4" opacity="0.5" />
-        <ellipse cx="98" cy="130" rx="4" ry="2" opacity="0.45" />
+      {/* the fixed line: red rope from the summit anchor down the face */}
+      <path d="M290 44Q284 130 292 230Q298 330 288 410Q284 440 290 466" stroke="#d1543e" strokeWidth="2.8" fill="none" />
+      <path d="M290 44Q284 130 292 230Q298 330 288 410" stroke="#e8734f" strokeWidth="1" fill="none" strokeDasharray="4 5" />
+      {/* clipped quickdraws along the line */}
+      {[
+        [288, 106, "#4a90d9"],
+        [291, 186, "#e8b93d"],
+        [294, 266, "#5a7a42"],
+        [290, 346, "#8a8a92"],
+      ].map(([x, y, c]) => (
+        <g key={`${x}-${y}`}>
+          <path d={`M${x} ${y}L${Number(x) + 6} ${Number(y) + 7}`} stroke="#8a8a92" strokeWidth="1.6" />
+          <ellipse cx={Number(x) + 8} cy={Number(y) + 11} rx="3" ry="4" fill="none" stroke={String(c)} strokeWidth="2" />
+        </g>
+      ))}
+      {/* the summit anchor: two bolts + sling */}
+      <path d="M282 42L290 36L298 42" stroke="#8a8a92" strokeWidth="2" fill="none" />
+      <circle cx="282" cy="42" r="2" fill="#494950" />
+      <circle cx="298" cy="42" r="2" fill="#494950" />
+      {/* chalk marks at the holds near the line */}
+      <g fill="#f0ede0">
+        <ellipse cx="274" cy="150" rx="5.5" ry="2.8" opacity="0.6" />
+        <ellipse cx="306" cy="218" rx="5" ry="2.5" opacity="0.55" />
+        <ellipse cx="272" cy="298" rx="5.2" ry="2.6" opacity="0.55" />
+        <ellipse cx="302" cy="376" rx="4.6" ry="2.3" opacity="0.5" />
+        <ellipse cx="278" cy="430" rx="4.4" ry="2.2" opacity="0.5" />
       </g>
-      {/* crash pad at the base */}
+      {/* talus + tiny pines at the foot for scale */}
+      <path d="M410 466L406 452Q412 442 428 444Q442 442 445 454L443 466Z" fill="#5f5a50" />
+      <path d="M398 452L405 432L412 452Z" fill="#20331f" />
+      <path d="M418 456L426 432L434 456Z" fill="#182a1a" />
+      <path d="M40 466L36 450Q42 438 58 440Q72 438 74 452L72 466Z" fill="#6e6960" />
+      {/* staged gear: crash pad, coiled rope, shoes, harness, rack, chalk */}
       <g>
-        <path d="M58 168L58 156Q58 150 66 150L138 150Q146 150 146 156L146 168Z" fill="#2c3e5f" />
-        <path d="M58 158L146 158" stroke="#1e2c46" strokeWidth="2" />
-        <path d="M74 150L74 168M126 150L126 168" stroke="#1e2c46" strokeWidth="2.4" />
-        <path d="M60 152Q102 146 144 152" stroke="#40598a" strokeWidth="2" fill="none" />
+        <path d="M170 470L170 456Q170 450 178 450L254 450Q262 450 262 456L262 470Z" fill="#2c3e5f" />
+        <path d="M170 458L262 458" stroke="#1e2c46" strokeWidth="2" />
+        <path d="M188 450L188 470M240 450L240 470" stroke="#1e2c46" strokeWidth="2.4" />
+        <path d="M172 452Q216 446 260 452" stroke="#40598a" strokeWidth="2" fill="none" />
       </g>
-      {/* chalk bag dropped beside the pad */}
-      <path d="M154 152L164 152Q165 162 159 164Q152 162 154 152Z" fill="#c97a4a" />
-      <ellipse cx="159" cy="153" rx="3.6" ry="1.4" fill="#e8e4da" />
+      <g fill="none" stroke="#d1543e" strokeWidth="2.4">
+        <ellipse cx="294" cy="456" rx="12" ry="6" />
+        <ellipse cx="294" cy="453" rx="12" ry="6" stroke="#e8734f" />
+        <ellipse cx="294" cy="450" rx="12" ry="6" />
+      </g>
+      {/* climbing shoes, heel to heel */}
+      <path d="M318 462Q318 456 324 456L334 456Q338 458 336 463Q328 466 318 466Z" fill="#b3402e" />
+      <path d="M358 462Q358 456 352 456L342 456Q338 458 340 463Q348 466 358 466Z" fill="#8f3225" />
+      <path d="M321 458L332 458M344 458L355 458" stroke="#26201c" strokeWidth="1.2" />
+      {/* harness hung on a spike of rock */}
+      <path d="M376 438L376 426" stroke="#6e675a" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="376" cy="442" rx="10" ry="4.5" fill="none" stroke="#e8b93d" strokeWidth="2.4" />
+      <path d="M368 444Q370 452 374 454M384 444Q382 452 378 454" stroke="#c9971f" strokeWidth="2.2" fill="none" />
+      {/* rack of draws on a sling + chalk bag */}
+      <path d="M120 452Q132 448 144 452" stroke="#4a3a2c" strokeWidth="1.6" fill="none" />
+      {[
+        [124, 453, "#4a90d9"],
+        [132, 451, "#8a8a92"],
+        [140, 453, "#5a7a42"],
+      ].map(([x, y, c]) => (
+        <g key={`d${x}`}>
+          <path d={`M${x} ${y}L${x} ${Number(y) + 5}`} stroke="#8a8a92" strokeWidth="1.2" />
+          <ellipse cx={x} cy={Number(y) + 8} rx="2.4" ry="3.2" fill="none" stroke={String(c)} strokeWidth="1.8" />
+        </g>
+      ))}
+      <path d="M96 456L106 456Q107 466 101 468Q94 466 96 456Z" fill="#c97a4a" />
+      <ellipse cx="101" cy="457" rx="3.6" ry="1.4" fill="#e8e4da" />
     </svg>
   );
 }
@@ -1405,44 +2256,69 @@ function BearRockArt() {
 }
 
 /**
- * Sculpted wave-ledge (round 4B slot redress): a stack of stepped, curved
- * sandstone shelves hugging the canyon wall, echoing the backdrop's flow —
- * each shelf has a lit top edge, a shadowed face, and strata lines. v1
- * mirrors it for the opposite wall.
+ * Sculpted sandstone wave wall, reworked round 5B (client: the old forms
+ * were unreadable). Now it reads literally: a stack of five flowing strata
+ * shelves — each a smooth rounded tongue with a shadowed face and a
+ * beam-lit lip — topped by an overhanging wave curl with a dark under-
+ * cave, the way the slot's walls actually flow. v1 mirrors it for the
+ * opposite wall.
  */
 function WaveLedgeArt({ v = 0 }: { v?: number }) {
   return (
     <svg
-      width="200"
-      height="216"
-      viewBox="0 0 200 216"
+      width="210"
+      height="230"
+      viewBox="0 0 210 230"
       aria-hidden="true"
       style={v ? { transform: "scaleX(-1)" } : undefined}
     >
-      {/* the fin's core mass: an S-curved sandstone blade, wide at the foot,
-          leaning with the flow — no straight edges anywhere */}
-      <path
-        d="M28 216Q10 168 30 128Q52 86 34 56Q24 34 52 18Q86 4 116 22Q142 38 128 66Q112 96 134 124Q158 154 144 184Q134 208 108 214Q64 220 28 216Z"
-        fill="#6b3418"
-      />
-      {/* shadowed under-curves of the wave */}
-      <path d="M36 62Q60 92 46 128Q34 160 48 196Q80 206 108 200Q84 178 92 142Q100 110 82 84Q60 58 36 62Z" fill="#4f2410" />
-      {/* shelf lips: stepped curved ledges catching the beam light */}
-      <path d="M46 34Q84 16 112 32Q132 44 122 62Q94 48 62 52Q46 44 46 34Z" fill="#8a4a24" />
-      <path d="M46 34Q84 16 112 32Q132 44 122 62" fill="none" stroke="#c97a42" strokeWidth="3" strokeLinecap="round" />
-      <path d="M42 84Q76 70 104 84Q126 96 116 116Q88 100 58 102Q40 96 42 84Z" fill="#7c3f1e" />
-      <path d="M42 84Q76 70 104 84Q126 96 116 116" fill="none" stroke="#b86a38" strokeWidth="2.6" strokeLinecap="round" />
-      <path d="M48 136Q84 124 116 138Q142 150 130 170Q98 154 66 156Q46 148 48 136Z" fill="#743a1c" />
-      <path d="M48 136Q84 124 116 138Q142 150 130 170" fill="none" stroke="#a55d30" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M40 186Q76 176 110 188Q128 196 120 210Q90 200 60 202Q42 196 40 186Z" fill="#5e2c14" />
-      <path d="M40 186Q76 176 110 188Q128 196 120 210" fill="none" stroke="#96522a" strokeWidth="2.2" strokeLinecap="round" />
-      {/* strata lines following the flow */}
-      <g stroke="#451f0d" strokeWidth="1.3" fill="none" opacity="0.75">
-        <path d="M44 48Q82 34 116 46M42 100Q76 88 110 100M46 152Q84 140 122 154M44 198Q76 190 108 200" />
+      {/* five stacked strata tongues, bottom → top, each lipped with light */}
+      <path d="M6 230Q2 204 26 194Q90 182 152 190Q198 196 202 230Z" fill="#5e2c14" />
+      <path d="M8 222Q6 204 28 196Q90 185 150 192Q192 198 198 222" fill="none" stroke="#96522a" strokeWidth="3" strokeLinecap="round" />
+      <path d="M14 196Q8 168 40 158Q102 146 156 156Q192 164 194 196Q120 186 40 192Z" fill="#743a1c" />
+      <path d="M16 190Q12 170 42 160Q102 149 154 158Q186 166 190 188" fill="none" stroke="#a55d30" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M22 158Q14 128 52 118Q108 108 152 118Q184 126 186 158Q112 148 46 154Z" fill="#7c3f1e" />
+      <path d="M24 152Q18 130 54 120Q108 111 150 120Q178 128 182 152" fill="none" stroke="#b86a38" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M32 118Q24 88 60 78Q110 68 148 80Q174 88 176 118Q108 108 52 114Z" fill="#8a4a24" />
+      <path d="M34 112Q28 90 62 80Q110 71 146 82Q170 90 172 112" fill="none" stroke="#c97a42" strokeWidth="2.6" strokeLinecap="round" />
+      {/* the wave curl: overhanging hook with a shadowed under-cave */}
+      <path d="M48 78Q38 34 88 20Q140 8 162 38Q174 56 154 66Q140 44 108 44Q74 46 64 78Z" fill="#8a4a24" />
+      <path d="M50 70Q46 40 90 26Q136 14 156 40" fill="none" stroke="#d98f57" strokeWidth="3" strokeLinecap="round" />
+      <path d="M64 78Q74 50 108 46Q138 44 152 64Q136 58 112 60Q84 62 72 78Z" fill="#3d1a0a" />
+      {/* strata flow-lines wrapping the tongues */}
+      <g stroke="#451f0d" strokeWidth="1.3" fill="none" opacity="0.7">
+        <path d="M30 176Q100 164 176 174M38 138Q104 126 172 136M46 100Q106 90 164 98M60 56Q104 40 148 48" />
       </g>
-      <g stroke="#d98f57" strokeWidth="1" fill="none" opacity="0.5">
-        <path d="M48 42Q84 28 116 40M46 94Q78 82 110 94M50 146Q86 134 120 148" />
+      <g stroke="#d98f57" strokeWidth="1" fill="none" opacity="0.45">
+        <path d="M32 170Q100 158 172 168M42 132Q106 120 168 130M52 94Q108 84 160 92" />
       </g>
+      {/* sand skirting the foot */}
+      <path d="M2 230Q30 218 70 222Q130 214 170 222Q196 220 208 230Z" fill="#a5663a" opacity="0.7" />
+    </svg>
+  );
+}
+
+/**
+ * Freestanding sandstone fin (round 5B slot density): a narrow rounded
+ * blade with strata bands wrapping its waist and a beam-lit west rim.
+ */
+function SlotFinArt() {
+  return (
+    <svg width="110" height="190" viewBox="0 0 110 190" aria-hidden="true">
+      <path d="M18 190Q8 130 20 84Q30 36 58 22Q84 14 94 48Q102 86 92 132Q86 168 78 190Z" fill="#6b3418" />
+      {/* shadowed east face */}
+      <path d="M62 26Q86 22 92 52Q100 90 90 134Q84 168 78 190L58 190Q70 130 72 84Q73 48 62 26Z" fill="#4f2410" />
+      {/* lit west rim */}
+      <path d="M22 86Q32 40 58 24" fill="none" stroke="#d98f57" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M20 130Q14 108 22 86" fill="none" stroke="#b86a38" strokeWidth="2.5" strokeLinecap="round" />
+      {/* strata bands wrapping the blade */}
+      <g stroke="#451f0d" strokeWidth="1.4" fill="none" opacity="0.75">
+        <path d="M16 148Q50 138 84 146M14 116Q50 106 90 114M20 82Q52 72 94 80M32 48Q58 38 90 50" />
+      </g>
+      <g stroke="#c97a42" strokeWidth="1" fill="none" opacity="0.5">
+        <path d="M17 142Q50 132 86 140M16 110Q52 100 89 108M23 76Q54 66 92 74" />
+      </g>
+      <path d="M10 190Q30 180 56 184Q80 180 96 190Z" fill="#a5663a" opacity="0.7" />
     </svg>
   );
 }
@@ -1496,37 +2372,126 @@ function PuddleArt() {
 }
 
 /**
- * The About anchor (round 4): a trailhead information kiosk at the meadow's
- * west end — two posts, a shingle roof, a pinned map with a "you are here"
- * dot, and a small photo tacked beside it. 4B dresses it further.
+ * Yosemite Falls (round 5B, from the client's photo): a dark granite
+ * amphitheater at the back treeline with the white ribbon dropping between
+ * its walls — upper fall, a mid-ledge splash, lower fall — into a foaming
+ * plunge pool over talus. Falling water is dashed strokes cycling downward
+ * (CSS .fallsFlow); the mist puffs breathe (CSS .fallsMist).
+ */
+function FallsArt() {
+  return (
+    <svg width="250" height="340" viewBox="0 0 250 340" aria-hidden="true">
+      {/* the amphitheater: two dark granite walls meeting at the notch */}
+      <path d="M4 336L2 130Q10 44 96 26L114 24L110 84Q104 190 112 336Z" fill="#46525f" />
+      <path d="M246 336L248 120Q238 40 152 24L134 22L140 84Q148 190 138 336Z" fill="#39434e" />
+      {/* wall shading + ledge lines */}
+      <path d="M10 330L8 140Q14 70 78 40Q60 110 64 200Q66 280 72 330Z" fill="#3a4550" />
+      <path d="M240 330L242 130Q236 62 176 38Q192 110 188 204Q186 284 180 330Z" fill="#2c343d" />
+      <g stroke="#57646f" strokeWidth="1.6" fill="none" opacity="0.8">
+        <path d="M20 120Q50 108 78 116M16 210Q44 200 70 208M172 130Q202 122 230 132M178 226Q206 218 234 228" />
+      </g>
+      <g stroke="#242c34" strokeWidth="1.8" fill="none" opacity="0.7">
+        <path d="M34 86Q58 76 82 84M166 90Q192 82 218 92M26 268Q52 260 76 266M180 272Q206 264 230 272" />
+      </g>
+      {/* the upper fall: white ribbon from the notch */}
+      <path d="M114 26L134 26L132 148Q128 160 122 160Q118 160 116 148Z" fill="#dfe9f2" />
+      <path d="M119 26L129 26L128 146Q126 152 123 152Q121 152 120 146Z" fill="#f2f7fb" />
+      {/* mid-ledge: a small shelf the water breaks over */}
+      <path d="M108 162L140 162L136 172L112 172Z" fill="#4e5a66" />
+      <ellipse cx="124" cy="163" rx="16" ry="4" fill="#e8f0f6" opacity="0.9" />
+      {/* the lower fall, slightly wider */}
+      <path d="M112 170L136 170L138 288Q132 298 124 298Q116 298 112 288Z" fill="#dfe9f2" />
+      <path d="M118 170L130 170L131 286Q128 292 124 292Q121 292 119 286Z" fill="#f6fafc" />
+      {/* falling-water texture: dashed strokes cycling downward */}
+      <path className="fallsFlow" d="M121 30L121 150M124 172L124 292" stroke="#ffffff" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path className="fallsFlow ff2" d="M128 34L127 148M130 176L131 288" stroke="#c9dcea" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      {/* plunge pool + foam */}
+      <path d="M62 322Q64 300 96 296Q124 292 154 296Q186 300 190 322Q186 334 124 336Q66 334 62 322Z" fill="#3c5a66" />
+      <ellipse cx="124" cy="308" rx="34" ry="9" fill="#5d8794" opacity="0.85" />
+      <ellipse cx="124" cy="300" rx="18" ry="5" fill="#e8f2f6" opacity="0.9" />
+      <path d="M92 312Q108 306 124 310Q142 314 156 310" stroke="#cfe4ea" strokeWidth="1.6" fill="none" opacity="0.8" />
+      {/* mist puffs breathing at the base */}
+      <g fill="#eef5f9">
+        <ellipse className="fallsMist" cx="102" cy="290" rx="16" ry="9" />
+        <ellipse className="fallsMist fm2" cx="146" cy="286" rx="13" ry="8" />
+        <ellipse className="fallsMist fm3" cx="124" cy="276" rx="11" ry="7" />
+      </g>
+      {/* talus boulders shouldering the pool */}
+      <path d="M40 336L36 318Q44 304 66 307Q82 306 84 320L82 336Z" fill="#4c463e" />
+      <path d="M166 336L164 322Q170 310 188 312Q202 311 205 324L203 336Z" fill="#55504a" />
+      <path d="M44 316Q56 309 70 312M170 318Q182 312 196 315" stroke="#6e685f" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+      {/* dark pines flanking the base, dwarfed by the walls */}
+      <path d="M18 336L30 300L42 336Z" fill="#1b2e1d" />
+      <path d="M28 322L30 292L32 322Z" fill="#233a24" />
+      <path d="M216 336L228 296L240 336Z" fill="#182a1a" />
+      <path d="M204 336L212 310L220 336Z" fill="#20331f" />
+    </svg>
+  );
+}
+
+/**
+ * The About anchor, rebuilt round 5B: a big about-this-website kiosk at the
+ * very start of the trail (the hiker spawns beside it). Carved title, a
+ * route map of all five scenes with a you-are-here dot, a pinned photo,
+ * and a note card.
  */
 function KioskArt() {
+  // The five stops on the route map, west→east, in scene ground tones.
+  const stops: ReadonlyArray<readonly [number, number, string]> = [
+    [28, 94, "#5a7a42"], // meadow
+    [46, 85, "#b3502e"], // slot
+    [66, 91, "#dfe8f2"], // snow
+    [86, 85, "#c97a42"], // desert
+    [108, 91, "#46608c"], // camp
+  ];
   return (
-    <svg width="86" height="92" viewBox="0 0 86 92" aria-hidden="true">
+    <svg width="150" height="162" viewBox="0 0 150 162" aria-hidden="true">
       {/* posts */}
-      <rect x="12" y="26" width="5" height="64" fill="#5c4426" />
-      <rect x="69" y="26" width="5" height="64" fill="#5c4426" />
+      <rect x="18" y="44" width="8" height="116" fill="#5c4426" />
+      <rect x="124" y="44" width="8" height="116" fill="#5c4426" />
+      <path d="M18 152L26 152M124 152L132 152" stroke="#4a3423" strokeWidth="3" />
       {/* shingle roof */}
-      <path d="M2 22L43 4L84 22L80 26L43 10L6 26Z" fill="#4a3423" />
-      <path d="M6 26L43 10L80 26L76 29L43 15L10 29Z" fill="#6b4a2a" />
-      {/* board */}
-      <rect x="10" y="28" width="66" height="44" rx="2" fill="#8a6a42" stroke="#5c4426" strokeWidth="2" />
-      <rect x="15" y="33" width="38" height="34" rx="1.5" fill="#e8e0cc" />
-      {/* the map: valley, trail dots, you-are-here */}
-      <path d="M18 58Q26 44 34 50Q44 56 50 40" stroke="#47663a" strokeWidth="2.2" fill="none" />
-      <path d="M19 40Q28 36 36 40Q44 44 49 60" stroke="#8a6a44" strokeWidth="1.4" strokeDasharray="2.5 2.5" fill="none" />
-      <circle cx="24" cy="52" r="2.4" fill="#c9524a" />
-      <path d="M18 36L50 36" stroke="#a59c88" strokeWidth="1" />
-      {/* pinned photo */}
-      <g transform="rotate(6 64 46)">
-        <rect x="57" y="38" width="15" height="12" fill="#f2eee2" />
-        <rect x="58.5" y="39.5" width="12" height="7" fill="#46608c" />
-        <rect x="58.5" y="45" width="12" height="3.5" fill="#5a7a42" />
-        <circle cx="64.5" cy="38.5" r="1.1" fill="#c9524a" />
+      <path d="M2 38L75 6L148 38L141 44L75 16L9 44Z" fill="#4a3423" />
+      <path d="M9 44L75 16L141 44L134 49L75 23L16 49Z" fill="#6b4a2a" />
+      <path d="M30 38L75 19L120 38" stroke="#7d5a36" strokeWidth="1.6" fill="none" />
+      {/* the board */}
+      <rect x="14" y="48" width="122" height="76" rx="3" fill="#8a6a42" stroke="#5c4426" strokeWidth="2.5" />
+      {/* carved title plank */}
+      <rect x="24" y="55" width="102" height="16" rx="2" fill="#6b4a2a" />
+      <text
+        x="75"
+        y="66.5"
+        textAnchor="middle"
+        fontFamily="ui-monospace, Menlo, monospace"
+        fontSize="9.5"
+        letterSpacing="1.6"
+        fill="#f0e6cc"
+      >
+        ABOUT THIS SITE
+      </text>
+      {/* the route map: five scene stops joined by a dashed trail */}
+      <rect x="20" y="76" width="110" height="26" fill="#e8e0cc" />
+      <path
+        d="M28 94Q37 86 46 85Q57 84 66 91Q76 97 86 85Q97 74 108 91"
+        stroke="#8a6a44"
+        strokeWidth="1.6"
+        strokeDasharray="3 3"
+        fill="none"
+      />
+      {stops.map(([x, y, c]) => (
+        <circle key={x} cx={x} cy={y} r="3.6" fill={c} stroke="#5c4426" strokeWidth="1.2" />
+      ))}
+      {/* you-are-here at the meadow stop */}
+      <circle cx="28" cy="94" r="6" fill="none" stroke="#c9524a" strokeWidth="1.8" />
+      {/* pinned photo + note card on the lower rail */}
+      <g transform="rotate(4 36 113)">
+        <rect x="24" y="106" width="24" height="15" fill="#f2eee2" />
+        <rect x="26" y="108" width="20" height="8.5" fill="#46608c" />
+        <rect x="26" y="115" width="20" height="4" fill="#5a7a42" />
+        <circle cx="36" cy="107" r="1.4" fill="#c9524a" />
       </g>
-      {/* a second note card */}
-      <rect x="57" y="54" width="14" height="10" rx="1" fill="#d8cfc0" />
-      <path d="M59 57L69 57M59 60L66 60" stroke="#8a7a5e" strokeWidth="1" />
+      <rect x="94" y="106" width="28" height="14" rx="1.5" fill="#d8cfc0" transform="rotate(-3 108 113)" />
+      <path d="M99 110.5L117 109.5M99 114.5L112 114M99 118L114 117" stroke="#8a7a5e" strokeWidth="1.2" />
     </svg>
   );
 }
@@ -1629,6 +2594,79 @@ function GearCacheArt() {
   );
 }
 
+/**
+ * Matsumoto Castle (round 5B, from the client's photo): the black-and-white
+ * tiered keep — dark weatherboard bands under white plaster, tiled roofs
+ * carrying snow, gold shachi finials on the top ridge — rising off a
+ * battered stone base with snow drifted against it.
+ */
+function CastleArt() {
+  // Lower four tiers, bottom→top: [wall left, wall top, wall width, wall
+  // height, eave overhang]. The top tier + ridge are drawn by hand.
+  const tiers: ReadonlyArray<readonly [number, number, number, number, number]> = [
+    [42, 262, 216, 38, 14],
+    [60, 216, 180, 30, 13],
+    [76, 172, 148, 28, 12],
+    [92, 130, 116, 26, 11],
+  ];
+  return (
+    <svg width="300" height="360" viewBox="0 0 300 360" aria-hidden="true">
+      {/* battered stone base */}
+      <path d="M56 348L80 298L220 298L244 348Z" fill="#55504a" />
+      <path d="M64 336L86 302M84 344L102 306M120 348L128 304M172 348L170 304M214 344L200 304M232 340L216 304" stroke="#3f3b36" strokeWidth="1.6" />
+      <path d="M74 314Q150 306 226 314M66 330Q150 322 234 330" stroke="#3f3b36" strokeWidth="1.4" fill="none" />
+      <path d="M80 298L220 298L224 306L76 306Z" fill="#6a655d" />
+      {/* snow drifted against the base */}
+      <path d="M48 352Q70 338 96 344Q130 336 168 344Q206 336 234 344Q252 342 256 352Z" fill="#eef3f8" />
+      {tiers.map(([x, y, w, h, ov], i) => {
+        const cx = x + w / 2;
+        const roofY = y - 16;
+        return (
+          <g key={i}>
+            {/* wall: white plaster over a black weatherboard skirt */}
+            <rect x={x} y={y} width={w} height={h * 0.52} fill="#e8e6de" />
+            <rect x={x} y={y + h * 0.52} width={w} height={h * 0.48} fill="#1d1d22" />
+            <path d={`M${x} ${y + h * 0.52}L${x + w} ${y + h * 0.52}`} stroke="#2e2e34" strokeWidth="1.6" />
+            {/* window slits in the plaster band */}
+            {Array.from({ length: 3 + (3 - i) }, (_, j) => {
+              const n = 3 + (3 - i);
+              const wx = x + (w / (n + 1)) * (j + 1);
+              return <rect key={j} x={wx - 3} y={y + 4} width="6" height={h * 0.36} fill="#26262c" />;
+            })}
+            {/* tiled roof with upturned eaves + snow slab */}
+            <path
+              d={`M${x - ov} ${y} Q${x + 22} ${roofY + 3} ${cx - 12} ${roofY} L${cx + 12} ${roofY} Q${x + w - 22} ${roofY + 3} ${x + w + ov} ${y} Q${cx} ${y + 7} ${x - ov} ${y} Z`}
+              fill="#26262c"
+            />
+            <path
+              d={`M${x - ov + 2} ${y - 2} Q${x + 22} ${roofY} ${cx - 12} ${roofY - 2.5} L${cx + 12} ${roofY - 2.5} Q${x + w - 22} ${roofY} ${x + w + ov - 2} ${y - 2}`}
+              stroke="#eef3f8"
+              strokeWidth="5"
+              fill="none"
+              strokeLinecap="round"
+            />
+          </g>
+        );
+      })}
+      {/* the vermilion rail of the moon-viewing wing, tier one */}
+      <path d="M46 258L254 258" stroke="#a03a28" strokeWidth="3" />
+      <path d="M58 258L58 264M92 258L92 264M126 258L126 264M174 258L174 264M208 258L208 264M242 258L242 264" stroke="#a03a28" strokeWidth="2" />
+      {/* top tier + hip-gable roof, gold shachi at the ridge ends */}
+      <rect x="107" y="92" width="86" height="12" fill="#e8e6de" />
+      <rect x="107" y="104" width="86" height="12" fill="#1d1d22" />
+      <rect x="128" y="94" width="7" height="9" fill="#26262c" />
+      <rect x="146" y="94" width="7" height="9" fill="#26262c" />
+      <rect x="164" y="94" width="7" height="9" fill="#26262c" />
+      <path d="M96 92Q118 70 138 66L162 66Q182 70 204 92Q150 100 96 92Z" fill="#26262c" />
+      <path d="M100 88Q120 70 140 66.5L160 66.5Q180 70 200 88" stroke="#eef3f8" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <path d="M136 66L164 66" stroke="#1d1d22" strokeWidth="6" strokeLinecap="round" />
+      <path d="M137 63Q133 54 139 52Q143 56 141 63Z" fill="#c9a23d" />
+      <path d="M163 63Q167 54 161 52Q157 56 159 63Z" fill="#c9a23d" />
+      <path d="M136 62L164 62" stroke="#eef3f8" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function SetPieceArt({ kind }: { kind: SetPieceKind }) {
   switch (kind) {
     case "lake":
@@ -1648,7 +2686,11 @@ export function SetPieceArt({ kind }: { kind: SetPieceKind }) {
     case "gearcache":
       return <GearCacheArt />;
     case "boulder":
-      return <BoulderArt />;
+      return <ElCapWallArt />;
+    case "falls":
+      return <FallsArt />;
+    case "castle":
+      return <CastleArt />;
   }
 }
 

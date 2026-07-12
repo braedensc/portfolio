@@ -1,8 +1,11 @@
 /**
  * The world engine: game loop, keyboard/pointer movement, click-to-move,
- * camera deadzone panning, a translate-only photo backdrop, billboard
- * projection, NPC idle animation, proximity cards, scene transitions, and
- * auto mode.
+ * billboard projection onto a static fit-to-viewport stage, NPC idle
+ * animation, proximity-opened drawers, scene transitions, and auto mode.
+ *
+ * Round 5: the camera never moves. Every scene is a fixed-width stage
+ * (±gxClamp world units) scaled so the whole stage fits the viewport width;
+ * the hiker walks within the frame and scenes swap at the edges.
  *
  * React owns UI state (which card is open, which scene renders, auto on/off)
  * via the EngineHooks callbacks; the engine owns all per-frame math and writes
@@ -17,9 +20,10 @@ import {
   type CardId,
   type SetPiece,
   type Station,
+  type StationAnim,
   type Vec,
 } from "@/content/site";
-import { paintHiker, paintBear, type HikerFrame } from "./sprites";
+import { paintHiker, paintBear, paintDeer, type HikerFrame } from "./sprites";
 
 export interface EngineHooks {
   setScene: (idx: number) => void;
@@ -31,14 +35,9 @@ export interface EngineHooks {
 
 export interface AttachRefs {
   root: HTMLElement;
-  /** The single photo backdrop plane (crisp: translate-only, never scaled). */
-  backdrop: HTMLElement;
-  /** Vector sky accent strip (drifting cloud wisps) — the one extra depth layer. */
-  sky: HTMLElement;
-  ground: HTMLElement;
   fader: HTMLElement;
   card: HTMLElement;
-  /** Thin accent line from the docked card toward its source POI. */
+  /** Thin accent line from the drawer's edge toward its source POI. */
   link: HTMLElement;
   hiker: HTMLElement;
   hikerCanvas: HTMLCanvasElement;
@@ -54,14 +53,23 @@ type Side = "left" | "right" | null;
 type Dir = "l" | "r" | "u" | "d";
 
 const GW = 2.5; // gy-to-gx distance weighting
-const SPEED = 273; // 182 (round 1) × 1.5 (round-2 client feedback: "a decent amount more")
-const AUTO_DWELL = 4; // seconds a card stays open in the manual tour (round 3: compact cards read faster)
-const ATTRACT_DWELL = 4; // seconds a card stays open while attract mode wanders
-/* The field-note card's CSS dock (world.css .card) — the connector math needs them. */
-const CARD_LEFT = 12;
-const CARD_BOTTOM = 44;
+const SPEED = 314; // 273 (round 2) × 1.15 (round-5 client feedback: "a little faster again")
+const AUTO_DWELL = 4; // seconds a drawer stays open in the manual tour
+const ATTRACT_DWELL = 4; // seconds a drawer stays open while attract mode wanders
 const ATTRACT_FIRST_DELAY = 4; // s after load before attract mode starts on its own
 const ATTRACT_IDLE_DELAY = 30; // s of no input before attract mode resumes
+/* Round-5 stage fit: world units of margin past the walkable clamp that must
+   stay on screen (keeps the far-edge signposts fully visible). */
+const STAGE_PAD = 20;
+/* Proximity drawer zones (round 5): stand within R_OPEN of a POI and its
+   drawer opens on its own; walk past R_CLOSE and it closes. The gap is the
+   hysteresis that keeps the drawer from flapping at the boundary. */
+const R_OPEN = 80;
+const R_CLOSE = 115;
+/** A dismissed (✕/Escape) POI stays suppressed until the hiker steps this far away. */
+const R_SUPPRESS_CLEAR = 100;
+/** First-load spawn (round 5B): the meadow trailhead, beside the About kiosk. */
+const SPAWN: Vec = { gx: -440, gy: 80 };
 
 const KEYMAP: Record<string, Dir> = {
   arrowleft: "l",
@@ -82,21 +90,25 @@ interface WorldItem {
   flat: boolean;
 }
 
-interface PieceRec {
+/** One proximity-openable POI (set-piece or station) in the current scene. */
+interface PoiRec {
   id: CardId;
   gx: number;
   gy: number;
+  type: "setpiece" | "station";
+  /** The .setp/.stn item root — gets the `near` class + station open anims. */
+  el: HTMLElement | null;
+  /** The stand-here zone pad drawn at the POI's approach point. */
+  pad: HTMLElement | null;
+  anim?: StationAnim;
+  animMs?: number;
   d: number;
 }
 
-interface StationRec {
-  el: HTMLElement;
-  gx: number;
-  gy: number;
-}
-
-/** Ambient pixel-art critters painted by the engine (currently the bear). */
+/** Ambient pixel-art critters painted by the engine (bear, deer). */
+type NpcKind = "bear" | "deer";
 interface NpcRec {
+  kind: NpcKind;
   ctx: CanvasRenderingContext2D;
   frame: 0 | 1;
   acc: number;
@@ -119,10 +131,10 @@ export class WorldEngine {
   private attached = false;
   private rm = false;
 
-  private gx = 0;
-  // Spawn on the meadow trail (round 4: the world starts at the meadow).
-  private gy = 72;
-  private camX = 0;
+  // Spawn at the meadow trailhead beside the about-this-site kiosk
+  // (round 5B: the journey starts at the very west end of the trail).
+  private gx = SPAWN.gx;
+  private gy = SPAWN.gy;
   private facing = 1;
   private target: Vec | null = null;
   /** Waypoints still to visit after `target` (path-following travel). */
@@ -134,7 +146,6 @@ export class WorldEngine {
 
   private cur = 0;
   private gxcl = scenes[0].gxClamp;
-  private camcl = scenes[0].camClamp;
   private blockers: Blocker[] = scenes[0].blockers;
   private scenePath: Vec[] = scenes[0].path;
   private transitioning = false;
@@ -159,8 +170,7 @@ export class WorldEngine {
 
   private itemsEl: HTMLElement | null = null;
   private worldEls: WorldItem[] = [];
-  private pieces: PieceRec[] = [];
-  private stns: StationRec[] = [];
+  private pois: PoiRec[] = [];
   private npcs: NpcRec[] = [];
   private hikerCtx: CanvasRenderingContext2D | null = null;
 
@@ -168,6 +178,8 @@ export class WorldEngine {
   private h = 0;
   private seamY = 0;
   private botY = 0;
+  /** Round-5 stage scale: world units → px so the whole stage fits the width. */
+  private u = 1;
 
   private raf = 0;
   private hiddenT = 0;
@@ -229,7 +241,6 @@ export class WorldEngine {
     const sc = scenes[idx];
     this.cur = idx;
     this.gxcl = sc.gxClamp;
-    this.camcl = sc.camClamp;
     this.blockers = sc.blockers;
     this.scenePath = sc.path;
     const pending = this.pending;
@@ -237,17 +248,15 @@ export class WorldEngine {
     const side = pending ? pending.side : null;
     if (side === "left") this.gx = -(this.gxcl - 90);
     else if (side === "right") this.gx = this.gxcl - 90;
-    else if (!pending) this.gx = 0;
+    else if (!pending) this.gx = SPAWN.gx;
     this.gy = Math.max(20, Math.min(92, this.gy));
     if (this.blockedAt(this.gx, this.gy)) this.unstick();
-    this.camX = Math.max(-this.camcl, Math.min(this.camcl, this.gx));
     this.target = null;
     this.queue = [];
     this.suppressed = null;
     this.rescan(itemsEl, idx);
     this.measure();
     this.positionAll();
-    this.paintBackdrop(0);
     if (pending && pending.thenTarget) this.walkVia(pending.thenTarget);
     if (this.transitioning) {
       if (this.rm) this.endTransition();
@@ -287,32 +296,27 @@ export class WorldEngine {
       });
   }
 
+  /** Click on a set-piece or station: near → open now (stations play their
+   *  reveal anim); far → walk to its stand-here zone, where proximity opens it. */
   setPieceClick(p: SetPiece): void {
     if (this.transitioning) return;
     this.suppressed = null;
     const d = Math.hypot(this.gx - p.gx, (this.gy - p.gy) * GW);
-    if (d > 85) this.walkVia({ ...p.approach });
+    if (d > R_OPEN) this.walkVia({ ...p.approach });
     else this.openCard(p.id);
   }
 
   stationClick(s: Station): void {
     if (this.transitioning) return;
-    const el = this.itemsEl?.querySelector<HTMLElement>(`.stn[data-poi="${s.id}"]`);
-    if (el && el.dataset.busy) return;
     this.suppressed = null;
     const d = Math.hypot(this.gx - s.gx, (this.gy - s.gy) * GW);
-    if (d > 85)
-      this.walkVia({ gx: s.gx + (this.gx < s.gx ? -52 : 52), gy: Math.min(96, s.gy + 12) });
-    if (s.anim && !this.rm && el) {
-      el.dataset.busy = "1";
-      el.classList.add(s.anim);
-      const anim = s.anim;
-      this.after(s.animMs, () => {
-        el.classList.remove(anim);
-        delete el.dataset.busy;
-        this.openCard(s.id);
-      });
-    } else this.openCard(s.id);
+    if (d > R_OPEN) {
+      this.walkVia({ ...s.approach });
+      return;
+    }
+    const rec = this.pois.find((p) => p.id === s.id);
+    if (rec) this.openPoi(rec);
+    else this.openCard(s.id);
   }
 
   /** ▶ button: starts the manual tour (taking over from attract mode if it was driving). */
@@ -331,15 +335,11 @@ export class WorldEngine {
     if (open && this.auto?.mode === "attract") this.cancelAuto();
   }
 
-  /** ✕ on the field-note card: close it, and suppress a set-piece so
-   *  proximity doesn't instantly reopen it under the hiker's feet. Always
-   *  pushes the closed state to React, even if the engine lost track. */
+  /** ✕ on the drawer: close it, and suppress the POI so proximity doesn't
+   *  instantly reopen it under the hiker's feet. Always pushes the closed
+   *  state to React, even if the engine lost track. */
   dismissCard(): void {
-    const id = this.activeId;
-    if (id) {
-      const loc = poiLocations[id];
-      if (loc && loc.type === "setpiece") this.suppressed = id;
-    }
+    if (this.activeId) this.suppressed = this.activeId;
     this.closeCard();
   }
 
@@ -358,6 +358,21 @@ export class WorldEngine {
     this.hooks.setCard(id);
   }
 
+  /** Open a POI's drawer, playing a station's reveal anim first if it has one. */
+  private openPoi(p: PoiRec): void {
+    if (p.anim && !this.rm && p.el) {
+      if (p.el.dataset.busy) return;
+      const { el, anim, id } = p;
+      el.dataset.busy = "1";
+      el.classList.add(anim);
+      this.after(p.animMs ?? 350, () => {
+        el.classList.remove(anim);
+        delete el.dataset.busy;
+        this.openCard(id);
+      });
+    } else this.openCard(p.id);
+  }
+
   private closeCard(): void {
     this.activeId = null;
     this.hooks.setCard(null);
@@ -365,8 +380,7 @@ export class WorldEngine {
 
   private esc(): void {
     if (this.activeId) {
-      const loc = poiLocations[this.activeId];
-      if (loc && loc.type === "setpiece") this.suppressed = this.activeId;
+      this.suppressed = this.activeId;
       this.closeCard();
     }
     this.target = null;
@@ -419,8 +433,7 @@ export class WorldEngine {
     if (mode === "attract") {
       this.hooks.setAttract(false);
       if (this.activeId && this.refs && !this.refs.card.matches(":hover")) {
-        const loc = poiLocations[this.activeId];
-        if (loc && loc.type === "setpiece") this.suppressed = this.activeId;
+        this.suppressed = this.activeId;
         this.closeCard();
       }
     } else this.hooks.setAuto(false);
@@ -432,14 +445,18 @@ export class WorldEngine {
     this.h = this.refs.root.clientHeight;
     this.seamY = 0.615 * this.h;
     this.botY = 0.93 * this.h;
+    // Fit the whole stage (plus signpost margin) to the viewport width.
+    // Capped high so ultrawide screens don't blow the art up; floored low so
+    // phones keep a readable world (the stage may spill a little there).
+    this.u = Math.min(1.35, Math.max(0.34, this.w / (2 * (this.gxcl + STAGE_PAD))));
   }
 
   private proj(px: number, py: number): { x: number; y: number; s: number } {
     const t = py / 100;
     return {
-      x: this.w / 2 + (px - this.camX) * (0.55 + 0.45 * t),
+      x: this.w / 2 + px * (0.55 + 0.45 * t) * this.u,
       y: this.seamY + (this.botY - this.seamY) * t,
-      s: 0.62 + 0.63 * t,
+      s: (0.62 + 0.63 * t) * this.u,
     };
   }
 
@@ -661,24 +678,47 @@ export class WorldEngine {
         flat: el.dataset.flat === "1",
       });
     });
-    this.stns = [];
-    itemsEl.querySelectorAll<HTMLElement>(".item.stn").forEach((el) => {
-      this.stns.push({ el, gx: Number(el.dataset.gx), gy: Number(el.dataset.gy) });
-    });
-    this.pieces = sc.setPieces.map((p) => ({ id: p.id, gx: p.gx, gy: p.gy, d: 1e9 }));
+    // Round 5: set-pieces and stations share one proximity model — every POI
+    // opens by standing near it (its zone pad) as well as by click.
+    this.pois = [
+      ...sc.setPieces.map((p) => ({ id: p.id, gx: p.gx, gy: p.gy, type: "setpiece" as const })),
+      ...sc.stations.map((s) => ({
+        id: s.id,
+        gx: s.gx,
+        gy: s.gy,
+        type: "station" as const,
+        anim: s.anim,
+        animMs: s.animMs,
+      })),
+    ].map((p) => ({
+      ...p,
+      el: itemsEl.querySelector<HTMLElement>(`.item[data-poi="${p.id}"]`),
+      pad: itemsEl.querySelector<HTMLElement>(`.zonepad[data-zone="${p.id}"]`),
+      d: 1e9,
+    }));
     this.npcs = [];
-    itemsEl.querySelectorAll<HTMLCanvasElement>("canvas[data-npc]").forEach((cv) => {
+    itemsEl.querySelectorAll<HTMLCanvasElement>("canvas[data-npc]").forEach((cv, i) => {
       const ctx = cv.getContext("2d");
       if (!ctx) return;
-      // The bear's head-turn is a slow, occasional gesture (~3s a frame).
-      const rec: NpcRec = { ctx, frame: 0, acc: 0, period: 3 };
+      const kind: NpcKind = cv.dataset.npc === "deer" ? "deer" : "bear";
+      // Slow, occasional gestures — the bear turns its head (~3s a frame),
+      // a deer holds its grazing pose longer. Stagger by index so two
+      // animals in one scene never move in lockstep.
+      const rec: NpcRec = {
+        kind,
+        ctx,
+        frame: 0,
+        acc: (i * 1.7) % 3,
+        period: kind === "deer" ? 4.2 : 3,
+      };
       this.paintNpc(rec);
       this.npcs.push(rec);
     });
   }
 
   private paintNpc(n: NpcRec): void {
-    paintBear(n.ctx, n.frame);
+    if (n.kind === "deer") paintDeer(n.ctx, n.frame);
+    else paintBear(n.ctx, n.frame);
   }
 
   private setFrame(f: HikerFrame): void {
@@ -790,7 +830,7 @@ export class WorldEngine {
     if (this.modalOpen) return; // the lightbox owns the pointer while open
     if (this.auto && !(t && t.closest("[data-auto-btn]"))) this.cancelAuto();
     if (this.transitioning) return;
-    if (t && t.closest("button,a,.card,.chips,.tr,.who,[data-auto-btn]")) return;
+    if (t && t.closest("button,a,.card,.wpw,.tr,.who,[data-auto-btn]")) return;
     if (!this.refs) return;
     const r = this.refs.root.getBoundingClientRect();
     const x = e.clientX - r.left;
@@ -798,34 +838,11 @@ export class WorldEngine {
     let tt = (y - this.seamY) / (this.botY - this.seamY);
     if (tt < -0.08) return;
     tt = Math.max(0, Math.min(1, tt));
-    const k = 0.55 + 0.45 * tt;
-    this.walkTo({ gx: (x - this.w / 2) / k + this.camX, gy: tt * 100 });
+    const k = (0.55 + 0.45 * tt) * this.u;
+    this.walkTo({ gx: (x - this.w / 2) / k, gy: tt * 100 });
   };
 
   /* ---------- per-frame ---------- */
-
-  /**
-   * Camera + backdrop. Crispness-first rig (round-3 client feedback): the
-   * photo backdrop is ONE plane at scale(1) — translate-only, so it is never
-   * fractionally resampled (no blur) and never overlaps a masked copy of
-   * itself (no ghost seams). Depth comes from the backdrop shifting a few px
-   * opposite the camera pan, plus the vector sky strip drifting a bit more.
-   */
-  private paintBackdrop(dt: number): void {
-    if (!this.refs) return;
-    const t = this.gy / 100;
-    const k = 0.55 + 0.45 * t;
-    const sx = (this.gx - this.camX) * k;
-    const dz = 0.18 * this.w;
-    let tc = this.camX;
-    if (sx > dz) tc = this.gx - dz / k;
-    else if (sx < -dz) tc = this.gx + dz / k;
-    tc = Math.max(-this.camcl, Math.min(this.camcl, tc));
-    this.camX = this.rm || dt === 0 ? tc : this.camX + (tc - this.camX) * Math.min(1, dt * 6);
-    this.refs.backdrop.style.transform = `translate3d(${-this.camX * 0.06}px,0,0)`;
-    this.refs.sky.style.transform = `translate3d(${-this.camX * 0.12}px,0,0)`;
-    this.refs.ground.style.transform = `translate3d(${-this.camX * 0.72}px,0,0) rotateX(64deg)`;
-  }
 
   private positionAll(): void {
     if (!this.refs) return;
@@ -843,11 +860,11 @@ export class WorldEngine {
   }
 
   /**
-   * Field-note connector (round 3): the card itself is CSS-docked at the
-   * bottom-left; when its source POI is on-screen, a thin 1px accent line
-   * runs from the card's top-right corner toward the POI so the eye can
-   * find what the note belongs to. Hidden when the geometry would read as
-   * clutter (POI off-screen, behind/too close to the card, small screens).
+   * Drawer connector (round 5 keeps the round-3 character): the info panel is
+   * a full-height left drawer; when its source POI is on-screen, a thin
+   * accent line runs from the drawer's right edge toward the POI so the eye
+   * can find what the panel belongs to. Hidden when the geometry would read
+   * as clutter (POI behind the drawer or off-screen, small screens).
    */
   private positionConnector(): void {
     if (!this.refs) return;
@@ -858,14 +875,14 @@ export class WorldEngine {
       return;
     }
     const card = this.refs.card;
-    const x0 = CARD_LEFT + card.offsetWidth;
-    const y0 = this.h - CARD_BOTTOM - card.offsetHeight + 18;
+    const x0 = card.offsetLeft + card.offsetWidth;
+    const y0 = card.offsetTop + Math.min(card.offsetHeight * 0.3, 170);
     const p = this.proj(loc.gx, loc.gy);
     const tx = p.x;
     const ty = p.y - 46 * p.s;
     const dx = tx - x0;
     const dy = ty - y0;
-    if (dx < 40 || tx > this.w - 10 || ty < 8) {
+    if (dx < 48 || tx > this.w - 10 || ty < 8) {
       link.classList.remove("on");
       return;
     }
@@ -888,14 +905,14 @@ export class WorldEngine {
         if (a.mode === "attract") {
           // Loop forever: brief random pause so it reads as wandering, then
           // ping-pong back through the route at the ends.
-          if (loc.type === "setpiece") this.suppressed = step;
+          this.suppressed = step;
           a.phase = "pause";
           a.timer = 0.5 + Math.random();
         } else {
           a.idx += 1;
           if (a.idx >= autoRoute.length) {
-            // Keep the last card from instantly reopening via proximity.
-            if (loc.type === "setpiece") this.suppressed = step;
+            // Keep the last drawer from instantly reopening via proximity.
+            this.suppressed = step;
             this.cancelAuto();
           } else a.phase = "go";
         }
@@ -1026,47 +1043,37 @@ export class WorldEngine {
       }
     }
 
-    /* camera + backdrop + billboards */
-    this.paintBackdrop(dt);
+    /* billboards */
     this.positionAll();
 
-    /* proximity */
+    /* proximity drawer zones (round 5): stand near any POI → its drawer
+       opens; walk past R_CLOSE → it closes. Opening waits for the hiker to
+       stop so walking THROUGH a zone en route elsewhere doesn't flash it. */
     if (!this.transitioning) {
-      for (const s of this.stns) {
-        const d = Math.hypot(this.gx - s.gx, (this.gy - s.gy) * GW);
-        s.el.classList.toggle("near", d < 95);
+      for (const p of this.pois) {
+        p.d = Math.hypot(this.gx - p.gx, (this.gy - p.gy) * GW);
+        const inZone = p.d < R_OPEN;
+        p.el?.classList.toggle("near", inZone);
+        p.pad?.classList.toggle("on", inZone);
       }
       if (!this.auto) {
-        let best: PieceRec | null = null;
-        let bd = 1e9;
-        for (const m of this.pieces) {
-          m.d = Math.hypot(this.gx - m.gx, (this.gy - m.gy) * GW);
-          if (m.d < bd) {
-            bd = m.d;
-            best = m;
-          }
+        if (this.suppressed) {
+          const sp = this.pois.find((m) => m.id === this.suppressed);
+          if (!sp || sp.d > R_SUPPRESS_CLEAR) this.suppressed = null;
         }
-        const act = this.activeId ? poiLocations[this.activeId] : null;
-        if (act && act.type === "station") {
-          const sd = Math.hypot(this.gx - act.gx, (this.gy - act.gy) * GW);
-          if (sd > 135 && !this.target) this.closeCard();
-        } else {
-          if (this.suppressed) {
-            const sp = this.pieces.find((m) => m.id === this.suppressed);
-            if (!sp || sp.d > 70) this.suppressed = null;
-          }
-          const cand = best && bd < 55 && best.id !== this.suppressed ? best.id : null;
-          if (cand !== this.activeId) {
-            // Hysteresis: a set-piece card opened by click stays up until ~95.
-            const curPiece = this.activeId
-              ? this.pieces.find((m) => m.id === this.activeId)
-              : undefined;
-            const keepOpen = !cand && curPiece !== undefined && curPiece.d < 95;
-            if (!keepOpen) {
-              if (cand) this.openCard(cand);
-              else this.closeCard();
-            }
-          }
+        let best: PoiRec | null = null;
+        for (const p of this.pois)
+          if (p.d < R_OPEN && p.id !== this.suppressed && (!best || p.d < best.d)) best = p;
+        const act = this.activeId
+          ? this.pois.find((m) => m.id === this.activeId)
+          : undefined;
+        if (this.activeId && !act) {
+          // Open card belongs to another scene (stale) — drop it.
+          this.closeCard();
+        } else if (act && act.d > R_CLOSE) {
+          this.closeCard();
+        } else if (best && best.id !== this.activeId && !this.walking) {
+          this.openPoi(best);
         }
       }
     }

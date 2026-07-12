@@ -141,3 +141,54 @@ const BEAR_FRAMES: readonly [readonly string[], readonly string[]] = [
 export function paintBear(ctx: CanvasRenderingContext2D, frame: 0 | 1): void {
   paint(ctx, BEAR_FRAMES[frame], BEAR_PAL, BEAR.w, BEAR.h);
 }
+
+/* ---------- deer (22×13, 2-frame idle) ----------
+   Doe at the meadow treeline (round 5B wildlife pass). Frame 0 grazes head
+   down; frame 1 lifts the head to check the meadow. */
+
+export const DEER = { w: 22, h: 13 } as const;
+
+const DEER_PAL: Palette = {
+  b: "#b58a5e", // coat
+  d: "#8a6544", // shade / legs / tail
+  c: "#e2d4bc", // rump patch + belly
+  e: "#caa87e", // ears
+  n: "#2b2018", // eye / nose / hooves
+};
+
+const DEER_FRAMES: readonly [readonly string[], readonly string[]] = [
+  [
+    "......................",
+    "......................",
+    "......................",
+    "......................",
+    "......................",
+    "...ddddddddddddd......",
+    "..dccbbbbbbbbbbb......",
+    "..dccbbbbbbbbbbb......",
+    "....bccccccccbbbb.....",
+    "....d.d....d.d..bb....",
+    "....d.d....d.d...bbe..",
+    "....d.d....d.d...bbb..",
+    "....n.n....n.n....bdn.",
+  ],
+  [
+    "................e..e..",
+    "................bbbb..",
+    "................bbnbdn",
+    "...............bbb....",
+    "..............bbb.....",
+    "...ddddddddddddd......",
+    "..dccbbbbbbbbbbb......",
+    "..dccbbbbbbbbbbb......",
+    "....bccccccccbb.......",
+    "....d.d....d.d........",
+    "....d.d....d.d........",
+    "....d.d....d.d........",
+    "....n.n....n.n........",
+  ],
+];
+
+export function paintDeer(ctx: CanvasRenderingContext2D, frame: 0 | 1): void {
+  paint(ctx, DEER_FRAMES[frame], DEER_PAL, DEER.w, DEER.h);
+}
