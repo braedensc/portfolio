@@ -224,6 +224,15 @@ export interface Project {
   stack: string;
   status: string;
   url?: string;
+  /**
+   * Simple-view ("Topo") presentation — optional so the world (which only
+   * needs name/description/stack/status/url) is unaffected.
+   */
+  peakLabel?: string;
+  badge?: { text: string; kind: "live" | "gated" | "dev" };
+  pitch?: string;
+  stackChips?: string[];
+  standout?: string;
 }
 
 export const todoclawUrl = "https://todoclaw-psi.vercel.app";
@@ -237,6 +246,21 @@ export const projects: Project[] = [
     stack: "React · TypeScript · Supabase · Anthropic",
     status: "Live, invite-only beta.",
     url: todoclawUrl,
+    peakLabel: "PEAK 01 · FIRST ASCENT 2026",
+    badge: { text: "Live · invite-only", kind: "gated" },
+    pitch:
+      "An Eisenhower-matrix task planner on a free-drag 2D grid — urgency × importance — with an optional AI assistant that plans your day and nudges you at the right hour.",
+    stackChips: [
+      "React",
+      "TypeScript",
+      "Supabase",
+      "TanStack Query",
+      "Anthropic API",
+      "Web Push",
+      "Playwright",
+    ],
+    standout:
+      "Realtime multi-client conflict resolution, seed-based spatial clustering, server-side AI budget guardrails, and an MCP tool layer.",
   },
   {
     id: "chefclaw",
@@ -245,6 +269,21 @@ export const projects: Project[] = [
       "Turns cooking videos into structured bilingual recipes with a multimodal model.",
     stack: "Python · FastAPI · PostgreSQL · React 19 · Gemini",
     status: "In development — opens here when it ships.",
+    peakLabel: "PEAK 02 · EXPEDITION IN PROGRESS",
+    badge: { text: "In development", kind: "dev" },
+    pitch:
+      "Paste a cooking video; a multimodal pipeline extracts a structured, bilingual recipe — ingredients verbatim, steps, and visual cues — into a browsable library.",
+    stackChips: [
+      "Python",
+      "FastAPI",
+      "PostgreSQL",
+      "React 19",
+      "Gemini",
+      "yt-dlp",
+      "OpenAPI",
+    ],
+    standout:
+      "A never-fabricate-food-data invariant, a broker-less async job queue (FOR UPDATE SKIP LOCKED), and fail-closed LLM cost controls.",
   },
 ];
 
@@ -1222,3 +1261,151 @@ export const autoRoute: CardId[] = [
   "chefclaw",
   "contact",
 ];
+
+/* ---------- simple view ("Topo" / Trail Map) content ---------- */
+
+export const heroEyebrow = "Full-stack software engineer";
+export const heroSub =
+  "I build production systems at scale — thousands of users, millions of API requests a day — and spend the weekends somewhere above the treeline. Former NCAA distance runner; recovering 4:03 miler.";
+export const heroCoords =
+  "33.7490° N  84.3880° W · ATLANTA, GA · UTC−5 · EST. 2021 IN PRODUCTION";
+
+/** Route log — the career as a climb with switchbacks (all facts real). */
+export interface RouteStop {
+  marker: string;
+  title: string;
+  detail: string;
+}
+export const routeLog: RouteStop[] = [
+  {
+    marker: "2017 · TRAILHEAD",
+    title: "Georgia Tech, CS",
+    detail:
+      "Specialized in high-performance computing & simulation. Ran NCAA track & cross country.",
+  },
+  {
+    marker: "2021 · SWITCHBACKS",
+    title: "OnSolve — Full-stack",
+    detail:
+      "React microfrontends for 1,000+ users; C#/.NET APIs serving millions of requests a day.",
+  },
+  {
+    marker: "2023 · RIDGELINE",
+    title: "Data & ML pipelines",
+    detail:
+      "RabbitMQ ingestion over millions of global events; built the human-in-the-loop moderation platform.",
+  },
+  {
+    marker: "NOW · SUMMIT PUSH",
+    title: "Todoclaw & ChefClaw",
+    detail:
+      "Two full products, solo: AI-assisted planning and multimodal recipe extraction.",
+  },
+];
+
+/** Expeditions section subheading. */
+export const expeditionsIntro =
+  "Two self-built products, treated like first ascents — a briefing, the stack, the standout engineering, then a stamped permit opens the live app in a new tab.";
+
+/** Basecamp — earlier projects, shown as smaller cards under the expeditions. */
+export interface BasecampProject {
+  title: string;
+  detail: string;
+}
+export const basecamp: BasecampProject[] = [
+  {
+    title: "NCAA Track & Field Rankings",
+    detail:
+      "Live-updated ranking platform. React · Java Spring · Docker · K8s on GKE · MongoDB · Flask scraper.",
+  },
+  {
+    title: "Wildfire Simulation",
+    detail:
+      "Cellular-automata fire model; Monte Carlo trials of controlled-burn strategies.",
+  },
+  {
+    title: "N-Body on CUDA",
+    detail:
+      "Grid-stride GPU kernels vs. threaded CPU for O(n²) simulation; speedup & efficiency curves. Julia · CUDA.jl.",
+  },
+];
+
+/** PRs — personal records and pull requests, same discipline, different units. */
+export interface StatRow {
+  lab: string;
+  val: string;
+}
+export const personalRecords: StatRow[] = [
+  { lab: "Mile", val: "4:03" },
+  { lab: "5,000 m", val: "14:17" },
+  { lab: "10,000 m", val: "31:07" },
+];
+export const pullRequests: StatRow[] = [
+  { lab: "API traffic maintained", val: "10⁶+/day" },
+  { lab: "Users on shipped UI", val: "1,000+" },
+  { lab: "K8s deployments monitored", val: "40+" },
+  { lab: "Geolocation API bill", val: "−50%" },
+];
+export const pullRequestsNote = "Four-plus years of production full-stack at OnSolve.";
+
+/** Gear rack — skills grouped for the simple view. */
+export interface GearGroup {
+  label: string;
+  items: string[];
+}
+export const gearRack: GearGroup[] = [
+  {
+    label: "Languages",
+    items: ["TypeScript", "C#", "Python", "Java", "SQL", "Julia"],
+  },
+  {
+    label: "Frameworks",
+    items: ["React", ".NET / ASP.NET Core", "Spring", "FastAPI", "Next.js", "CUDA"],
+  },
+  {
+    label: "Cloud & data",
+    items: [
+      "PostgreSQL",
+      "Kubernetes",
+      "Docker",
+      "Redis",
+      "RabbitMQ",
+      "AWS",
+      "GCP",
+      "Supabase",
+      "Grafana",
+    ],
+  },
+];
+
+/** ChefClaw guided-tour steps (shown while the app is still in development). */
+export const chefTourSteps = [
+  "1 · Paste a Bilibili or Rednote link — an async job downloads and watches the video.",
+  "2 · A multimodal model extracts a structured, bilingual recipe. Quantities are captured verbatim — the pipeline never invents food data.",
+  "3 · One video can yield several linked dishes, filed into a searchable, browsable library.",
+];
+
+/** Viewpoints — a small strip of real photographs (originals, not stylized). */
+export interface Viewpoint {
+  src: string;
+  caption: string;
+}
+export const viewpoints: Viewpoint[] = [
+  { src: "/gallery/photography/tunnel-view.jpg", caption: "TUNNEL VIEW · YOSEMITE" },
+  {
+    src: "/gallery/photography/kearsarge-basin.jpg",
+    caption: "KEARSARGE BASIN · EASTERN SIERRA",
+  },
+  { src: "/gallery/photography/taft-point-crow.jpg", caption: "TAFT POINT · YOSEMITE" },
+  { src: "/gallery/photography/the-narrows.jpg", caption: "THE NARROWS · ZION" },
+  {
+    src: "/gallery/photography/antelope-canyon.jpg",
+    caption: "ANTELOPE CANYON · ARIZONA",
+  },
+  {
+    src: "/gallery/photography/glacier-valley.jpg",
+    caption: "GLACIER NATIONAL PARK · MONTANA",
+  },
+];
+export const viewpointsNote =
+  "Every frame here is one of my own photographs — the full set lives in the world view.";
