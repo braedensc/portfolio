@@ -378,7 +378,8 @@ export const galleries: Partial<Record<CardId, string[]>> = {
   ]),
   grove: g("photography", ["sequoia-grove"]),
   climbing: g("photography", ["el-capitan", "taft-point-crow"]),
-  falls: g("photography", ["yosemite-falls"]),
+  // (no falls gallery: the falls card shows yosemite-falls as its header image,
+  // so a one-photo gallery row would just duplicate it)
   bear: g("photography", ["glacier-bear"]),
   // The camp set is shared by Contact and the camp's mirror-lake vignette.
   contact: g("camp", ["campfire-night", "mirror-lake-dusk", "tent-alpenglow"]),
@@ -721,7 +722,7 @@ export const scenes: Scene[] = [
       { shape: "ellipse", gx: -515, gy: 32, hw: 60, hh: 5 }, // west wave wall
       { shape: "ellipse", gx: 520, gy: 34, hw: 60, hh: 5 }, // east wave wall
       { shape: "ellipse", gx: -245, gy: 28, hw: 26, hh: 4 }, // stone fin
-      { shape: "rect", gx: 0, gy: 46, hw: 600, hh: 6 }, // the stream
+      { shape: "rect", gx: 0, gy: 26, hw: 600, hh: 26 }, // the stream + canyon back (gy 0–52): the whole back third is walls + water, never walkable — a high-gy scene entry unsticks SOUTH onto the floor, never onto the water
       { shape: "ellipse", gx: 90, gy: 56, hw: 30, hh: 4 }, // photographer's setup
     ],
     decor: [

@@ -565,6 +565,8 @@
 .item[data-kind="squirrel"] .in::after,
 .item[data-kind="hare"] .in::after,
 .item[data-kind="snake"] .in::after,
+.item[data-kind="jackrabbit"] .in::after,
+.item[data-kind="bird"] .in::after,
 .item[data-kind="gate"] .in::after,
 .item[data-kind="arch"] .in::after,
 .item[data-kind="fire"] .in::after {
